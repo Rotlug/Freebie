@@ -15,8 +15,6 @@
         {
           devShells.default = mkShell {
             buildInputs = [
-              gtk4
-              libadwaita
               flatpak-builder
               meson
               ninja

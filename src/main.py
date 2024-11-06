@@ -42,21 +42,22 @@ class FreebieApplication(Adw.Application):
         We raise the application's main window, creating it if
         necessary.
         """
-        win = self.props.active_window
+        win = self.get_active_window()
         if not win:
-            win = FreebieWindow(application=self)
-        win.present()
-
+            win = FreebieWindow(self)
+        
+        win.present() # type: ignore
+    
     def on_about_action(self, widget, _):
         """Callback for the app.about action."""
-        about = Adw.AboutWindow(transient_for=self.props.active_window,
+        about = Adw.AboutDialog(
                                 application_name='freebie',
                                 application_icon='com.github.rotlug.Freebie',
                                 developer_name='rotlug',
                                 version='0.1.0',
                                 developers=['rotlug'],
                                 copyright='© 2024 rotlug')
-        about.present()
+        about.present(self.get_active_window())
 
     def on_preferences_action(self, widget, _):
         """Callback for the app.preferences action."""
@@ -76,7 +77,6 @@ class FreebieApplication(Adw.Application):
         self.add_action(action)
         if shortcuts:
             self.set_accels_for_action(f"app.{name}", shortcuts)
-
 
 def main(version):
     """The application's entry point."""

@@ -24,7 +24,7 @@ from gi.repository import Gtk
 class FreebieWindow(Adw.ApplicationWindow):
     __gtype_name__ = 'FreebieWindow'
 
-    label = Gtk.Template.Child()
+    label: Gtk.Label = Gtk.Template.Child()
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, application: Adw.Application):
+        super().__init__(application=application)
