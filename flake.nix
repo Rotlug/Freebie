@@ -20,10 +20,16 @@
               ninja
 
               python312
-              python312Packages.pygobject-stubs
-              python312Packages.pygobject3
-              python312Packages.pycairo
-            ];
+            ] ++ (with pkgs.python312Packages; [
+              pygobject-stubs
+              pygobject3
+              pycairo
+              requests
+              unidecode
+              beautifulsoup4
+              types-beautifulsoup4
+              aria2p
+            ]);
           };
         }
       );
