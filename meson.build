@@ -7,7 +7,9 @@ project('freebie',
 i18n = import('i18n')
 gnome = import('gnome')
 
+pkgdatadir = join_paths(get_option('prefix'), get_option('datadir'), meson.project_name())
 
+conf = configuration_data()
 
 subdir('data')
 subdir('src')

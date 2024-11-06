@@ -28,6 +28,18 @@
             "name" : "other-modules"
         },
         {
+            "name": "blueprint-compiler",
+            "buildsystem": "meson",
+            "sources": [
+              {
+                "type": "git",
+                "url": "https://gitlab.gnome.org/jwestman/blueprint-compiler",
+                "tag": "v0.14.0"
+              }
+            ],
+            "cleanup": ["*"]
+          },
+        {
             "name": "aria2",
             "config-opts": [
                 "--disable-libaria2",

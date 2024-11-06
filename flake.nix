@@ -20,6 +20,7 @@
               ninja
 
               python312
+              blueprint-compiler
             ] ++ (with pkgs.python312Packages; [
               pygobject-stubs
               pygobject3

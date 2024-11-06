@@ -20,7 +20,7 @@
 from gi.repository import Adw
 from gi.repository import Gtk
 
-@Gtk.Template(resource_path='/com/github/rotlug/Freebie/window.ui')
+@Gtk.Template(resource_path='/com/github/rotlug/Freebie/gtk/window.ui')
 class FreebieWindow(Adw.ApplicationWindow):
     __gtype_name__ = 'FreebieWindow'
 
