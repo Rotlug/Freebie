@@ -1,0 +1,10 @@
+.venv
+.flatpak
+.vscode
+_build
+.flatpak-builder
+builddir
+
+# Direnv related
+.direnv
+.envrc

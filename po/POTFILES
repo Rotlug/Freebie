@@ -1,0 +1,6 @@
+data/com.github.rotlug.Freebie.desktop.in
+data/com.github.rotlug.Freebie.metainfo.xml.in
+data/com.github.rotlug.Freebie.gschema.xml
+src/main.py
+src/window.py
+src/window.ui

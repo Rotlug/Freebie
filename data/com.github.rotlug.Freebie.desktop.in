@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=freebie
+Exec=freebie
+Icon=com.github.rotlug.Freebie
+Terminal=false
+Type=Application
+Categories=GTK;
+StartupNotify=true
