@@ -25,6 +25,7 @@ gi.require_version('Adw', '1')
 
 from gi.repository import Gtk, Gio, Adw
 from .window import FreebieWindow
+from .download import download_manager
 
 class FreebieApplication(Adw.Application):
     """The main application singleton class."""
@@ -43,7 +44,7 @@ class FreebieApplication(Adw.Application):
         necessary.
         """
         win = self.get_active_window()
-        if not win:
+        if win == None:
             win = FreebieWindow(self)
         
         win.present() # type: ignore
