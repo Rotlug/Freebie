@@ -1,0 +1,43 @@
+from aria2p import Download
+import requests
+from .game import Game
+from .igdb_api import IGDBApiWrapper
+from bs4 import BeautifulSoup as bs
+
+# Provide `Game` Objects
+class Provider:
+    def __init__(self) -> None:
+        pass
+
+    def search(self, query: str) -> list[Game]:
+        return []
+
+    def get_soup(self, url: str) -> bs:
+        user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.143 Safari/537.36'
+        headers = {'User-Agent': user_agent}
+
+        request_text = requests.get(url=url, headers=headers).text # returns in 'iso-8859-1' (bad)
+        request_text = bytes(request_text,'iso-8859-1').decode('utf-8') # turns it to 'utf-8' (good, supports diacritics for example the é in Pokémon)
+
+        soup = bs(request_text, 'html.parser')
+        return soup
+
+    def get_popular(self) -> list[Game]:
+        return []
+
+# Download and install `Game` objects (it inherits from provider only to get access to the `get_soup` method)
+class Installer(Provider):
+    def __init__(self) -> None:
+        self.downloads: dict[str, Download] = {}
+    
+    # # Download a game and return the path to the downloaded folder
+    # def download(self, game: Game) -> str | None:
+    #     pass
+
+    # # Install the game and return the path to the exe
+    # def install(self, download_folder: str, game: Game) -> str | None:
+    #     pass
+    
+    # Download and install a game and return the path to the .lnk file of the game
+    def get_game(self, game: Game) -> str | None:
+        pass

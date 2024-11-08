@@ -18,9 +18,11 @@
               flatpak-builder
               meson
               ninja
+              gnome-builder # Use GNOME Builder for building & running
+              blueprint-compiler
 
               python312
-              blueprint-compiler
+              pyright
             ] ++ (with pkgs.python312Packages; [
               pygobject-stubs
               pygobject3

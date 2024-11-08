@@ -25,5 +25,5 @@ freebie_sources = [
   'window.py',
 ]
 
-install_subdir('download', install_dir: moduledir)
+install_subdir('backend', install_dir: moduledir)
 install_data(freebie_sources, install_dir: moduledir)

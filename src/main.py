@@ -17,15 +17,17 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from threading import Thread
 import sys
 import gi
+from .backend.igdb_api import IGDBApiWrapper
 
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
 from gi.repository import Gtk, Gio, Adw
 from .window import FreebieWindow
-from .download import download_manager
+from .backend.first_startup import first_startup
 
 class FreebieApplication(Adw.Application):
     """The main application singleton class."""
@@ -33,9 +35,17 @@ class FreebieApplication(Adw.Application):
     def __init__(self):
         super().__init__(application_id='com.github.rotlug.Freebie',
                          flags=Gio.ApplicationFlags.DEFAULT_FLAGS)
-        self.create_action('quit', lambda *_: self.quit(), ['<primary>q'])
+        self.create_action('quit', lambda *_: self.save_and_quit(), ['<primary>q'])
         self.create_action('about', self.on_about_action)
         self.create_action('preferences', self.on_preferences_action)
+        
+        self.igdb = IGDBApiWrapper()
+        save_metadata_thread = Thread(target=self.igdb.save_cache_task, name="SaveMetadata")
+        save_metadata_thread.start()
+    
+    def save_and_quit(self):
+        self.igdb.save_cache_to_disk()
+        self.quit()
 
     def do_activate(self):
         """Called when the application is activated.
@@ -80,6 +90,7 @@ class FreebieApplication(Adw.Application):
             self.set_accels_for_action(f"app.{name}", shortcuts)
 
 def main(version):
+    first_startup()
     """The application's entry point."""
     app = FreebieApplication()
     return app.run(sys.argv)

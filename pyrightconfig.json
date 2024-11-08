@@ -1,4 +1,3 @@
 {
-    "reportMissingModuleSource": "none",
-    "exclude": ["builddir"]
+    "reportMissingModuleSource": "none"
 }

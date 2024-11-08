@@ -8,3 +8,5 @@ builddir
 # Direnv related
 .direnv
 .envrc
+
+__pycache__/

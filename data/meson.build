@@ -1,29 +1,17 @@
-blueprint_files = [
-  'gtk/window.blp'
-]
-
-blueprints_ui = []
-foreach b : blueprint_files
-	blueprints_ui += b.replace('.blp', '.ui')
-endforeach
-
 blueprints = custom_target('blueprints',
-    input: files(blueprint_files),
-   output: '.',
+  input: files(
+    'gtk/window.blp'
+  ),
+  output: '.',
   command: [find_program('blueprint-compiler'), 'batch-compile', '@OUTPUT@', '@CURRENT_SOURCE_DIR@', '@INPUT@'],
 )
 
-gnome.compile_resources(
-  'freebie',
-  configure_file(
-    input: 'freebie.gresource.xml.in',
-    output: 'freebie.gresource.xml',
-    configuration: conf,
-  ),
+gnome.compile_resources('freebie',
+  'freebie.gresource.xml',
   gresource_bundle: true,
   install: true,
   install_dir: pkgdatadir,
-  dependencies: blueprints,
+  dependencies: blueprints
 )
 
 desktop_file = i18n.merge_file(
