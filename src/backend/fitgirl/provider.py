@@ -30,7 +30,7 @@ class FitgirlProvider(Provider):
             game_link = "https://1337x.to" + children[1]["href"]
 
             game_name = utils.split_multiple(entry_name, "([/").strip() # FitGirl Seperator
-            # if game_name in game_names: continue
+            if game_name in game_names: continue
             game_names.add(game_name)
 
             # Shorten name if its really long

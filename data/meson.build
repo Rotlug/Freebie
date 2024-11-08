@@ -1,7 +1,9 @@
 blueprints = custom_target('blueprints',
   input: files(
     'gtk/window.blp',
-    'gtk/main_view.blp'
+    'gtk/main_page.blp',
+    'gtk/game.blp',
+    'gtk/browse_view.blp'
   ),
   output: '.',
   command: [find_program('blueprint-compiler'), 'batch-compile', '@OUTPUT@', '@CURRENT_SOURCE_DIR@', '@INPUT@'],

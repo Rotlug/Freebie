@@ -23,7 +23,8 @@ freebie_sources = [
   '__init__.py',
   'main.py',
   'window.py',
-  'game_manager.py'
+  'game_manager.py',
+  'game_box.py'
 ]
 
 install_subdir('backend', install_dir: moduledir)
