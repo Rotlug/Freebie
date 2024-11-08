@@ -4,6 +4,7 @@ from .backend.fitgirl.installer import FitgirlInstaller
 from .backend.fitgirl.provider import FitgirlProvider
 from .backend.game import Game
 from .backend.provider import Installer, Provider
+
 from gi.repository import Gtk
 
 class Source:
@@ -11,7 +12,16 @@ class Source:
         self.provider = provider()
         self.installer = installer()
 
+def singleton(cls):
+    instances = {}
+    def wrapper(*args, **kwargs):
+        if cls not in instances:
+          instances[cls] = cls(*args, **kwargs)
+        return instances[cls]
+    return wrapper
+
 # GameManager singleton
+@singleton
 class GameManager:
     def __init__(self) -> None:
         self.sources = [
@@ -21,9 +31,19 @@ class GameManager:
         self.game_statuses: dict[str, str] = {}
     
     def search(self, query: str) -> list[Game]:
-        games = []
+        games: list[Game] = []
         for source in self.sources:
             games += source.provider.search(query)
+        
+        # # Remove Duplicates
+        # game_names = set()
+        # new_games = []
+        # for game in games:
+        #     if game.name in game_names: continue
+        #     new_games.append(game)
+        #     game_names.add(game.name)
+        
+        # return new_games
         return games
 
     def get_popular(self) -> list[Game]:
@@ -34,7 +54,7 @@ class GameManager:
 
     def get_game(self, game: Game):
         installer = game.installer()
-        installer_thread = Thread(target=installer.get_game, args=[game])
+        installer_thread = Thread(target=installer.get_game, args=[game], daemon=True)
         installer_thread.start()
 
         game_slug = game.get_slug(True)
