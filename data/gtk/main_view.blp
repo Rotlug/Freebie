@@ -1,0 +1,96 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $MainView: Adw.NavigationPage {
+  title: 'Freebie';
+
+  Adw.ToolbarView toolbar {
+    [top]
+    Adw.HeaderBar header_bar {
+      title-widget: Adw.ViewSwitcher switcher_title {
+        policy: wide;
+        stack: stack;
+      };
+
+      [end]
+      MenuButton {
+        primary: true;
+        icon-name: 'open-menu-symbolic';
+        tooltip-text: 'Menu';
+        menu-model: primary_menu;
+      }
+
+      [start]
+      ToggleButton search_button {
+        icon-name: 'system-search-symbolic';
+        tooltip-text: 'Search';
+
+        ShortcutController {
+          scope: global;
+
+          Shortcut {
+            trigger: '<Control>F';
+            action: 'activate';
+          }
+        }
+      }
+    }
+
+    [top]
+    SearchBar searchbar {
+      key-capture-widget: toolbar;
+      hexpand: true;
+
+      SearchEntry searchentry {
+        search-delay: 200;
+        placeholder-text: _('Search Games...');
+        width-request: 400;
+      }
+    }
+
+    content: Adw.ViewStack stack {
+      Adw.ViewStackPage {
+        name: 'browse';
+        title: 'Browse';
+        icon-name: 'view-grid-symbolic';
+
+        child: Box browse {};
+      }
+
+      Adw.ViewStackPage {
+        name: 'play';
+        title: 'Play';
+        icon-name: 'applications-games-symbolic';
+
+        child: Box play {};
+      }
+
+      Adw.ViewStackPage {
+        name: 'downloads';
+        title: 'Downloads';
+        icon-name: 'document-save-symbolic';
+
+        child: Box downloads {};
+      }
+    };
+  }
+}
+
+menu primary_menu {
+  section {
+    item {
+      label: _('_Preferences');
+      action: 'app.preferences';
+    }
+
+    item {
+      label: _('_Keyboard Shortcuts');
+      action: 'win.show-help-overlay';
+    }
+
+    item {
+      label: _('_About Freebie');
+      action: 'app.about';
+    }
+  }
+}

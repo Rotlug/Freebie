@@ -1,8 +1,10 @@
 from . import utils
 from unidecode import unidecode
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from igdb_api import Metadata
+    from .provider import Installer
 
 class Game:
     def __init__(self, name: str, link: str, size: str) -> None:
@@ -10,7 +12,8 @@ class Game:
         self.link = link
         self.size = size
         self.metadata: Metadata | None = None
-
+        self.installer: type[Installer]
+    
     def get_slug(self, short=False):
         result = unidecode(self.name).lower()
         # [short] removes editions, deluxe editions etc..

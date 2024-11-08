@@ -1,3 +1,4 @@
+from src.backend.fitgirl.installer import FitgirlInstaller
 from ..provider import Provider
 from ..game import Game
 from ..igdb_api import IGDBApiWrapper
@@ -13,7 +14,7 @@ class FitgirlProvider(Provider):
 
     def search(self, query: str, page=1) -> list[Game]:
         soup = self.get_soup(f"https://1337x.to/category-search/{query}/Games/{page}/")
-        games = []
+        games: list[Game] = []
 
         game_names = set() # No Duplicate names allowed
         for tag in soup.find_all("td", {"class": "coll-1"}):
@@ -45,6 +46,7 @@ class FitgirlProvider(Provider):
             games.append(game)
 
         for game in games:
+            game.installer = FitgirlInstaller
             game.metadata = self.igdb.search(game)
 
         return games

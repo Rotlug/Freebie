@@ -19,10 +19,16 @@
 
 from gi.repository import Adw
 from gi.repository import Gtk
+from .game_manager import GameManager
+from .pages.main_view import MainView
 
 @Gtk.Template(resource_path='/com/github/rotlug/Freebie/gtk/window.ui')
 class FreebieWindow(Adw.ApplicationWindow):
     __gtype_name__ = 'FreebieWindow'
 
+    nav_view: Adw.NavigationView = Gtk.Template.Child()
+    game_manager = GameManager()
+    
     def __init__(self, application: Adw.Application):
         super().__init__(application=application)
+        self.nav_view.add(MainView()) #type: ignore
