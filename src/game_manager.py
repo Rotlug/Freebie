@@ -38,16 +38,26 @@ class GameManager:
         installer_thread.start()
 
         game_slug = game.get_slug(True)
+        
+        self.game_statuses[game_slug] = "Downloading... 0%"
         while installer_thread.is_alive():
             if game_slug in installer.downloads:
                 self.game_statuses[game_slug] = f"Downloading... {installer.downloads[game_slug].progress_string()}"
             sleep(3)
     
-    def update_button_task(self, game_view_page, button: Gtk.Button):
-        initial_game: Game = game_view_page.game
-
-        while game_view_page.game == initial_game:
-            button.set_label(self.game_statuses[initial_game.get_slug(True)])
+    def update_button_task(self, game: Game, button: Gtk.Button):
+        while True:
+            self.update_button(game, button)
             sleep(3)
         
-        print(f"Game {initial_game.name} is over")
+    def update_button(self, game: Game, button: Gtk.Button):
+        slug = game.get_slug(True)
+        if slug in self.game_statuses:
+            button.set_sensitive(False)
+            button.set_css_classes([])
+            button.remove_css_class("suggested-action")
+            button.set_label(self.game_statuses[slug])
+        else:
+            button.set_sensitive(True)
+            button.set_label(f"Get ({game.size})")
+            button.add_css_class("suggested-action")

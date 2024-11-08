@@ -1,7 +1,6 @@
 from aria2p import Download
 import requests
 from .game import Game
-from .igdb_api import IGDBApiWrapper
 from bs4 import BeautifulSoup as bs
 
 # Provide `Game` Objects

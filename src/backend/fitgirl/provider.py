@@ -1,4 +1,4 @@
-from src.backend.fitgirl.installer import FitgirlInstaller
+from .installer import FitgirlInstaller
 from ..provider import Provider
 from ..game import Game
 from ..igdb_api import IGDBApiWrapper

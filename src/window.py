@@ -31,4 +31,4 @@ class FreebieWindow(Adw.ApplicationWindow):
     
     def __init__(self, application: Adw.Application):
         super().__init__(application=application)
-        self.nav_view.add(MainView()) #type: ignore
+        self.nav_view.add(MainView(self.nav_view)) #type: ignore
