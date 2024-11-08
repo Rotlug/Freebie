@@ -1,0 +1,48 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $Game: Box {
+  orientation: vertical;
+  halign: center;
+  valign: start;
+
+  Adw.Clamp {
+    maximum-size: 200;
+
+    Button cover_button {
+      name: 'cover_button';
+      overflow: hidden;
+
+      accessibility {
+        labelled-by: title;
+      }
+
+      Box {
+        orientation: vertical;
+        hexpand: false;
+        vexpand: false;
+
+        Picture cover {
+          content-fit: cover;
+          width-request: 200;
+          height-request: 300;
+        }
+
+        Label title {
+          label: _('Title');
+          ellipsize: end;
+          hexpand: true;
+          halign: start;
+          margin-top: 14;
+          margin-bottom: 14;
+          margin-start: 12;
+          margin-end: 12;
+        }
+      }
+
+      styles [
+        "card",
+      ]
+    }
+  }
+}
