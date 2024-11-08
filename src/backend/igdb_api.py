@@ -22,7 +22,16 @@ class Metadata:
         print("-----------Description-------------")
         print(self.description)
 
+def singleton(class_):
+    instances = {}
+    def getinstance(*args, **kwargs):
+        if class_ not in instances:
+            instances[class_] = class_(*args, **kwargs)
+        return instances[class_]
+    return getinstance
 
+# IGDBApiWrapper singleton
+@singleton
 class IGDBApiWrapper:
     def __init__(self) -> None:
         with open("/var/data/igdb.txt", "r") as f:
@@ -50,17 +59,19 @@ class IGDBApiWrapper:
             self.last_renewed = time.time()
 
     def search(self, game: Game, retry=False) -> Metadata | None:
-        self.generate_access() # Regenerate Access if time is running out
-
         slug = game.get_slug(retry)
         
         # Get From Cache
-        if json_utils.is_in_file(METADATA_FILE, slug):
-            result = json_utils.get_file(METADATA_FILE)[slug]
-            if result == None: return None
+        if slug in self.cache:
+            result = self.cache[slug]
+            if result == None:
+                if retry: return None
+                else: return self.search(game, retry=True)
             return self.dict_to_metadata(result)
         
         # Get From API
+        print(f"Fetching {game.name} from api")
+        self.generate_access() # Regenerate Access if time is running out
         assert self.access != None
         data = requests.post('https://api.igdb.com/v4/games', **{'headers': {'Client-ID': self.client_id, 'Authorization': f'Bearer {self.access["access_token"]}'},'data': f'fields cover.url,name,url,summary,aggregated_rating,first_release_date; where slug="{slug}"; limit 1;'}).json()
 
@@ -68,16 +79,15 @@ class IGDBApiWrapper:
 
         # NO DATA (no cover also counts as no data)
         if no_data or ('cover' not in data[0]):
-            self.save_to_cache(slug, None)
+            self.cache[slug] = None
             if retry:
                 return None # Give Up
-            else: # Retry
+            else: # Retry with the short version of the slug
                 return self.search(game, True)
 
         # Data Found - Save in cache and continue
         data = data[0]
-        self.save_to_cache(slug, data)
-
+        self.cache[slug] = data
         return self.dict_to_metadata(data)
 
     def dict_to_metadata(self, data: dict) -> Metadata:
@@ -86,7 +96,7 @@ class IGDBApiWrapper:
         if 'summary' not in data: data['summary'] = None
 
         return Metadata(
-            cover_url = data['cover']['url'].lstrip('//').replace('thumb', '1080p'),
+            cover_url = data['cover']['url'].lstrip('//').replace('thumb', '720p'),
             description = data['summary'],
             rating = round(data['aggregated_rating']),
             release_date=utils.unix_time_to_string(data['first_release_date'])
@@ -101,6 +111,3 @@ class IGDBApiWrapper:
     def save_cache_to_disk(self):
         print(f"Saved Cache to {METADATA_FILE}")
         json_utils.override_file(METADATA_FILE, self.cache)
-    
-    def save_to_cache(self, slug, data):
-        self.cache[slug] = data
