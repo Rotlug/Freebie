@@ -6,17 +6,18 @@ import subprocess
 from os import listdir
 from shutil import rmtree
 
-class FitgirlInstaller(Installer):
-    def __init__(self) -> None:
-        super().__init__()
-        subprocess.Popen("aria2c --enable-rpc > /dev/null", shell=True) # Open ARIA2
-        self.aria2 = aria2p.API(
+subprocess.Popen("aria2c --enable-rpc > /dev/null", shell=True) # Open ARIA2
+aria2 = aria2p.API(
             aria2p.Client(
                 host="http://localhost",
                 port=6800,
                 secret=""
             )
         )
+
+class FitgirlInstaller(Installer):
+    def __init__(self) -> None:
+        super().__init__()
 
     def get_game(self, game: Game) -> None:
         soup = self.get_soup(game.link)
@@ -30,12 +31,12 @@ class FitgirlInstaller(Installer):
 
     # Return path to repack folder
     def download(self, magnet: str, game: Game) -> str:
-        self.aria2.add_magnet(magnet, {"dir": "/var/data/downloads/"})
+        aria2.add_magnet(magnet, {"dir": "/var/data/downloads/"})
 
         # Find Download GID
         gid: str = ""
         while gid == "":
-            for d in self.aria2.get_downloads():
+            for d in aria2.get_downloads():
                 if "[METADATA]" in d.name: continue
                 name_slug = Game(d.name, "", "").get_slug(True)
                 if game.get_slug(True) in name_slug:
@@ -45,7 +46,7 @@ class FitgirlInstaller(Installer):
 
         # Get Progress Percentage Periodically
         while True:
-            download = self.aria2.get_download(gid)
+            download = aria2.get_download(gid)
             self.downloads[game.get_slug()] = download
             print(download.progress_string(0))
             if download.is_complete or download.seeder:

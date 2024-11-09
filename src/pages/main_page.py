@@ -9,7 +9,7 @@ from ..backend.igdb_api import igdb
 class MainPage(Adw.NavigationPage):
     __gtype_name__ = "MainPage"
     searchbar: Gtk.SearchBar = Gtk.Template.Child()
-    searchentry: Gtk.SearchEntry = Gtk.Template.Child()
+    search_entry: Gtk.SearchEntry = Gtk.Template.Child()
     search_button: Gtk.ToggleButton = Gtk.Template.Child()
     stack: Adw.ViewStack = Gtk.Template.Child()
 
@@ -24,7 +24,7 @@ class MainPage(Adw.NavigationPage):
 
         # self.browse.append(BrowsePage(self.searchentry, self.stack)) # Browse Page
         self.stack.connect("notify::visible-child", self.retract_search_bar)
-        self.browse.append(BrowseView()) # type: ignore
+        self.browse.append(BrowseView(self.search_entry, self.stack)) # type: ignore
     
     def retract_search_bar(self, widget, _):
         self.search_button.set_active(False)

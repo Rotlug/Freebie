@@ -8,7 +8,7 @@ from .backend.provider import Installer, Provider
 from gi.repository import Gtk
 
 class Source:
-    def __init__(self, provider: type[Provider], installer: type[Installer]) -> None:
+    def __init__(self, provider: type[Provider], installer: type[Installer]):
         self.provider = provider()
         self.installer = installer()
 
@@ -21,11 +21,13 @@ class GameManager:
         self.game_statuses: dict[str, str] = {}
     
     def search(self, query: str) -> list[Game]:
+        if query == "": return self.get_popular()
+        
         games: list[Game] = []
         for source in self.sources:
             games += source.provider.search(query)
-        
-        return self.remove_games_without_pictures(games)
+
+        return games
 
     def remove_games_without_pictures(self, games: list[Game]):
         new_games = []
@@ -38,7 +40,8 @@ class GameManager:
         games = []
         for source in self.sources:
             games += source.provider.get_popular()
-        return self.remove_games_without_pictures(games)
+
+        return games
 
     def get_game(self, game: Game):
         installer = game.installer()

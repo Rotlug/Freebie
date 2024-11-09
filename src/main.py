@@ -41,7 +41,7 @@ class FreebieApplication(Adw.Application):
         self.create_action('about', self.on_about_action)
         self.create_action('preferences', self.on_preferences_action)
         
-        save_metadata_thread = Thread(target=igdb.save_cache_task, name="SaveMetadata", daemon=True)
+        Thread(target=igdb.save_cache_task, name="SaveMetadata", daemon=True).start()
     
     def do_activate(self):
         """Called when the application is activated.

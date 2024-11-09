@@ -1,7 +1,6 @@
 from .installer import FitgirlInstaller
 from ..provider import Provider
 from ..game import Game
-from ..igdb_api import igdb
 from .. import utils
 
 class FitgirlProvider(Provider):
@@ -41,11 +40,8 @@ class FitgirlProvider(Provider):
                 link=game_link,
                 size=download_size,
             )
+            game.installer = FitgirlInstaller
 
             games.append(game)
-
-        for game in games:
-            game.installer = FitgirlInstaller
-            game.metadata = igdb.search(game)
-
+        
         return games

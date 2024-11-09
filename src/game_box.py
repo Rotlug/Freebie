@@ -14,7 +14,6 @@ def url_pixbuf(game: Game):
     file_name = f"{pixbufs_cache_folder}/{game.get_slug()}.png"
 
     if os.path.isfile(file_name):
-        print(f"Got {game.name} from pixbuf folder")
         pixbuf = Pixbuf.new_from_file(file_name)
         return pixbuf
 
