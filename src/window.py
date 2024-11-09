@@ -21,7 +21,9 @@ from gi.repository import Adw
 from gi.repository import Gtk
 from .backend.igdb_api import igdb
 from .game_manager import game_manager
+
 from .pages.main_page import MainPage
+from .pages.game_page import GamePage
 
 @Gtk.Template(resource_path='/com/github/rotlug/Freebie/gtk/window.ui')
 class FreebieWindow(Adw.ApplicationWindow):
@@ -32,4 +34,5 @@ class FreebieWindow(Adw.ApplicationWindow):
     def __init__(self, application: Adw.Application):
         super().__init__(application=application)
         self.nav_view.add(MainPage(self.nav_view)) #type: ignore
+        self.nav_view.add(GamePage()) # type: ignore
     

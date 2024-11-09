@@ -2,6 +2,7 @@ blueprints = custom_target('blueprints',
   input: files(
     'gtk/window.blp',
     'gtk/main_page.blp',
+    'gtk/game_page.blp',
     'gtk/game.blp',
     'gtk/browse_view.blp'
   ),

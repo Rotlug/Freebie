@@ -1,0 +1,48 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $GamePage: Adw.NavigationPage {
+  title: "Game Name";
+  tag: "game";
+
+  Overlay view {
+    [overlay]
+    Adw.ToolbarView details_view_toolbar_view {
+      [top]
+      Adw.HeaderBar {}
+
+      content: ScrolledWindow {
+        Box details_view_box {
+          halign: center;
+          valign: center;
+          margin-start: 24;
+          margin-end: 24;
+          margin-top: 24;
+          margin-bottom: 24;
+
+          Adw.Clamp {
+            maximum-size: 200;
+
+            Overlay {
+              Picture cover {
+                halign: end;
+                valign: start;
+                width-request: 200;
+                height-request: 300;
+
+                styles [
+                  "card",
+                ]
+              }
+            }
+          }
+        }
+      };
+    }
+
+    Picture blurred_background {
+      opacity: 0.25;
+      keep-aspect-ratio: false;
+    }
+  }
+}

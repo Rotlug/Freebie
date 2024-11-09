@@ -5,6 +5,7 @@
     <file preprocess="xml-stripblanks">gtk/main_page.ui</file>
     <file preprocess="xml-stripblanks">gtk/game.ui</file>
     <file preprocess="xml-stripblanks">gtk/browse_view.ui</file>
+    <file preprocess="xml-stripblanks">gtk/game_page.ui</file>
     <file preprocess="xml-stripblanks">gtk/help-overlay.ui</file>
   </gresource>
 </gresources>
