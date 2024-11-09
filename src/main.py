@@ -20,8 +20,7 @@
 from threading import Thread
 import sys
 import gi
-from .game_manager import GameManager
-from .backend.igdb_api import IGDBApiWrapper
+from .backend.igdb_api import igdb
 
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
@@ -31,9 +30,6 @@ from .window import FreebieWindow
 from .backend.first_startup import first_startup
 
 first_startup()
-
-igdb = IGDBApiWrapper()
-game_manager = GameManager()
 
 class FreebieApplication(Adw.Application):
     """The main application singleton class."""
@@ -55,7 +51,7 @@ class FreebieApplication(Adw.Application):
         """
         win = self.get_active_window()
         if win == None:
-            win = FreebieWindow(self, igdb, game_manager) # type: ignore
+            win = FreebieWindow(self) # type: ignore
         
         win.present() # type: ignore
     

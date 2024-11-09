@@ -12,16 +12,6 @@ class Source:
         self.provider = provider()
         self.installer = installer()
 
-def singleton(cls):
-    instances = {}
-    def wrapper(*args, **kwargs):
-        if cls not in instances:
-          instances[cls] = cls(*args, **kwargs)
-        return instances[cls]
-    return wrapper
-
-# GameManager singleton
-@singleton
 class GameManager:
     def __init__(self) -> None:
         self.sources = [
@@ -35,22 +25,20 @@ class GameManager:
         for source in self.sources:
             games += source.provider.search(query)
         
-        # # Remove Duplicates
-        # game_names = set()
-        # new_games = []
-        # for game in games:
-        #     if game.name in game_names: continue
-        #     new_games.append(game)
-        #     game_names.add(game.name)
-        
-        # return new_games
-        return games
+        return self.remove_games_without_pictures(games)
 
+    def remove_games_without_pictures(self, games: list[Game]):
+        new_games = []
+        for game in games:
+            if game.metadata != None: new_games.append(game)
+        
+        return new_games
+    
     def get_popular(self) -> list[Game]:
         games = []
         for source in self.sources:
             games += source.provider.get_popular()
-        return games
+        return self.remove_games_without_pictures(games)
 
     def get_game(self, game: Game):
         installer = game.installer()
@@ -81,3 +69,6 @@ class GameManager:
             button.set_sensitive(True)
             button.set_label(f"Get ({game.size})")
             button.add_css_class("suggested-action")
+
+# GameManager singleton
+game_manager = GameManager()

@@ -22,16 +22,7 @@ class Metadata:
         print("-----------Description-------------")
         print(self.description)
 
-def singleton(class_):
-    instances = {}
-    def getinstance(*args, **kwargs):
-        if class_ not in instances:
-            instances[class_] = class_(*args, **kwargs)
-        return instances[class_]
-    return getinstance
-
 # IGDBApiWrapper singleton
-@singleton
 class IGDBApiWrapper:
     def __init__(self) -> None:
         with open("/var/data/igdb.txt", "r") as f:
@@ -111,3 +102,6 @@ class IGDBApiWrapper:
     def save_cache_to_disk(self):
         print(f"Saved Cache to {METADATA_FILE}")
         json_utils.override_file(METADATA_FILE, self.cache)
+
+# IGDB Singleton
+igdb = IGDBApiWrapper()

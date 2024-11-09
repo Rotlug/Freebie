@@ -3,7 +3,7 @@ from gi.repository import Gtk
 from ..game_manager import GameManager
 from .browse_view import BrowseView
 
-from ..backend.igdb_api import IGDBApiWrapper
+from ..backend.igdb_api import igdb
 
 @Gtk.Template(resource_path='/com/github/rotlug/Freebie/gtk/main_page.ui')
 class MainPage(Adw.NavigationPage):
@@ -15,17 +15,16 @@ class MainPage(Adw.NavigationPage):
 
     browse: Gtk.Box = Gtk.Template.Child()
 
-    def __init__(self, nav: Adw.NavigationView, igdb: IGDBApiWrapper, game_manager: GameManager, **kwargs):
+    def __init__(self, nav: Adw.NavigationView, **kwargs):
         super().__init__(**kwargs)
-        
-        self.igdb = igdb
+                
         self.nav = nav
         self.searchbar.connect("notify::search-mode-enabled", self.on_searchbar_toggled)
         self.search_button.connect("toggled", self.on_toggle_search_action)
 
         # self.browse.append(BrowsePage(self.searchentry, self.stack)) # Browse Page
         self.stack.connect("notify::visible-child", self.retract_search_bar)
-        self.browse.append(BrowseView(igdb, game_manager)) # type: ignore
+        self.browse.append(BrowseView()) # type: ignore
     
     def retract_search_bar(self, widget, _):
         self.search_button.set_active(False)

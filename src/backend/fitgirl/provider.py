@@ -1,13 +1,12 @@
 from .installer import FitgirlInstaller
 from ..provider import Provider
 from ..game import Game
-from ..igdb_api import IGDBApiWrapper
+from ..igdb_api import igdb
 from .. import utils
 
 class FitgirlProvider(Provider):
     def __init__(self) -> None:
         super().__init__()
-        self.igdb = IGDBApiWrapper()
 
     def get_popular(self) -> list[Game]:
         return self.search("Fitgirl")
@@ -47,6 +46,6 @@ class FitgirlProvider(Provider):
 
         for game in games:
             game.installer = FitgirlInstaller
-            game.metadata = self.igdb.search(game)
+            game.metadata = igdb.search(game)
 
         return games
