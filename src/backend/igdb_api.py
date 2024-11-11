@@ -2,6 +2,7 @@ from .game import Game
 from . import utils, json_utils
 import requests
 import time
+from .ensure import ensure_directory, ensure_file
 
 METADATA_FILE = "/var/data/metadata.json"
 
@@ -84,7 +85,7 @@ class IGDBApiWrapper:
     def dict_to_metadata(self, data: dict) -> Metadata:
         if 'first_release_date' not in data: data['first_release_date'] = 0
         if 'aggregated_rating' not in data: data['aggregated_rating'] = 0
-        if 'summary' not in data: data['summary'] = None
+        if 'summary' not in data: data['summary'] = ""
 
         return Metadata(
             cover_url = data['cover']['url'].lstrip('//').replace('thumb', '720p'),
@@ -104,4 +105,7 @@ class IGDBApiWrapper:
         json_utils.override_file(METADATA_FILE, self.cache)
 
 # IGDB Singleton
+ensure_directory("pixbufs")
+ensure_file("metadata.json", "{}")
+ensure_file("igdb.txt")
 igdb = IGDBApiWrapper()

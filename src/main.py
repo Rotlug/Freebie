@@ -27,9 +27,6 @@ gi.require_version('Adw', '1')
 
 from gi.repository import Gtk, Gio, Adw
 from .window import FreebieWindow
-from .backend.first_startup import first_startup
-
-first_startup()
 
 class FreebieApplication(Adw.Application):
     """The main application singleton class."""

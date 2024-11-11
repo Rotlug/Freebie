@@ -26,7 +26,7 @@ class MainPage(Adw.NavigationPage):
         # self.browse.append(BrowsePage(self.searchentry, self.stack)) # Browse Page
         self.stack.connect("notify::visible-child", self.retract_search_bar)
         self.browse.append(BrowseView(self.search_entry, self.stack, self.nav)) # type: ignore
-    
+        
     def retract_search_bar(self, widget, _):
         self.search_button.set_active(False)
 

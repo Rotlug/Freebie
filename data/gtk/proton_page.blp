@@ -1,0 +1,46 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $ProtonPage: Adw.NavigationPage {
+    title: 'Freebie';
+    tag: 'proton';
+    
+    Adw.ToolbarView toolbar {
+        [top]
+        Adw.HeaderBar header_bar {}
+
+        content: Box {
+            halign: center;
+            valign: center;
+            orientation: vertical;
+
+            Box {
+                orientation: horizontal;
+                halign: center;
+
+                Adw.Spinner {
+                    width-request: 24;
+                    margin-end: 10;
+                }
+
+                Label title {
+                    styles [
+                        "title-1"
+                    ]
+
+                    label: "Downloading Proton-GE...";
+                }
+            }
+
+
+            Label {
+                margin-top: 5;
+                label: "Proton-GE is the tool we use to run Windows games on Linux.";
+            }
+
+            ProgressBar progressbar {
+                margin-top: 10;
+            }
+        };
+    }
+}

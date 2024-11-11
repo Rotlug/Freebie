@@ -2,19 +2,19 @@ using Gtk 4.0;
 using Adw 1;
 
 template $GamePage: Adw.NavigationPage {
-  title: "Game Name";
+  title: "Details View";
   tag: "game";
 
   Overlay view {
     [overlay]
     Adw.ToolbarView details_view_toolbar_view {
       [top]
-      Adw.HeaderBar {}
+      Adw.HeaderBar {
+        title-widget: Adw.WindowTitle window_title {};
+      }
 
       content: ScrolledWindow {
         Box details_view_box {
-          halign: center;
-          valign: center;
           margin-start: 24;
           margin-end: 24;
           margin-top: 24;
@@ -27,12 +27,53 @@ template $GamePage: Adw.NavigationPage {
               Picture cover {
                 halign: end;
                 valign: start;
+                content-fit: cover;
                 width-request: 200;
                 height-request: 300;
 
                 styles [
                   "card",
                 ]
+              }
+            }
+          }
+
+          Box {
+            orientation: vertical;
+            margin-start: 10;
+            hexpand: true;
+
+            Label game_title {
+              wrap: true;
+              wrap-mode: word;
+              halign: start;
+              label: "Game Title";
+              styles [
+                "title-1"
+              ]
+            }
+
+            Label game_subtitle {
+              wrap: true;
+              wrap-mode: word;
+              halign: start;
+              label: "7/10 • 24Gb";
+              styles [
+                "heading"
+              ]
+            }
+
+            Label game_description {
+              wrap: true;
+              wrap-mode: word;
+              margin-top: 10;
+              halign: start;
+              label: "Description";
+            }
+            
+            Box {
+              Button action_button {
+                margin-top: 10;
               }
             }
           }

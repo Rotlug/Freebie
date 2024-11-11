@@ -4,7 +4,8 @@ blueprints = custom_target('blueprints',
     'gtk/main_page.blp',
     'gtk/game_page.blp',
     'gtk/game.blp',
-    'gtk/browse_view.blp'
+    'gtk/browse_view.blp',
+    'gtk/proton_page.blp'
   ),
   output: '.',
   command: [find_program('blueprint-compiler'), 'batch-compile', '@OUTPUT@', '@CURRENT_SOURCE_DIR@', '@INPUT@'],

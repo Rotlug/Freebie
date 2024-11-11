@@ -1,7 +1,8 @@
 # Work with json files to make the app fazter
 import json
+import os
 
-def get_file(filename: str) -> dict:
+def get_file(filename: str) -> dict:    
     with open(filename) as file:
         return json.load(file)
 
