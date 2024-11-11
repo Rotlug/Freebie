@@ -38,7 +38,7 @@ class FreebieWindow(Adw.ApplicationWindow):
     def __init__(self, application: Adw.Application):
         super().__init__(application=application)
         self.nav_view.add(MainPage(self.nav_view)) #type: ignore
-        self.nav_view.add(GamePage()) # type: ignore
+        self.nav_view.add(GamePage(self.nav_view)) # type: ignore
 
         if not os.path.exists(f"{DATA_DIR}/proton") or len(os.listdir(f"{DATA_DIR}/proton")) == 0:
             # If proton is not downloaded, open the proton page on startup.

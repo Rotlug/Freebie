@@ -19,15 +19,19 @@ class GamePage(Adw.NavigationPage):
     cover: Gtk.Picture = Gtk.Template.Child()
     action_button: Gtk.Button = Gtk.Template.Child()
 
-    def __init__(self):
+    def __init__(self, nav: Adw.NavigationView):
         super().__init__()
-        
+        self.nav = nav
         # Start the button update task in the background
-        Thread(target=game_manager.update_button_task, )
-    
+        Thread(target=game_manager.update_button_task, args=[self, nav], daemon=True).start()
+        self.game: Game
+        self.button_signals: list[int] = []
+
     def set_game(self, game: Game):
         assert game.metadata != None
 
+        self.game = game
+        
         self.blurred_background.set_pixbuf(get_blurred_pixbuf(game))
         self.window_title.set_title(game.name)
         
@@ -39,14 +43,20 @@ class GamePage(Adw.NavigationPage):
         self.game_description.set_label(game.metadata.description)
         
         self.cover.set_pixbuf(url_pixbuf(game))
-        self.action_button.connect("clicked", get_game, game)
+        
+        # self.action_button.connect("clicked", game_manager.get_game_thread, game)
+        for sig in self.button_signals:
+            self.action_button.disconnect(sig)
+        
+        self.button_signals = []
+        self.button_signals.append(self.action_button.connect("clicked", self.get_game, game))
 
         game_manager.update_button(game, self.action_button)
     
-def get_game(game: Game):
-    print(f"GETTING GAME: {game.name}")
-    Thread(target=game_manager.get_game, args=[game], daemon=True).start()
-
+    def get_game(self, widget, game):
+        self.action_button.set_sensitive(False)
+        game_manager.get_game_thread(game)
+    
 def get_blurred_pixbuf(game: Game):
     pixbuf = url_pixbuf(game)
     assert pixbuf != None

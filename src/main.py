@@ -17,10 +17,13 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import os
+from subprocess import call
 from threading import Thread
 import sys
 import gi
 from .backend.igdb_api import igdb
+from .backend import ensure
 
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
@@ -83,6 +86,7 @@ class FreebieApplication(Adw.Application):
             self.set_accels_for_action(f"app.{name}", shortcuts)
 
 def main(version):
+    ensure.ensure_wine_prefix() # Make sure that a wine prefix exists (if a proton version is installed)
     """The application's entry point."""
     app = FreebieApplication()
     return_code = app.run(sys.argv)

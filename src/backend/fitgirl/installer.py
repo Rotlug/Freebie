@@ -1,3 +1,4 @@
+import os
 from ..provider import Installer
 from ..game import Game
 from time import sleep
@@ -5,6 +6,7 @@ import aria2p
 import subprocess
 from os import listdir
 from shutil import rmtree
+from ..ensure import DATA_DIR, find
 
 subprocess.Popen("aria2c --enable-rpc > /dev/null", shell=True) # Open ARIA2
 aria2 = aria2p.API(
@@ -59,19 +61,19 @@ class FitgirlInstaller(Installer):
 
     # Returns path to .lnk file
     def install(self, path: str, game: Game) -> str | None:
-        winetricks_path = "/home/rotlug/Documents/Code/Game/winetricks" # Placeholder!
-        wine_path = "/home/rotlug/Downloads/GE-Proton9-11/files/bin/wine" # Placeholder! 
-        wine_prefix = "/home/rotlug/.local/share/Steam/steamapps/compatdata/2508984596/pfx/" # Placeholder!
+        winetricks_path = f"{DATA_DIR}/proton/winetricks"
+        wine_path = find("wine64", f"{DATA_DIR}/proton")
+        wine_prefix = f"{DATA_DIR}/prefix"
 
         # Mute Audio
-        subprocess.call(f'WINE="{wine_path}" WINEPREFIX="{wine_prefix}" steam-run "{winetricks_path}" sound=disable', shell=True)
+        subprocess.call(f'WINE="{wine_path}" WINEPREFIX="{wine_prefix}" "{winetricks_path}" sound=disable', shell=True)
 
         # Run Installer
-        command = f'WINEPREFIX="{wine_prefix}" steam-run "{wine_path}" "{path}/setup.exe" /DIR="C:\\Games\\{game.get_slug()}"'
+        command = f'WINEPREFIX="{wine_prefix}" "{wine_path}" "{path}/setup.exe" /VERYSILENT /DIR="C:\\Games\\{game.get_slug()}"'
         subprocess.call(command, shell=True)
 
         # Turn audio back on
-        subprocess.call(f'WINE="{wine_path}" WINEPREFIX="{wine_prefix}" steam-run "{winetricks_path}" sound=pulse', shell=True)
+        subprocess.call(f'WINE="{wine_path}" WINEPREFIX="{wine_prefix}" "{winetricks_path}" sound=pulse', shell=True)
 
         # Installation is complete, delete repack
         rmtree(path)

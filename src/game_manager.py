@@ -5,7 +5,9 @@ from .backend.fitgirl.provider import FitgirlProvider
 from .backend.game import Game
 from .backend.provider import Installer, Provider
 
-from gi.repository import Gtk, Adw
+from .backend.ensure import ensure_directory
+
+from gi.repository import Gtk, Adw, GLib
 
 class Source:
     def __init__(self, provider: type[Provider], installer: type[Installer]):
@@ -58,12 +60,14 @@ class GameManager:
                 else:
                     self.game_statuses[game_slug] = f"Downloading... {installer.downloads[game_slug].progress_string()}"
             sleep(3)
+        else:
+            del self.game_statuses[game_slug]
     
-    def update_button_task(self, game_page, stack: Adw.NavigationView, button: Gtk.Button):
+    def update_button_task(self, game_page, nav: Adw.NavigationView):
         while True:
-            page = stack.get_visible_page()
+            page = nav.get_visible_page()
             if (page != None) and page.get_tag() == "game":
-                self.update_button(game_page.game, button)
+                GLib.idle_add(self.update_button, game_page.game, game_page.action_button)
             sleep(3)
         
     def update_button(self, game: Game, button: Gtk.Button):
@@ -76,12 +80,11 @@ class GameManager:
         else:
             button.set_sensitive(True)
             button.set_label(f"Get ({game.size})")
-            button.add_css_class("suggested-action")
-            
-            button.connect("clicked", self.get_game_thread, game)
-    
+            button.add_css_class("suggested-action")    
+        
     def get_game_thread(self, game):
         Thread(target=self.get_game, args=[game], daemon=True).start()
     
 # GameManager singleton
+ensure_directory("downloads")
 game_manager = GameManager()

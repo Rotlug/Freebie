@@ -3,7 +3,7 @@ from threading import Thread
 from gi.repository import Adw, Gtk, GLib
 
 import requests
-from ..backend.ensure import ensure_directory, DATA_DIR
+from ..backend.ensure import ensure_directory, ensure_wine_prefix, DATA_DIR
 
 URL = "https://github.com/GloriousEggroll/proton-ge-custom/releases/latest"
 
@@ -26,7 +26,6 @@ class ProtonPage(Adw.NavigationPage):
         version = r.url.split("/")[-1] #type: ignore
 
         download_url = f"https://github.com/GloriousEggroll/proton-ge-custom/releases/download/{version}/{version}.tar.gz"
-        # download_url = "http://google.com/favicon.ico"
 
         download_request: requests.Response = requests.get(download_url, stream=True)
         total_size = int(download_request.headers.get('content-length', 0))
@@ -46,6 +45,17 @@ class ProtonPage(Adw.NavigationPage):
 
             self.title.set_label(f"Installing {version}...")
             call(f"tar -xvzf {DATA_DIR}/proton/{version}.tar.gz", shell=True, cwd=f"{DATA_DIR}/proton/") #Uncompress
-         
-        call(f"rm {DATA_DIR}/proton/{version}.tar.gz") # Remove the compressed version
+
+        self.download_winetricks()
+
+        call(f"rm {DATA_DIR}/proton/{version}.tar.gz", shell=True) # Remove the compressed version
+        
+        ensure_wine_prefix() # make a wine prefix if one doesn't exist
+
         self.nav.pop_to_tag("main")
+
+    def download_winetricks(self):
+        r: requests.Response = requests.get("https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks")
+        with open(f"{DATA_DIR}/proton/winetricks", "wb") as f:
+            f.write(r.content) # type: ignore
+        call(f"chmod +x {DATA_DIR}/proton/winetricks", shell=True)

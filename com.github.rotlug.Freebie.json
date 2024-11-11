@@ -9,9 +9,13 @@
     "finish-args" : [
         "--share=network",
         "--share=ipc",
-        "--socket=fallback-x11",
-        "--device=dri",
-        "--socket=wayland"
+        "--device=all",
+        "--socket=wayland",
+        "--socket=x11"
+    ],
+    "sdk-extensions": [
+        "org.gnome.Sdk.Compat.i386",
+        "org.freedesktop.Sdk.Extension.toolchain-i386"
     ],
     "cleanup" : [
         "/include",
@@ -67,9 +71,6 @@
                     "type" : "dir",
                     "path" : "."
                 }
-            ],
-            "config-opts" : [
-                "--libdir=lib"
             ]
         }
     ]
