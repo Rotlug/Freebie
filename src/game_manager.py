@@ -26,7 +26,8 @@ class GameManager:
         ]
 
         self.game_statuses: dict[str, str] = {}
-        self.play_view: Any
+        self.play_view: Any = None
+        self.game_page: Any = None
     
     def search(self, query: str) -> list[Game]:
         if query == "": return self.get_popular()
@@ -70,7 +71,9 @@ class GameManager:
         
         if self.play_view != None:
             self.play_view.update_game_array()
-
+        if self.game_page != None:
+            self.game_page.set_game(game)
+        
     def update_button_task(self, game_page, nav: Adw.NavigationView):
         while True:
             page = nav.get_visible_page()
@@ -103,22 +106,33 @@ class GameManager:
         installed = json_utils.get_file(f"{DATA_DIR}/installed.json")
         if game.name not in installed: return
         
-        exe = installed[game.name]
+        exe = installed[game.name]["exe"]
         wine = find("wine", f"{DATA_DIR}/proton")
 
         env = os.environ
         env["WINEPREFIX"] = f"{DATA_DIR}/prefix"
-        env["WINEDLLOVERRIDES"] = "d3d9,d3d10,d3d11,dxgi,d3d12,d3d12core=n,b"
-
+        env["WINEDLLOVERRIDES"] = "d3d9,d3d10,d3d11,dxgi,d3d12,d3d12core,libvkd3d-1,libvkd3d-shader-1,wined3d=n,b"
+        
+        print(f'{wine} start /exec "{exe}"')
         call(f'{wine} start /exec "{exe}"', shell=True, env=env)
 
         del self.game_statuses[game.get_slug(True)]
     
     def get_button_target(self, game: Game):
-        installed = json_utils.get_file(f"{DATA_DIR}/installed.json")
-        if game.name in installed: return self.run_game_thread
+        if self.is_installed(game): return self.run_game_thread
         return self.get_game_thread
     
+    def uninstall(self, game: Game):
+        call(f"rm -r {json_utils.get_file(f"{DATA_DIR}/installed.json")[game.name]["dir"]}", shell=True)
+        json_utils.remove_from_file(f"{DATA_DIR}/installed.json", game.name)
+        if self.play_view != None:
+            self.play_view.update_game_array()
+        
+    def is_installed(self, game: Game):
+        if game.name in json_utils.get_file(f"{DATA_DIR}/installed.json"):
+            return True
+        return False
+
 # GameManager singleton
 ensure_directory("downloads")
 game_manager = GameManager()

@@ -84,7 +84,7 @@ class FitgirlInstaller(Installer):
             slug = Game(d, "", "").get_slug(True)
             if game.get_slug(True) in slug:
                 lnk_path = desktop_dir + "/" + d
-                self.add_game_to_installed(game, lnk_path)
+                self.add_game_to_installed(game, lnk_path, f"{DATA_DIR}/prefix/drive_c/Games/{game.get_slug(True)}")
                 return lnk_path
 
         # No Desktop icon found :(

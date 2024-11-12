@@ -11,7 +11,8 @@
         "--share=ipc",
         "--device=all",
         "--socket=wayland",
-        "--socket=x11"
+        "--socket=x11",
+        "--socket=pulseaudio"
     ],
     "sdk-extensions": [
         "org.gnome.Sdk.Compat.i386",

@@ -1,6 +1,6 @@
 # Work with json files to make the app fazter
 import json
-import os
+from typing import Any
 
 def get_file(filename: str) -> dict:    
     with open(filename) as file:
@@ -16,7 +16,7 @@ def override_file(filename, data: dict) -> None:
     with open(filename, "w") as f:
         json.dump(data, f)
 
-def add_to_file(filename: str, key: str, value: str) -> None:
+def add_to_file(filename: str, key: str, value: Any) -> None:
     if is_in_file(filename, key):
         return
 

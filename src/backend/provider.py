@@ -44,8 +44,10 @@ class Installer(Provider):
     def get_game(self, game: Game) -> str | None:
         pass
     
-    def add_game_to_installed(self, game: Game, lnk: str):
-        wine = find("wine", f"{DATA_DIR}/proton")
-        wine_prefix = f"{DATA_DIR}/prefix"
-        
-        json_utils.add_to_file(f"{DATA_DIR}/installed.json", game.name, lnk)
+    def add_game_to_installed(self, game: Game, lnk: str, installed_dir: str):
+        data = {
+            "exe": lnk,
+            "dir": installed_dir
+        }
+
+        json_utils.add_to_file(f"{DATA_DIR}/installed.json", game.name, data)

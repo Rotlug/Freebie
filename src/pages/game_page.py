@@ -18,6 +18,7 @@ class GamePage(Adw.NavigationPage):
 
     cover: Gtk.Picture = Gtk.Template.Child()
     action_button: Gtk.Button = Gtk.Template.Child()
+    remove_button: Gtk.Button = Gtk.Template.Child()
 
     def __init__(self, nav: Adw.NavigationView):
         super().__init__()
@@ -25,7 +26,11 @@ class GamePage(Adw.NavigationPage):
         # Start the button update task in the background
         Thread(target=game_manager.update_button_task, args=[self, nav], daemon=True).start()
         self.game: Game
-        self.button_signals: list[int] = []
+
+        self.action_button.connect("clicked", self.get_game)
+        self.remove_button.connect("clicked", self.uninstall_game)
+        
+        game_manager.game_page = self
 
     def set_game(self, game: Game):
         assert game.metadata != None
@@ -45,22 +50,21 @@ class GamePage(Adw.NavigationPage):
         
         self.cover.set_pixbuf(url_pixbuf(game))
         
-        # Clear Button Signals
-        for sig in self.button_signals:
-            self.action_button.disconnect(sig)
-        self.button_signals = []
-
-        # Connect action button to action
-        self.button_signals.append(self.action_button.connect("clicked", self.get_game, game))
-
         # Update button state when entering the page
         game_manager.update_button(game, self.action_button)
-    
-    def get_game(self, widget, game):
-        self.action_button.set_sensitive(False)
-        target = game_manager.get_button_target(game)
-        target(game)
+
+        self.remove_button.set_visible(game_manager.is_installed(game))
         
+    def get_game(self, widget):
+        self.action_button.set_sensitive(False)
+        target = game_manager.get_button_target(self.game)
+        target(self.game)
+        
+    def uninstall_game(self, widget):
+        game_manager.uninstall(self.game)
+        self.set_game(self.game)
+        self.nav.pop_to_tag("main")
+    
 def get_blurred_pixbuf(game: Game):
     pixbuf = url_pixbuf(game)
     assert pixbuf != None

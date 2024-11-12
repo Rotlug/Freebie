@@ -72,8 +72,19 @@ template $GamePage: Adw.NavigationPage {
             }
             
             Box {
+              orientation: horizontal;
+              margin-top: 10;
+
               Button action_button {
-                margin-top: 10;
+                margin-end: 10;
+              }
+
+              Button remove_button {
+                styles [
+                  "destructive-action"
+                ]
+
+                label: "Remove";
               }
             }
           }
