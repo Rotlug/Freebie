@@ -44,19 +44,22 @@ class GamePage(Adw.NavigationPage):
         
         self.cover.set_pixbuf(url_pixbuf(game))
         
-        # self.action_button.connect("clicked", game_manager.get_game_thread, game)
+        # Clear Button Signals
         for sig in self.button_signals:
             self.action_button.disconnect(sig)
-        
         self.button_signals = []
+
+        # Connect action button to action
         self.button_signals.append(self.action_button.connect("clicked", self.get_game, game))
 
+        # Update button state when entering the page
         game_manager.update_button(game, self.action_button)
     
     def get_game(self, widget, game):
         self.action_button.set_sensitive(False)
-        game_manager.get_game_thread(game)
-    
+        target = game_manager.get_button_target(game)
+        target(game)
+        
 def get_blurred_pixbuf(game: Game):
     pixbuf = url_pixbuf(game)
     assert pixbuf != None

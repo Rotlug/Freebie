@@ -2,6 +2,8 @@ from aria2p import Download
 import requests
 from .game import Game
 from bs4 import BeautifulSoup as bs
+from . import json_utils
+from .ensure import ensure_file, DATA_DIR, find
 
 # Provide `Game` Objects
 class Provider:
@@ -27,6 +29,7 @@ class Provider:
 # Download and install `Game` objects (it inherits from provider only to get access to the `get_soup` method)
 class Installer(Provider):
     def __init__(self) -> None:
+        ensure_file("installed.json", initial_contents="{}")
         self.downloads: dict[str, Download] = {}
     
     # # Download a game and return the path to the downloaded folder
@@ -40,3 +43,10 @@ class Installer(Provider):
     # Download and install a game and return the path to the .lnk file of the game
     def get_game(self, game: Game) -> str | None:
         pass
+    
+    def add_game_to_installed(self, game: Game, lnk: str):
+        wine = find("wine", f"{DATA_DIR}/proton")
+        wine_prefix = f"{DATA_DIR}/prefix"
+        
+        start_command = f'WINEPREFIX={wine_prefix} {wine} start /exec "{lnk}"'
+        json_utils.add_to_file(f"{DATA_DIR}/installed.json", game.name, start_command)

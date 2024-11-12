@@ -1,3 +1,4 @@
+from subprocess import call
 from threading import Thread
 from time import sleep
 from .backend.fitgirl.installer import FitgirlInstaller
@@ -5,7 +6,9 @@ from .backend.fitgirl.provider import FitgirlProvider
 from .backend.game import Game
 from .backend.provider import Installer, Provider
 
-from .backend.ensure import ensure_directory
+from .backend.ensure import ensure_directory, DATA_DIR
+
+from .backend import json_utils
 
 from gi.repository import Gtk, Adw, GLib
 
@@ -55,10 +58,9 @@ class GameManager:
         self.game_statuses[game_slug] = "Downloading... 0%"
         while installer_thread.is_alive():
             if game_slug in installer.downloads:
-                if installer.downloads[game_slug].progress >= 99:
-                    self.game_statuses[game_slug] = "Installing..."
-                else:
-                    self.game_statuses[game_slug] = f"Downloading... {installer.downloads[game_slug].progress_string()}"
+                self.game_statuses[game_slug] = f"Downloading... {installer.downloads[game_slug].progress_string()}"
+            else:
+                self.game_statuses[game_slug] = "Installing..."
             sleep(3)
         else:
             del self.game_statuses[game_slug]
@@ -78,12 +80,32 @@ class GameManager:
             button.remove_css_class("suggested-action")
             button.set_label(self.game_statuses[slug])
         else:
-            button.set_sensitive(True)
-            button.set_label(f"Get ({game.size})")
-            button.add_css_class("suggested-action")    
+            if game.name in json_utils.get_file(f"{DATA_DIR}/installed.json"):
+                button.set_sensitive(True)
+                button.set_label("Play")
+                button.add_css_class("suggested-action")
+            else:
+                button.set_sensitive(True)
+                button.set_label(f"Get ({game.size})")
+                button.add_css_class("suggested-action")    
+    
+    def get_game_thread(self, game: Game): Thread(target=self.get_game, args=[game], daemon=True).start()
+    def run_game_thread(self, game: Game): Thread(target=self.run_game, args=[game], daemon=True).start()
+
+    def run_game(self, game: Game):
+        self.game_statuses[game.get_slug(True)] = "Running"
+        installed = json_utils.get_file(f"{DATA_DIR}/installed.json")
+        if game.name not in installed: return
         
-    def get_game_thread(self, game):
-        Thread(target=self.get_game, args=[game], daemon=True).start()
+        command = installed[game.name]
+        print(f"COMMAND: {command}")
+        call(command, shell=True)
+        del self.game_statuses[game.get_slug(True)]
+    
+    def get_button_target(self, game: Game):
+        installed = json_utils.get_file(f"{DATA_DIR}/installed.json")
+        if game.name in installed: return self.run_game_thread
+        return self.get_game_thread
     
 # GameManager singleton
 ensure_directory("downloads")
