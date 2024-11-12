@@ -1,3 +1,4 @@
+import os
 from subprocess import call
 from threading import Thread
 from time import sleep
@@ -7,7 +8,7 @@ from .backend.fitgirl.provider import FitgirlProvider
 from .backend.game import Game
 from .backend.provider import Installer, Provider
 
-from .backend.ensure import ensure_directory, DATA_DIR
+from .backend.ensure import ensure_directory, DATA_DIR, find
 
 from .backend import json_utils
 
@@ -102,9 +103,15 @@ class GameManager:
         installed = json_utils.get_file(f"{DATA_DIR}/installed.json")
         if game.name not in installed: return
         
-        command = installed[game.name]
-        print(f"COMMAND: {command}")
-        call(command, shell=True)
+        exe = installed[game.name]
+        wine = find("wine", f"{DATA_DIR}/proton")
+
+        env = os.environ
+        env["WINEPREFIX"] = f"{DATA_DIR}/prefix"
+        env["WINEDLLOVERRIDES"] = "d3d9,d3d10,d3d11,dxgi,d3d12,d3d12core=n,b"
+
+        call(f'{wine} start /exec "{exe}"', shell=True, env=env)
+
         del self.game_statuses[game.get_slug(True)]
     
     def get_button_target(self, game: Game):

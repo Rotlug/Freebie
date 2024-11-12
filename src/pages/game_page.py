@@ -29,7 +29,7 @@ class GamePage(Adw.NavigationPage):
 
     def set_game(self, game: Game):
         assert game.metadata != None
-
+        
         self.game = game
         
         self.blurred_background.set_pixbuf(get_blurred_pixbuf(game))

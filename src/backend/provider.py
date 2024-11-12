@@ -48,5 +48,4 @@ class Installer(Provider):
         wine = find("wine", f"{DATA_DIR}/proton")
         wine_prefix = f"{DATA_DIR}/prefix"
         
-        start_command = f'WINEPREFIX={wine_prefix} {wine} start /exec "{lnk}"'
-        json_utils.add_to_file(f"{DATA_DIR}/installed.json", game.name, start_command)
+        json_utils.add_to_file(f"{DATA_DIR}/installed.json", game.name, lnk)
