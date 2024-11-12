@@ -46,7 +46,9 @@ class GamePage(Adw.NavigationPage):
         size = f" • {game.size}" if game.size != "" else game.size
 
         self.game_subtitle.set_label(rating + size)
-        self.game_description.set_label(game.metadata.description)
+        
+        if game.metadata.description != None:
+            self.game_description.set_label(game.metadata.description)
         
         self.cover.set_pixbuf(url_pixbuf(game))
         
@@ -59,7 +61,7 @@ class GamePage(Adw.NavigationPage):
         self.action_button.set_sensitive(False)
         target = game_manager.get_button_target(self.game)
         target(self.game)
-        
+    
     def uninstall_game(self, widget):
         game_manager.uninstall(self.game)
         self.set_game(self.game)
