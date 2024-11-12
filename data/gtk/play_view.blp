@@ -1,0 +1,21 @@
+using Gtk 4.0;
+
+template $PlayView: Box {
+  ScrolledWindow scrolled_window {
+    hexpand: true;
+    vexpand: true;
+    
+    FlowBox library {
+      homogeneous: true;
+      margin-start: 10;
+      margin-end: 10;
+      margin-top: 10;
+      margin-bottom: 10;
+      halign: center;
+      valign: start;
+      column-spacing: 12;
+      row-spacing: 12;
+      selection-mode: none;
+    }
+  }
+}

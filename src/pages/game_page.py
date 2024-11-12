@@ -37,9 +37,10 @@ class GamePage(Adw.NavigationPage):
         
         self.game_title.set_label(game.name)
 
-        rating = "No Rating Found" if game.metadata.rating == 0 else f"{game.metadata.rating}/100"
+        rating = "" if game.metadata.rating == 0 else f"{game.metadata.rating}/100"
+        size = f" • {game.size}" if game.size != "" else game.size
 
-        self.game_subtitle.set_label(f"{rating} • {game.size}")
+        self.game_subtitle.set_label(rating + size)
         self.game_description.set_label(game.metadata.description)
         
         self.cover.set_pixbuf(url_pixbuf(game))

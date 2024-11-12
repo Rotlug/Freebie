@@ -5,6 +5,7 @@ blueprints = custom_target('blueprints',
     'gtk/game_page.blp',
     'gtk/game.blp',
     'gtk/browse_view.blp',
+    'gtk/play_view.blp',
     'gtk/proton_page.blp'
   ),
   output: '.',

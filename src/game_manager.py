@@ -1,6 +1,7 @@
 from subprocess import call
 from threading import Thread
 from time import sleep
+from typing import Any
 from .backend.fitgirl.installer import FitgirlInstaller
 from .backend.fitgirl.provider import FitgirlProvider
 from .backend.game import Game
@@ -24,6 +25,7 @@ class GameManager:
         ]
 
         self.game_statuses: dict[str, str] = {}
+        self.play_view: Any
     
     def search(self, query: str) -> list[Game]:
         if query == "": return self.get_popular()
@@ -64,7 +66,10 @@ class GameManager:
             sleep(3)
         else:
             del self.game_statuses[game_slug]
-    
+        
+        if self.play_view != None:
+            self.play_view.update_game_array()
+
     def update_button_task(self, game_page, nav: Adw.NavigationView):
         while True:
             page = nav.get_visible_page()

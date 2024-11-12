@@ -2,6 +2,7 @@ from gi.repository import Adw
 from gi.repository import Gtk
 from ..game_manager import GameManager
 from .browse_view import BrowseView
+from .play_view import PlayView
 
 from ..backend.igdb_api import igdb
 
@@ -15,6 +16,7 @@ class MainPage(Adw.NavigationPage):
     stack: Adw.ViewStack = Gtk.Template.Child()
     
     browse: Gtk.Box = Gtk.Template.Child()
+    play: Gtk.Box = Gtk.Template.Child()
 
     def __init__(self, nav: Adw.NavigationView, **kwargs):
         super().__init__(**kwargs)
@@ -23,13 +25,19 @@ class MainPage(Adw.NavigationPage):
         self.searchbar.connect("notify::search-mode-enabled", self.on_searchbar_toggled)
         self.search_button.connect("toggled", self.on_toggle_search_action)
 
-        # self.browse.append(BrowsePage(self.searchentry, self.stack)) # Browse Page
-        self.stack.connect("notify::visible-child", self.retract_search_bar)
-        self.browse.append(BrowseView(self.search_entry, self.stack, self.nav)) # type: ignore
-        
-    def retract_search_bar(self, widget, _):
-        self.search_button.set_active(False)
+        self.stack.connect("notify::visible-child", self.visible_child_changed)
 
+        # Add Views
+        self.browse.append(BrowseView(self.search_entry, self.stack, self.nav)) # type: ignore
+        self.play.append(PlayView(self.search_entry, self.stack, self.nav)) # type: ignore
+    
+    def visible_child_changed(self, widget, _):
+        self.search_button.set_active(False)
+        if self.stack.get_visible_child() == "browse":
+            self.search_entry.set_search_delay(200)
+        else:
+            self.search_entry.set_search_delay(0)
+        
     def on_searchbar_toggled(self, widget, paramspec):
         enabled = self.searchbar.get_search_mode()
         self.search_button.set_active(enabled)
