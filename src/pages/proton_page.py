@@ -56,6 +56,7 @@ class ProtonPage(Adw.NavigationPage):
         self.nav.pop_to_tag("main")
         
     def download_stream(self, url: str, dest: str):
+        self.progressbar.set_fraction(0)
         r: requests.Response = requests.get(url, stream=True)
         total_size = int(r.headers.get('content-length', 0))
         downloaded_size = 0
@@ -98,4 +99,4 @@ class ProtonPage(Adw.NavigationPage):
         
         vkd3d_dir = f"{DATA_DIR}/proton/vkd3d-proton-{version}"
         call(f"cp x64/*.dll {DATA_DIR}/prefix/drive_c/windows/system32", cwd=vkd3d_dir, shell=True)
-        call(f"cp x32/*.dll {DATA_DIR}/prefix/drive_c/windows/syswow64", cwd=vkd3d_dir, shell=True)
+        call(f"cp x86/*.dll {DATA_DIR}/prefix/drive_c/windows/syswow64", cwd=vkd3d_dir, shell=True)
