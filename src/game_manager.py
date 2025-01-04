@@ -107,6 +107,7 @@ class GameManager:
         if game.name not in installed: return
         
         exe = installed[game.name]["exe"]
+        
         wine = find("wine", f"{DATA_DIR}/proton")
 
         env = os.environ
