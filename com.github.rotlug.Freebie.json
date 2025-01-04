@@ -14,6 +14,14 @@
         "--socket=x11",
         "--socket=pulseaudio"
     ],
+    "inherit-extensions": [
+        "org.freedesktop.Platform.Compat.i386",
+        "org.freedesktop.Platform.GL32",
+        "org.freedesktop.Platform.ffmpeg-full",
+        "org.freedesktop.Platform.ffmpeg_full.i386",
+        "org.winehq.Wine.gecko",
+        "org.winehq.Wine.mono"
+    ],
     "sdk-extensions": [
         "org.gnome.Sdk.Compat.i386",
         "org.freedesktop.Sdk.Extension.toolchain-i386"
