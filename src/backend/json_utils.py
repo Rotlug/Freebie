@@ -9,8 +9,7 @@ def get_file(filename: str) -> dict:
 def is_in_file(filename, key) -> bool:
     with open(filename) as file:
         json_file = json.load(file)
-        if key in json_file: return True
-        return False
+        return key in json_file
 
 def override_file(filename, data: dict) -> None:
     with open(filename, "w") as f:

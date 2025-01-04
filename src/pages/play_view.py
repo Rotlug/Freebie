@@ -52,14 +52,8 @@ class PlayView(Gtk.Box):
             self.add_game_to_library(game)
     
     def filter_game(self, game) -> bool:
-        if self.search_entry.get_text().lower() in game.name.lower():
-            return True
-        else:
-            return False
+        return self.search_entry.get_text().lower() in game.name.lower()
     
-    def eligible_to_search(self, search_term):
-        return (self.search_entry.get_text() == search_term)
-
     def add_game_to_library(self, game):
         box = GameBox(game)
 

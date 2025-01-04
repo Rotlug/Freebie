@@ -129,9 +129,7 @@ class GameManager:
             self.play_view.update_game_array()
         
     def is_installed(self, game: Game):
-        if game.name in json_utils.get_file(f"{DATA_DIR}/installed.json"):
-            return True
-        return False
+        return game.name in json_utils.get_file(f"{DATA_DIR}/installed.json")
 
 # GameManager singleton
 ensure_directory("downloads")
