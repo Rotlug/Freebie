@@ -26,8 +26,8 @@ class Metadata:
 # IGDBApiWrapper singleton
 class IGDBApiWrapper:
     def __init__(self) -> None:
-        self.client_id: str
-        self.secret: str
+        self.client_id = ""
+        self.secret = ""
 
         self.access: dict | None = None
 
@@ -39,11 +39,12 @@ class IGDBApiWrapper:
         self.cache = json_utils.get_file(METADATA_FILE)
 
     def generate_access(self) -> None:
-        with open("/var/data/igdb.txt", "r") as f:
-            lines = f.readlines()
-            self.client_id = lines[0].strip()
-            self.secret = lines[1].strip()
-        
+        if self.client_id == "" or self.secret == "":
+            with open("/var/data/igdb.txt", "r") as f:
+                lines = f.readlines()
+                self.client_id = lines[0].strip()
+                self.secret = lines[1].strip()
+            
         self.seconds_left -= (time.time() - self.last_renewed)
 
         if (self.access == None) or self.seconds_left <= 50:
