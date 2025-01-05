@@ -1,0 +1,61 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $IGDBPage: Adw.NavigationPage {
+    title: 'Freebie';
+    tag: 'proton';
+    
+    Adw.ToolbarView toolbar {
+        [top]
+        Adw.HeaderBar header_bar {}
+
+        content: Box {
+            halign: center;
+            valign: center;
+            orientation: vertical;
+
+            Label title {
+                halign: center;
+
+                styles [
+                    "title-1"
+                ]
+
+                label: "Insert Your API Credentials";
+            }
+
+            Label subtitle {
+                margin-top: 5;
+            }
+
+            ListBox {
+                margin-top: 10;
+
+                styles [
+                    "boxed-list"
+                ]
+                
+                Adw.EntryRow client_id_entry {
+                    title: "Client ID";
+                }
+
+                Adw.PasswordEntryRow secret_entry {
+                    title: "Secret";
+                }
+            }
+
+            Button apply {
+                margin-top: 10;
+
+                styles [
+                    "pill",
+                    "suggested-action"
+                ]
+
+                Label {
+                    label: "Apply";
+                }
+            }
+        };
+    }
+}

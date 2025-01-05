@@ -9,5 +9,6 @@
     <file preprocess="xml-stripblanks">gtk/play_view.ui</file>
     <file preprocess="xml-stripblanks">gtk/game_page.ui</file>
     <file preprocess="xml-stripblanks">gtk/help-overlay.ui</file>
+    <file preprocess="xml-stripblanks">gtk/igdb_page.ui</file>
   </gresource>
 </gresources>

@@ -1,10 +1,10 @@
 from gi.repository import Adw
 from gi.repository import Gtk
-from ..game_manager import GameManager
+# from ..game_manager import GameManager
 from .browse_view import BrowseView
 from .play_view import PlayView
 
-from ..backend.igdb_api import igdb
+# from ..backend.igdb_api import igdb
 
 @Gtk.Template(resource_path='/com/github/rotlug/Freebie/gtk/main_page.ui')
 class MainPage(Adw.NavigationPage):

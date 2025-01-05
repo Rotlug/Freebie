@@ -22,12 +22,11 @@ from gi.repository import Adw
 from gi.repository import Gtk
 
 from .backend.ensure import DATA_DIR
-from .backend.igdb_api import igdb
-from .game_manager import game_manager
 
 from .pages.main_page import MainPage
 from .pages.game_page import GamePage
 from .pages.proton_page import ProtonPage
+from .pages.igdb_page import IGDBPage
 
 @Gtk.Template(resource_path='/com/github/rotlug/Freebie/gtk/window.ui')
 class FreebieWindow(Adw.ApplicationWindow):
@@ -37,9 +36,13 @@ class FreebieWindow(Adw.ApplicationWindow):
     
     def __init__(self, application: Adw.Application):
         super().__init__(application=application)
-        self.nav_view.add(MainPage(self.nav_view)) #type: ignore
-        self.nav_view.add(GamePage(self.nav_view)) # type: ignore
-
+        
+        if os.path.exists(f"{DATA_DIR}/igdb.txt"):
+            self.nav_view.add(MainPage(self.nav_view)) #type: ignore
+            self.nav_view.add(GamePage(self.nav_view)) # type: ignore
+        else:
+            self.nav_view.add(IGDBPage(self.nav_view)) #type: ignore
+        
         if not os.path.exists(f"{DATA_DIR}/proton") or len(os.listdir(f"{DATA_DIR}/proton")) == 0:
             # If proton is not downloaded, open the proton page on startup.
             self.nav_view.push(ProtonPage(self.nav_view)) #type: ignore
