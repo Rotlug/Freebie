@@ -13,6 +13,7 @@ class BrowseView(Gtk.Box):
     __gtype_name__ = "BrowseView"
 
     library: Gtk.FlowBox = Gtk.Template.Child()
+    searching_spinner_revealer: Gtk.Revealer = Gtk.Template.Child()
 
     def __init__(self, search_entry: Gtk.SearchEntry, stack: Adw.ViewStack, nav_view: Adw.NavigationView, **kwargs):
         super().__init__(**kwargs)
@@ -32,20 +33,22 @@ class BrowseView(Gtk.Box):
         GLib.idle_add(self.library.remove_all)
 
     def populate_library(self, text):
+        self.set_spinner_reveal(True)
         games = game_manager.search(text)
         for game in games:
             if not self.eligible_to_search(text):
                 print("Search Aborted!")
-                return
+                break
 
             game.metadata = igdb.search(game)
             if (game.metadata != None) and self.eligible_to_search(text): GLib.idle_add(self.add_game_to_library, game)
-            
+
             """
             The reason that there is check for [eligible_to_search] twice in
             This function is because if igdb.search() takes a while to execute (for example, if the game isn't in the cache)
             then that value might change by the time that it completes.
             """
+        self.set_spinner_reveal(False)
     
     def eligible_to_search(self, search_term):
         return (self.search_entry.get_text() == search_term)
@@ -60,3 +63,6 @@ class BrowseView(Gtk.Box):
         self.nav_view.push_by_tag("game")
         page: GamePage = self.nav_view.find_page("game") # type: ignore
         page.set_game(game)
+    
+    def set_spinner_reveal(self, show: bool):
+        self.searching_spinner_revealer.set_reveal_child(show)

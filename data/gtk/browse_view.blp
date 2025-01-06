@@ -1,10 +1,35 @@
 using Gtk 4.0;
+using Adw 1;
 
 template $BrowseView: Box {
+  orientation: vertical;
+
+  Revealer searching_spinner_revealer {
+    Box searching_box {
+      orientation: horizontal;
+      halign: center;
+      valign: center;
+      margin-bottom: 7;
+
+      Adw.Spinner {
+        width-request: 15;
+        margin-end: 5;
+      }
+
+      Label {
+        styles [
+          "dim-label"
+        ]
+
+        label: "Searching...";
+      }
+    }
+  }
+
   ScrolledWindow scrolled_window {
     hexpand: true;
-    vexpand: true;
-    
+    vexpand: true; 
+
     FlowBox library {
       homogeneous: true;
       margin-start: 10;
