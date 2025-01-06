@@ -39,9 +39,12 @@ class BrowseView(Gtk.Box):
             if not self.eligible_to_search(text):
                 print("Search Aborted!")
                 break
-
+            
             game.metadata = igdb.search(game)
-            if (game.metadata != None) and self.eligible_to_search(text): GLib.idle_add(self.add_game_to_library, game)
+
+            if (game.metadata != None) and self.eligible_to_search(text):
+                game.name = game.metadata.name
+                GLib.idle_add(self.add_game_to_library, game)
 
             """
             The reason that there is check for [eligible_to_search] twice in

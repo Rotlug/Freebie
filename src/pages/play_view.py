@@ -4,7 +4,7 @@ from .game_page import GamePage
 from ..backend.game import Game
 
 from ..game_manager import game_manager
-from ..backend.igdb_api import igdb
+from ..backend.igdb_api import Metadata, igdb
 
 from ..game_box import GameBox
 from ..backend import json_utils
@@ -36,6 +36,10 @@ class PlayView(Gtk.Box):
             print(g)
             game = Game(g, "", "")
             game.metadata = igdb.search(game)
+
+            assert game.metadata != None
+            game.name = game.metadata.name
+            
             self.games.append(game)
 
         GLib.idle_add(self.library.remove_all)

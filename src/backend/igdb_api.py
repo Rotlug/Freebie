@@ -7,7 +7,8 @@ from .ensure import ensure_directory, ensure_file
 METADATA_FILE = "/var/data/metadata.json"
 
 class Metadata:
-    def __init__(self, cover_url, rating, release_date, description) -> None:
+    def __init__(self, name, cover_url, rating, release_date, description) -> None:
+        self.name = name
         self.cover_url = cover_url
         self.rating = rating
         self.release_date = release_date
@@ -90,12 +91,14 @@ class IGDBApiWrapper:
         if 'first_release_date' not in data: data['first_release_date'] = 0
         if 'aggregated_rating' not in data: data['aggregated_rating'] = 0
         if 'summary' not in data: data['summary'] = ""
-
+        if 'name' not in data: data['name'] = "Name not found!"
+        
         return Metadata(
             cover_url = data['cover']['url'].lstrip('//').replace('thumb', '720p'),
             description = data['summary'],
             rating = round(data['aggregated_rating']),
-            release_date=utils.unix_time_to_string(data['first_release_date'])
+            release_date=utils.unix_time_to_string(data['first_release_date']),
+            name=data["name"]
         )
 
     def save_cache_task(self):

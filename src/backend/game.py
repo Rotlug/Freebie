@@ -18,12 +18,13 @@ class Game:
         result = unidecode(self.name).lower()
         # [short] removes editions, deluxe editions etc..
         if short:
-            if " - " in result or " + " in result or " & " in result:
+            if " - " in result or " + " in result or " & " in result or ", ":
                 result = result.split(" - ")[0]
                 result = result.split(" + ")[0]
                 result = result.split(" & ")[0]
+                result = result.split(", ")[0]
             else:
-                result = utils.split_multiple(result, ":–-")
+                result = utils.split_multiple(result, ":–-,")
 
         result = result.replace("goty", "game of the year")
         result = result.replace("–", "-")

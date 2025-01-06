@@ -3,7 +3,7 @@ import requests
 from .game import Game
 from bs4 import BeautifulSoup as bs
 from . import json_utils
-from .ensure import ensure_file, DATA_DIR, find
+from .ensure import ensure_file, DATA_DIR
 
 # Provide `Game` Objects
 class Provider:
@@ -18,8 +18,11 @@ class Provider:
         headers = {'User-Agent': user_agent}
 
         request_text = requests.get(url=url, headers=headers).text # returns in 'iso-8859-1' (bad)
-        request_text = bytes(request_text,'iso-8859-1').decode('utf-8') # turns it to 'utf-8' (good, supports diacritics for example the é in Pokémon)
-
+        try:
+            request_text = bytes(request_text,'iso-8859-1').decode('utf-8') # turns it to 'utf-8' (good, supports diacritics for example the é in Pokémon)
+        except:
+            pass
+        
         soup = bs(request_text, 'html.parser')
         return soup
 

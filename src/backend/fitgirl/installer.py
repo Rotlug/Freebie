@@ -1,4 +1,5 @@
 import os
+from warnings import catch_warnings
 
 from ...backend.utils import set_wine_sound_driver, umu_run
 from ..provider import Installer
@@ -25,9 +26,17 @@ class FitgirlInstaller(Installer):
         super().__init__()
 
     def get_game(self, game: Game) -> None:
+        print(f"GAME_LINK {game.link}")
         soup = self.get_soup(game.link)
 
-        magnet_link: str = soup.find("a", {"id": "openPopup"})["href"] # type: ignore
+        magnet_link = ""
+
+        try: # 1337x magnet link
+            magnet_link: str = soup.find("a", {"id": "openPopup"})["href"] # type: ignore
+        except:
+            magnet_link: str = soup.find(lambda tag: tag.name == "a" and tag.text == "magnet")["href"] # type: ignore
+        
+        print(f"MAGNET_LINK: {magnet_link}")
 
         download = self.download(magnet_link, game)
         desktop = self.install(download, game)
