@@ -37,12 +37,10 @@ class FreebieWindow(Adw.ApplicationWindow):
     def __init__(self, application: Adw.Application):
         super().__init__(application=application)
         
-        if os.path.exists(f"{DATA_DIR}/igdb.txt"):
+        if not os.path.exists(f"{DATA_DIR}/proton") or len(os.listdir(f"{DATA_DIR}/proton")) == 0:
+            self.nav_view.add(ProtonPage(self.nav_view)) #type: ignore
+        elif not os.path.exists(f"{DATA_DIR}/igdb.txt"):
+            self.nav_view.add(IGDBPage(self.nav_view)) #type: ignore
+        else:
             self.nav_view.add(MainPage(self.nav_view)) #type: ignore
             self.nav_view.add(GamePage(self.nav_view)) # type: ignore
-        else:
-            self.nav_view.add(IGDBPage(self.nav_view)) #type: ignore
-        
-        if not os.path.exists(f"{DATA_DIR}/proton") or len(os.listdir(f"{DATA_DIR}/proton")) == 0:
-            # If proton is not downloaded, open the proton page on startup.
-            self.nav_view.push(ProtonPage(self.nav_view)) #type: ignore

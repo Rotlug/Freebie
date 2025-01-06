@@ -1,8 +1,9 @@
-import os
 from subprocess import call
 from threading import Thread
 from time import sleep
 from typing import Any
+
+from .backend.utils import umu_run
 from .backend.fitgirl.installer import FitgirlInstaller
 from .backend.fitgirl.provider import FitgirlProvider
 from .backend.game import Game
@@ -107,15 +108,8 @@ class GameManager:
         if game.name not in installed: return
         
         exe = installed[game.name]["exe"]
-        
-        wine = find("wine", f"{DATA_DIR}/proton")
-
-        env = os.environ
-        env["WINEPREFIX"] = f"{DATA_DIR}/prefix"
-        env["WINEDLLOVERRIDES"] = "d3d9,d3d10,d3d11,dxgi,d3d12,d3d12core,libvkd3d-1,libvkd3d-shader-1,wined3d=n,b"
-        
-        print(f'{wine} start /exec "{exe}"')
-        call(f'{wine} start /exec "{exe}"', shell=True, env=env)
+  
+        umu_run(f'"{exe}"')
 
         del self.game_statuses[game.get_slug(True)]
     

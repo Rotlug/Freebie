@@ -1,86 +1,134 @@
 {
-    "id" : "com.github.rotlug.Freebie",
-    "runtime" : "org.gnome.Platform",
-    "runtime-version" : "47",
-    "sdk" : "org.gnome.Sdk",
-    "base": "org.winehq.Wine",
-    "base_version": "stable-24.08",
-    "command" : "freebie",
-    "finish-args" : [
-        "--share=network",
-        "--share=ipc",
-        "--device=all",
-        "--socket=wayland",
-        "--socket=x11",
-        "--socket=pulseaudio"
-    ],
-    "inherit-extensions": [
-        "org.freedesktop.Platform.Compat.i386",
-        "org.freedesktop.Platform.GL32",
-        "org.freedesktop.Platform.ffmpeg-full",
-        "org.freedesktop.Platform.ffmpeg_full.i386",
-        "org.winehq.Wine.gecko",
-        "org.winehq.Wine.mono"
-    ],
-    "sdk-extensions": [
-        "org.gnome.Sdk.Compat.i386",
-        "org.freedesktop.Sdk.Extension.toolchain-i386"
-    ],
-    "cleanup" : [
-        "/include",
-        "/lib/pkgconfig",
-        "/man",
-        "/share/doc",
-        "/share/gtk-doc",
-        "/share/man",
-        "/share/pkgconfig",
-        "*.la",
-        "*.a"
-    ],
-    "modules" : [
-        "python3-modules.json",
+  "id": "com.github.rotlug.Freebie",
+  "sdk": "org.gnome.Sdk",
+  "runtime": "org.gnome.Platform",
+  "base": "org.winehq.Wine",
+  "base_version": "stable-24.08",
+  "runtime-version": "47",
+  "command": "freebie",
+  "finish-args": [
+    "--allow=devel",
+    "--allow=multiarch",
+    "--allow=per-app-dev-shm",
+    "--share=network",
+    "--share=ipc",
+    "--socket=x11",
+    "--socket=wayland",
+    "--socket=pulseaudio",
+    "--device=all",
+    "--system-talk-name=org.freedesktop.UDisks2",
+    "--env=PATH=/app/bin:/app/utils/bin:/usr/bin:/usr/lib/extensions/vulkan/MangoHud/bin/:/usr/bin:/usr/lib/extensions/vulkan/OBSVkCapture/bin/:/usr/lib/extensions/vulkan/gamescope/bin/",
+    "--env=GST_PLUGIN_SYSTEM_PATH=/app/lib/gstreamer-1.0:/usr/lib/x86_64-linux-gnu/gstreamer-1.0:/app/lib32/gstreamer-1.0:/usr/lib/i386-linux-gnu/gstreamer-1.0",
+    "--require-version=1.1.2",
+    "--filesystem=xdg-data/umu:create"
+  ],
+  "inherit-extensions": [
+    "org.freedesktop.Platform.GL32",
+    "org.freedesktop.Platform.ffmpeg-full",
+    "org.freedesktop.Platform.ffmpeg_full.i386",
+    "org.winehq.Wine.gecko",
+    "org.winehq.Wine.mono"
+  ],
+  "add-extensions": {
+    "org.gnome.Platform.Compat.i386": {
+      "directory": "lib/i386-linux-gnu",
+      "version": "47"
+    },
+    "org.gnome.Platform.Compat.i386.Debug": {
+      "directory": "lib/debug/lib/i386-linux-gnu",
+      "version": "47",
+      "no-autodownload": true
+    },
+    "com.valvesoftware.Steam.CompatibilityTool": {
+      "subdirectories": true,
+      "directory": "share/steam/compatibilitytools.d",
+      "version": "stable",
+      "versions": "stable;beta;test",
+      "no-autodownload": true,
+      "autodelete": false
+    },
+    "com.valvesoftware.Steam.Utility": {
+      "subdirectories": true,
+      "directory": "utils",
+      "version": "stable",
+      "versions": "stable;beta;test",
+      "add-ld-path": "lib",
+      "merge-dirs": "bin",
+      "no-autodownload": true,
+      "autodelete": false
+    }
+  },
+  "x-compat-i386-opts": {
+    "prepend-pkg-config-path": "/app/lib32/pkgconfig:/usr/lib/i386-linux-gnu/pkgconfig",
+    "ldflags": "-L/app/lib32",
+    "append-path": "/usr/lib/sdk/toolchain-i386/bin",
+    "env": {
+      "CC": "i686-unknown-linux-gnu-gcc",
+      "CXX": "i686-unknown-linux-gnu-g++"
+    },
+    "libdir": "/app/lib32"
+  },
+  "sdk-extensions": [
+    "org.gnome.Sdk.Compat.i386",
+    "org.freedesktop.Sdk.Extension.toolchain-i386"
+  ],
+  "cleanup": [
+    "/include",
+    "/lib/pkgconfig",
+    "/man",
+    "/share/doc",
+    "/share/gtk-doc",
+    "/share/man",
+    "/share/pkgconfig",
+    "*.la",
+    "*.a"
+  ],
+  "cleanup-commands": [
+    "mkdir -p /app/utils",
+    "mkdir -p /app/share/steam/compatibilitytools.d",
+    "mkdir -p /app/share/vulkan/implicit_layer.d/"
+  ],
+  "modules": [
+    "python3-modules.json",
+    {
+      "name": "blueprint-compiler",
+      "buildsystem": "meson",
+      "sources": [
         {
-            "name" : "other-modules"
-        },
-        {
-            "name" : "aria2",
-            "config-opts" : [
-                "--disable-libaria2",
-                "--disable-websocket",
-                "--without-sqlite3"
-            ],
-            "sources" : [
-                {
-                    "type" : "archive",
-                    "sha256" : "58d1e7608c12404f0229a3d9a4953d0d00c18040504498b483305bcb3de907a5",
-                    "url" : "https://github.com/aria2/aria2/releases/download/release-1.36.0/aria2-1.36.0.tar.xz"
-                }
-            ]
-        },
-        {
-            "name" : "blueprint-compiler",
-            "buildsystem" : "meson",
-            "sources" : [
-                {
-                    "type" : "git",
-                    "url" : "https://gitlab.gnome.org/jwestman/blueprint-compiler",
-                    "tag" : "v0.14.0"
-                }
-            ],
-            "cleanup" : [
-                "*"
-            ]
-        },
-        {
-            "name" : "freebie",
-            "builddir" : true,
-            "buildsystem" : "meson",
-            "sources" : [
-                {
-                    "type" : "dir",
-                    "path" : "."
-                }
-            ]
+          "type": "git",
+          "url": "https://gitlab.gnome.org/jwestman/blueprint-compiler",
+          "tag": "v0.14.0"
         }
-    ]
+      ],
+      "cleanup": [
+        "*"
+      ]
+    },
+    {
+      "name": "aria2",
+      "config-opts": [
+        "--disable-libaria2",
+        "--disable-websocket",
+        "--without-sqlite3"
+      ],
+      "sources": [
+        {
+          "type": "archive",
+          "sha256": "58d1e7608c12404f0229a3d9a4953d0d00c18040504498b483305bcb3de907a5",
+          "url": "https://github.com/aria2/aria2/releases/download/release-1.36.0/aria2-1.36.0.tar.xz"
+        }
+      ]
+    },
+    {
+      "name": "freebie",
+      "builddir": true,
+      "buildsystem": "meson",
+      "sources": [
+        {
+          "type": "dir",
+          "path": "."
+        }
+      ]
+    }
+  ]
 }

@@ -1,4 +1,6 @@
 import os
+
+from ...backend.utils import set_wine_sound_driver, umu_run
 from ..provider import Installer
 from ..game import Game
 from time import sleep
@@ -8,7 +10,8 @@ from os import listdir
 from shutil import rmtree
 from ..ensure import DATA_DIR, find
 
-subprocess.Popen("aria2c --enable-rpc > /dev/null", shell=True) # Open ARIA2
+proc = subprocess.Popen("aria2c --enable-rpc > /dev/null", shell=True) # Open ARIA2
+
 aria2 = aria2p.API(
             aria2p.Client(
                 host="http://localhost",
@@ -56,24 +59,20 @@ class FitgirlInstaller(Installer):
                 del self.downloads[game.get_slug()] # Remove download from downloads dict
 
                 return download.control_file_path.as_posix().strip('.aria2')
-                break # I Am Funi 2
             sleep(3)
 
     # Returns path to .lnk file
     def install(self, path: str, game: Game) -> str | None:
-        winetricks_path = f"{DATA_DIR}/proton/winetricks"
-        wine_path = find("wine64", f"{DATA_DIR}/proton")
         wine_prefix = f"{DATA_DIR}/prefix"
 
         # Mute Audio
-        subprocess.call(f'WINE="{wine_path}" WINEPREFIX="{wine_prefix}" "{winetricks_path}" sound=disable', shell=True)
+        set_wine_sound_driver("disabled")
 
         # Run Installer
-        command = f'WINEPREFIX="{wine_prefix}" "{wine_path}" "{path}/setup.exe" /VERYSILENT /DIR="C:\\Games\\{game.get_slug()}"'
-        subprocess.call(command, shell=True)
-
+        umu_run(f'"{path}/setup.exe" /VERYSILENT /DIR="C:\\Games\\{game.get_slug()}"')
+        
         # Turn audio back on
-        subprocess.call(f'WINE="{wine_path}" WINEPREFIX="{wine_prefix}" "{winetricks_path}" sound=pulse', shell=True)
+        set_wine_sound_driver("pulse")
 
         # Installation is complete, delete repack
         rmtree(path)

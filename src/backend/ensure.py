@@ -1,5 +1,6 @@
 import os
 from subprocess import call
+from .utils import umu_run
 
 DATA_DIR = "/var/data"
 
@@ -30,9 +31,4 @@ def ensure_wine_prefix():
     if is_non_empty_directory(f"{DATA_DIR}/{WINE_PREFIX_PATH}"): return
     ensure_directory(WINE_PREFIX_PATH)
     
-    wine = find("wine", f"{DATA_DIR}/proton")
-    if wine == None:
-        return
-    
-    print(f"Wine at {wine}")
-    call(f"WINEPREFIX={DATA_DIR}/{WINE_PREFIX_PATH} {wine} init", shell=True)
+    umu_run('""')

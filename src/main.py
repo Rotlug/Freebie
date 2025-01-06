@@ -17,13 +17,12 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import os
-from subprocess import call
 from threading import Thread
 import sys
 import gi
 from .backend.igdb_api import igdb
 from .backend import ensure
+from .backend.fitgirl.installer import proc
 
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
@@ -42,7 +41,8 @@ class FreebieApplication(Adw.Application):
         self.create_action('preferences', self.on_preferences_action)
         
         Thread(target=igdb.save_cache_task, name="SaveMetadata", daemon=True).start()
-    
+        print("HEllo world")
+
     def do_activate(self):
         """Called when the application is activated.
 
@@ -86,11 +86,15 @@ class FreebieApplication(Adw.Application):
             self.set_accels_for_action(f"app.{name}", shortcuts)
 
 def main(version):
-    ensure.ensure_wine_prefix() # Make sure that a wine prefix exists (if a proton version is installed)
+    ensure.ensure_wine_prefix() # Make sure that a wine prefix exists
     """The application's entry point."""
     app = FreebieApplication()
     return_code = app.run(sys.argv)
     
     # Save cache to disk and quit
     igdb.save_cache_to_disk()
+
+    # Kill aria2p
+    proc.kill()
+
     return return_code
