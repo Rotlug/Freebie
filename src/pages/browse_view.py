@@ -21,7 +21,7 @@ class BrowseView(Gtk.Box):
         self.search_entry.connect("search_changed", self.on_search_entry_search_changed)
         self.stack = stack
         self.nav_view = nav_view
-        
+    
     def on_search_entry_search_changed(self, widget: Gtk.SearchEntry):
         text = widget.get_text()
         if self.stack.get_visible_child_name() != "browse": return
@@ -35,6 +35,8 @@ class BrowseView(Gtk.Box):
     def populate_library(self, text):
         self.set_spinner_reveal(True)
         games = game_manager.search(text)
+        game_names: list[str] = []
+
         for game in games:
             if not self.eligible_to_search(text):
                 print("Search Aborted!")
@@ -44,7 +46,10 @@ class BrowseView(Gtk.Box):
 
             if (game.metadata != None) and self.eligible_to_search(text):
                 game.name = game.metadata.name
-                GLib.idle_add(self.add_game_to_library, game)
+                
+                if (game.name not in game_names): # Avoid duplicate games
+                    game_names.append(game.name)
+                    GLib.idle_add(self.add_game_to_library, game)
 
             """
             The reason that there is check for [eligible_to_search] twice in
