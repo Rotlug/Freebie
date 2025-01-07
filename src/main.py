@@ -86,7 +86,7 @@ class FreebieApplication(Adw.Application):
             self.set_accels_for_action(f"app.{name}", shortcuts)
 
 def main(version):
-    ensure.ensure_wine_prefix() # Make sure that a wine prefix exists
+    # ensure.ensure_wine_prefix() # Make sure that a wine prefix exists
     """The application's entry point."""
     app = FreebieApplication()
     return_code = app.run(sys.argv)

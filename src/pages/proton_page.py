@@ -4,7 +4,7 @@ from gi.repository import Adw, Gtk, GLib
 import sys, os
 
 import requests
-from ..backend.ensure import ensure_directory, DATA_DIR
+from ..backend.ensure import ensure_directory, DATA_DIR, ensure_wine_prefix, is_non_empty_directory
 
 @Gtk.Template(resource_path='/com/github/rotlug/Freebie/gtk/proton_page.ui')
 class ProtonPage(Adw.NavigationPage):
@@ -22,11 +22,17 @@ class ProtonPage(Adw.NavigationPage):
     def download(self):
         ensure_directory("proton")
 
-        # Download UMU-run
-        self.title.set_label("Downloadimg UMU...")
-        self.subtitle.set_label("UMU Is a tool to run Steam games outside of Steam.")
+        # Download UMU-run if doesnt exist
+        if (not os.path.exists(f"{DATA_DIR}/proton/umu_run.py")):
+            self.title.set_label("Downloadimg UMU...")
+            self.subtitle.set_label("UMU Is a tool to run Steam games outside of Steam.")
+            self.download_umu()
 
-        self.download_umu()
+        # Initialize Wine Prefix, if it doesn't exist
+        if not is_non_empty_directory(f"{DATA_DIR}/prefix"):
+            self.title.set_label("Creating Wine Prefix...")
+            self.subtitle.set_label("This is the folder that the games will be installed in.")
+            ensure_wine_prefix()
 
         # Bye Bye
         self.restart()

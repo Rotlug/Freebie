@@ -21,7 +21,7 @@ import os
 from gi.repository import Adw
 from gi.repository import Gtk
 
-from .backend.ensure import DATA_DIR
+from .backend.ensure import DATA_DIR, is_non_empty_directory
 
 from .pages.main_page import MainPage
 from .pages.game_page import GamePage
@@ -37,7 +37,7 @@ class FreebieWindow(Adw.ApplicationWindow):
     def __init__(self, application: Adw.Application):
         super().__init__(application=application)
         
-        if not os.path.exists(f"{DATA_DIR}/proton") or len(os.listdir(f"{DATA_DIR}/proton")) == 0:
+        if not is_non_empty_directory(f"{DATA_DIR}/proton") or not is_non_empty_directory(f"{DATA_DIR}/prefix"):
             self.nav_view.add(ProtonPage(self.nav_view)) #type: ignore
         elif not os.path.exists(f"{DATA_DIR}/igdb.txt"):
             self.nav_view.add(IGDBPage(self.nav_view)) #type: ignore
