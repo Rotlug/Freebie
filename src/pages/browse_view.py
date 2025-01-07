@@ -32,7 +32,7 @@ class BrowseView(Gtk.Box):
         thread.start()
         GLib.idle_add(self.library.remove_all)
 
-    def populate_library(self, text):
+    def populate_library(self, text: str):
         self.set_spinner_reveal(True)
         games = game_manager.search(text)
         game_names: list[str] = []
@@ -42,6 +42,8 @@ class BrowseView(Gtk.Box):
                 print("Search Aborted!")
                 break
             
+            if text.lower() not in game.name.lower(): continue
+
             game.metadata = igdb.search(game)
 
             if (game.metadata != None) and self.eligible_to_search(text):
