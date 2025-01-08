@@ -58,7 +58,7 @@ class FreebieApplication(Adw.Application):
     def on_about_action(self, widget, _):
         """Callback for the app.about action."""
         about = Adw.AboutDialog(
-                                application_name='freebie',
+                                application_name='Freebie',
                                 application_icon='com.github.rotlug.Freebie',
                                 developer_name='rotlug',
                                 version='0.1.0',
