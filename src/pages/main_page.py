@@ -33,7 +33,10 @@ class MainPage(Adw.NavigationPage):
     
     def visible_child_changed(self, widget, _):
         self.search_button.set_active(False)
-        if self.stack.get_visible_child() == "browse":
+        
+        name = self.stack.get_visible_child().get_first_child().get_name() # type: ignore
+        
+        if name == "BrowseView":
             self.search_entry.set_search_delay(500)
         else:
             self.search_entry.set_search_delay(0)
