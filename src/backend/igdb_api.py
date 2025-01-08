@@ -57,9 +57,10 @@ class IGDBApiWrapper:
 
     def search(self, game: Game, retry=False) -> Metadata | None:
         slug = game.get_slug(retry)
-        
+
         # Get From Cache
         if slug in self.cache:
+            print(f"Fetching {slug} from cache")
             result = self.cache[slug]
             if result == None:
                 if retry: return None
@@ -67,7 +68,7 @@ class IGDBApiWrapper:
             return self.dict_to_metadata(result)
         
         # Get From API
-        print(f"Fetching {game.name} from api")
+        print(f"Fetching {slug} from api")
         self.generate_access() # Regenerate Access if time is running out
         assert self.access != None
         data = requests.post('https://api.igdb.com/v4/games', **{'headers': {'Client-ID': self.client_id, 'Authorization': f'Bearer {self.access["access_token"]}'},'data': f'fields cover.url,name,url,summary,aggregated_rating,first_release_date; where slug="{slug}"; limit 1;'}).json()
