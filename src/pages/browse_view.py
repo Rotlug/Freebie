@@ -14,6 +14,7 @@ class BrowseView(Gtk.Box):
 
     library: Gtk.FlowBox = Gtk.Template.Child()
     searching_spinner_revealer: Gtk.Revealer = Gtk.Template.Child()
+    search_stack: Gtk.Stack = Gtk.Template.Child()
 
     def __init__(self, search_entry: Gtk.SearchEntry, stack: Adw.ViewStack, nav_view: Adw.NavigationView, **kwargs):
         super().__init__(**kwargs)
@@ -21,7 +22,9 @@ class BrowseView(Gtk.Box):
         self.search_entry.connect("search_changed", self.on_search_entry_search_changed)
         self.stack = stack
         self.nav_view = nav_view
-    
+
+        self.search_stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
+
     def on_search_entry_search_changed(self, widget: Gtk.SearchEntry):
         text = widget.get_text()
         if self.stack.get_visible_child_name() != "browse": return
@@ -37,6 +40,8 @@ class BrowseView(Gtk.Box):
         games = game_manager.search(text)
         game_names: list[str] = []
 
+        visible_games = 0
+
         for game in games:
             if not self.eligible_to_search(text):
                 print("Search Aborted!")
@@ -51,13 +56,20 @@ class BrowseView(Gtk.Box):
                 
                 if (game.name not in game_names): # Avoid duplicate games
                     game_names.append(game.name)
+                    visible_games += 1
                     GLib.idle_add(self.add_game_to_library, game)
 
-            """
-            The reason that there is check for [eligible_to_search] twice in
-            This function is because if igdb.search() takes a while to execute (for example, if the game isn't in the cache)
-            then that value might change by the time that it completes.
-            """
+        if visible_games == 0:
+            self.search_stack.set_visible_child(self.search_stack.get_last_child()) # type: ignore
+        else:
+            self.search_stack.set_visible_child(self.search_stack.get_first_child()) # type: ignore
+
+        """
+        The reason that there is check for [eligible_to_search] twice in
+        This function is because if igdb.search() takes a while to execute (for example, if the game isn't in the cache)
+        then that value might change by the time that it completes.
+        """
+        
         self.set_spinner_reveal(False)
     
     def eligible_to_search(self, search_term):

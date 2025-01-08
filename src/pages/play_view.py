@@ -15,6 +15,7 @@ class PlayView(Gtk.Box):
     __gtype_name__ = "PlayView"
 
     library: Gtk.FlowBox = Gtk.Template.Child()
+    library_stack: Gtk.Stack = Gtk.Template.Child()
 
     def __init__(self, search_entry: Gtk.SearchEntry, stack: Adw.ViewStack, nav_view: Adw.NavigationView, **kwargs):
         super().__init__(**kwargs)
@@ -24,6 +25,7 @@ class PlayView(Gtk.Box):
         self.nav_view = nav_view
         
         game_manager.play_view = self
+        self.library_stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
         
         ensure_file("installed.json", "{}")
         self.games = []
@@ -44,6 +46,11 @@ class PlayView(Gtk.Box):
 
         GLib.idle_add(self.library.remove_all)
 
+        if len(self.games) == 0:
+            self.library_stack.set_visible_child(self.library_stack.get_last_child()) # type: ignore
+        else:
+            self.library_stack.set_visible_child(self.library_stack.get_first_child()) # type: ignore
+        
         for game in self.games:
             self.add_game_to_library(game)
         
