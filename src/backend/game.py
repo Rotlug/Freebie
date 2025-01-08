@@ -22,9 +22,9 @@ class Game:
                 result = result.split(" - ")[0]
                 result = result.split(" + ")[0]
                 result = result.split(" & ")[0]
-                result = result.split(", ")[0]
+                result = utils.split_multiple(result, "/,")
             else:
-                result = utils.split_multiple(result, ":–-,")
+                result = utils.split_multiple(result, ":–-,/")
 
         result = result.replace("goty", "game of the year")
         result = result.replace("–", "-")
@@ -32,4 +32,4 @@ class Game:
         result = result.replace(' ', '-').replace("---", "-")
         result = result.replace("--", "-")
         result = result.rstrip('-')
-        return result
+        return result.strip()
