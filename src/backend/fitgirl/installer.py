@@ -64,6 +64,7 @@ class FitgirlInstaller(Installer):
             self.downloads[game.get_slug()] = download
             print(download.progress_string(0))
             if download.is_complete or download.seeder:
+                sleep(10)
                 download.remove()
                 del self.downloads[game.get_slug()] # Remove download from downloads dict
 
