@@ -18,6 +18,7 @@ class Game:
         result = unidecode(self.name).lower()
         # [short] removes editions, deluxe editions etc..
         if short:
+            result = remove_editions(result)
             if " - " in result or " + " in result or " & " in result or ", ":
                 result = result.split(" - ")[0]
                 result = result.split(" + ")[0]
@@ -33,3 +34,18 @@ class Game:
         result = result.replace("--", "-")
         result = result.rstrip('-')
         return result.strip()
+
+def remove_editions(slug: str):
+    editions = [
+        "digital deluxe",
+        "deluxe",
+        "premium",
+    ]
+
+    for ed in editions:
+        if ed in slug.lower():
+            print(f"FOUND {ed} in {slug}")
+            slug = slug.split(ed)[0]
+            break
+    
+    return slug
