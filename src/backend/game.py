@@ -19,11 +19,8 @@ class Game:
         # [short] removes editions, deluxe editions etc..
         if short:
             result = remove_editions(result)
-            if " - " in result or " + " in result or " & " in result or ", ":
-                result = result.split(" - ")[0]
-                result = result.split(" + ")[0]
-                result = result.split(" & ")[0]
-                result = utils.split_multiple(result, "/,")
+            if "-" in result or "+" in result or "&" in result or ",":
+                result = utils.split_multiple(result, "/,-+&")
             else:
                 result = utils.split_multiple(result, ":–-,/")
 
@@ -40,6 +37,7 @@ def remove_editions(slug: str):
         "digital deluxe",
         "deluxe",
         "premium",
+        "the one who waits bundle"
     ]
 
     for ed in editions:

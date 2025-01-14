@@ -20,8 +20,8 @@
 from threading import Thread
 import sys
 import gi
+from .backend.utils import umu_run
 from .backend.igdb_api import igdb
-from .backend import ensure
 from .backend.fitgirl.installer import proc
 
 gi.require_version('Gtk', '4.0')
@@ -39,6 +39,7 @@ class FreebieApplication(Adw.Application):
         self.create_action('quit', lambda *_: self.quit, ['<primary>q'])
         self.create_action('about', self.on_about_action)
         self.create_action('preferences', self.on_preferences_action)
+        self.create_action('run_exe', self.on_run_exe_action, ['<primary>e'])
         
         Thread(target=igdb.save_cache_task, name="SaveMetadata", daemon=True).start()
         print("HEllo world")
@@ -55,6 +56,24 @@ class FreebieApplication(Adw.Application):
         
         win.present() # type: ignore
     
+    def on_run_exe_action(self, widget, _):
+        print("run_exe called")
+        dialog = Gtk.FileChooserNative(
+            title="Choose Executable",
+            action=Gtk.FileChooserAction.OPEN,
+            transient_for=self.get_active_window(),
+            modal=True,
+            filter=Gtk.FileFilter(mime_types=["application/x-msdownload"])
+        )
+        
+        dialog.connect("response", self.on_exe_file_selected)
+        dialog.show()
+
+    def on_exe_file_selected(self, widget: Gtk.FileChooserNative, _):
+        path: str = widget.get_file().get_path() # type: ignore
+        umu_run(f"'{path}'")
+        widget.destroy()
+    
     def on_about_action(self, widget, _):
         """Callback for the app.about action."""
         about = Adw.AboutDialog(
@@ -70,7 +89,7 @@ class FreebieApplication(Adw.Application):
         """Callback for the app.preferences action."""
         print('app.preferences action activated')
 
-    def create_action(self, name, callback, shortcuts=None):
+    def create_action(self, name, callback, shortcuts: list[str] | None = None):
         """Add an application action.
 
         Args:
@@ -82,6 +101,7 @@ class FreebieApplication(Adw.Application):
         action = Gio.SimpleAction.new(name, None)
         action.connect("activate", callback)
         self.add_action(action)
+
         if shortcuts:
             self.set_accels_for_action(f"app.{name}", shortcuts)
 

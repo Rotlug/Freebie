@@ -61,7 +61,7 @@ def umu_run(exe: str):
     env["WINEPREFIX"] = f"{DATA_DIR}/prefix"
     
     python = sys.executable
-
+        
     call(f'{python} {DATA_DIR}/proton/umu_run.py {exe}', shell=True, env=env)
 
 def set_wine_sound_driver(sound_driver: str):
