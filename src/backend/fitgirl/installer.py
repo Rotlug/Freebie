@@ -45,7 +45,7 @@ class FitgirlInstaller(Installer):
 
     # Return path to repack folder
     def download(self, magnet: str, game: Game) -> str:
-        aria2.add_magnet(magnet, {"dir": "/var/data/downloads/"})
+        aria2.add_magnet(magnet, {"dir": f"{DATA_DIR}/downloads/"})
 
         # Find Download GID
         gid: str = ""

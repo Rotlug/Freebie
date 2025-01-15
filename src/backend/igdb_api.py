@@ -3,8 +3,9 @@ from . import utils, json_utils
 import requests
 import time
 from .ensure import ensure_directory, ensure_file
+from .utils import DATA_DIR
 
-METADATA_FILE = "/var/data/metadata.json"
+METADATA_FILE = f"{DATA_DIR}/metadata.json"
 
 class Metadata:
     def __init__(self, name, cover_url, rating, release_date, description) -> None:
@@ -41,7 +42,7 @@ class IGDBApiWrapper:
 
     def generate_access(self) -> None:
         if self.client_id == "" or self.secret == "":
-            with open("/var/data/igdb.txt", "r") as f:
+            with open(f"{DATA_DIR}/igdb.txt", "r") as f:
                 lines = f.readlines()
                 self.client_id = lines[0].strip()
                 self.secret = lines[1].strip()

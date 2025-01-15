@@ -2,10 +2,12 @@ from gi.repository import Gtk, Gio, Adw
 import urllib.request
 from gi.repository.GdkPixbuf import Pixbuf
 
+from .backend.utils import DATA_DIR
+
 import os
 from .backend.game import Game
 
-pixbufs_cache_folder =  "/var/data/pixbufs"
+pixbufs_cache_folder =  f"{DATA_DIR}/pixbufs"
 
 def url_pixbuf(game: Game):
     if game.metadata is None: return

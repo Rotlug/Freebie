@@ -1,8 +1,6 @@
 import os
 from subprocess import call
-from .utils import umu_run
-
-DATA_DIR = "/var/data"
+from .utils import umu_run, DATA_DIR
 
 def ensure_file(file_name: str, initial_contents: str | None = None):
     if os.path.exists(f"{DATA_DIR}/{file_name}"): return
