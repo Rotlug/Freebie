@@ -5,11 +5,12 @@ import os
 
 from unidecode import unidecode
 
-DATA_DIR = os.getenv('XDG_DATA_HOME', os.path.expanduser('~/.local/share/freebie'))
+non_sandboxed_dir = os.path.expanduser('~/.local/share/freebie')
+DATA_DIR = os.getenv('XDG_DATA_HOME', non_sandboxed_dir)
 
 # If not running inside Flatpak, make sure to create the directory
-if DATA_DIR == os.path.expanduser('~/.local/share/freebie'):
-    os.mkdir(os.path.expanduser('~/.local/share/freebie'))
+if DATA_DIR == non_sandboxed_dir and not os.path.exists(non_sandboxed_dir):
+    os.mkdir(non_sandboxed_dir)
 
 import os, sys
 
