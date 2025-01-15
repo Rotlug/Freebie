@@ -7,6 +7,10 @@ from unidecode import unidecode
 
 DATA_DIR = os.getenv('XDG_DATA_HOME', os.path.expanduser('~/.local/share/freebie'))
 
+# If not running inside Flatpak, make sure to create the directory
+if DATA_DIR == os.path.expanduser('~/.local/share/freebie'):
+    os.mkdir(os.path.expanduser('~/.local/share/freebie'))
+
 import os, sys
 
 def any_of_list_in(list_of_str: list, check_str: str) -> bool:
