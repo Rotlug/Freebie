@@ -71,7 +71,7 @@ class FreebieApplication(Adw.Application):
 
     def on_exe_file_selected(self, widget: Gtk.FileChooserNative, _):
         path: str = widget.get_file().get_path() # type: ignore
-        umu_run(f"'{path}'")
+        Thread(target=umu_run, daemon=True, args=[f"'{path}'"]).start()
         widget.destroy()
     
     def on_about_action(self, widget, _):
