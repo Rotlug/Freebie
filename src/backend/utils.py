@@ -1,9 +1,11 @@
 from datetime import datetime
 from subprocess import call
 
+import os
+
 from unidecode import unidecode
 
-DATA_DIR = "/var/data"
+DATA_DIR = os.getenv('XDG_DATA_HOME', os.path.expanduser('~/.local/share/freebie'))
 
 import os, sys
 
