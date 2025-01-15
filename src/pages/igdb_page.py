@@ -3,6 +3,8 @@ from gi.repository import Adw, Gtk
 import sys
 import os
 
+from ..backend.utils import restart
+
 from ..backend.ensure import DATA_DIR
 
 @Gtk.Template(resource_path='/com/github/rotlug/Freebie/gtk/igdb_page.ui')
@@ -35,14 +37,7 @@ class IGDBPage(Adw.NavigationPage):
                 self.secret_entry.get_text()
             ])
         
-        self.restart()
-
-    def restart(self):
-        # Get the current Python executable and script
-        python = sys.executable
-
-        # Replace the current process with a new one
-        os.execv(python, [python] + sys.argv)
+        restart()
     
     def is_valid(self):
         return self.secret_entry.get_text_length() == 30 and self.client_id_entry.get_text_length() == 30

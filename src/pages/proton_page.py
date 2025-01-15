@@ -4,6 +4,8 @@ from gi.repository import Adw, Gtk, GLib
 import sys, os
 
 import requests
+
+from ..backend.utils import restart
 from ..backend.ensure import ensure_directory, DATA_DIR, ensure_wine_prefix, is_non_empty_directory
 
 @Gtk.Template(resource_path='/com/github/rotlug/Freebie/gtk/proton_page.ui')
@@ -35,7 +37,7 @@ class ProtonPage(Adw.NavigationPage):
             ensure_wine_prefix()
 
         # Bye Bye
-        self.restart()
+        restart()
         
     def download_stream(self, url: str, dest: str):
         self.progressbar.set_fraction(0)
@@ -52,13 +54,6 @@ class ProtonPage(Adw.NavigationPage):
                     # Calculate and print the progress percentage
                     percent = (downloaded_size / total_size)
                     GLib.idle_add(self.progressbar.set_fraction, percent) 
-
-    def restart(self):
-        # Get the current Python executable and script
-        python = sys.executable
-
-        # Replace the current process with a new one
-        os.execv(python, [python] + sys.argv)
     
     def download_umu(self):
         r = requests.get("https://github.com/Open-Wine-Components/umu-launcher/releases/latest")

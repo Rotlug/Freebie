@@ -14,6 +14,13 @@ if DATA_DIR == non_sandboxed_dir and not os.path.exists(non_sandboxed_dir):
 
 import os, sys
 
+def restart():
+    # Get the current Python executable and script
+    python = sys.executable
+
+    # Replace the current process with a new one
+    os.execv(python, [python] + sys.argv)
+
 def any_of_list_in(list_of_str: list, check_str: str) -> bool:
     result = False
 
