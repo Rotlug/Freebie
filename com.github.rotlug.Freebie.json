@@ -100,9 +100,7 @@
           "tag": "v0.14.0"
         }
       ],
-      "cleanup": [
-        "*"
-      ]
+      "cleanup": ["*"]
     },
     {
       "name": "aria2",
@@ -128,7 +126,11 @@
           "type": "dir",
           "path": "."
         }
-      ]
+      ],
+      "config-opts": ["--libdir=lib"]
     }
-  ]
+  ],
+  "build-options": {
+    "env": {}
+  }
 }

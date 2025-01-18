@@ -20,9 +20,11 @@ class GamePage(Adw.NavigationPage):
     action_button: Gtk.Button = Gtk.Template.Child()
     remove_button: Gtk.Button = Gtk.Template.Child()
 
-    def __init__(self, nav: Adw.NavigationView):
+    def __init__(self, nav: Adw.NavigationView, window: Adw.ApplicationWindow):
         super().__init__()
         self.nav = nav
+        self.window = window
+
         # Start the button update task in the background
         Thread(target=game_manager.update_button_task, args=[self, nav], daemon=True).start()
         self.game: Game
@@ -63,9 +65,25 @@ class GamePage(Adw.NavigationPage):
         target(self.game)
     
     def uninstall_game(self, widget):
-        game_manager.uninstall(self.game)
-        self.set_game(self.game)
-        self.nav.pop_to_tag("main")
+        dialog = Adw.AlertDialog(
+            heading="Delete Game?",
+            body=f"Are you sure you want to delete <b>{self.game.name}</b>? This action cannot be undone!",
+            body_use_markup=True,
+            default_response="cancel",
+        )
+
+        dialog.add_response("cancel", "Cancel")
+        dialog.add_response("delete", "Delete")
+        dialog.set_response_appearance("delete", Adw.ResponseAppearance.DESTRUCTIVE)
+        
+        dialog.connect("response", self.on_delete_dialog_response)
+        dialog.present(self.window)
+
+    def on_delete_dialog_response(self, dialog, response):
+        if response == "delete":
+            game_manager.uninstall(self.game)
+            self.set_game(self.game)
+            self.nav.pop_to_tag("main")
     
 def get_blurred_pixbuf(game: Game):
     pixbuf = url_pixbuf(game)

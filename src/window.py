@@ -43,4 +43,4 @@ class FreebieWindow(Adw.ApplicationWindow):
             self.nav_view.add(IGDBPage(self.nav_view)) #type: ignore
         else:
             self.nav_view.add(MainPage(self.nav_view)) #type: ignore
-            self.nav_view.add(GamePage(self.nav_view)) # type: ignore
+            self.nav_view.add(GamePage(self.nav_view, self)) # type: ignore

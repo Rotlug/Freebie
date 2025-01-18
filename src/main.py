@@ -57,7 +57,6 @@ class FreebieApplication(Adw.Application):
         win.present() # type: ignore
     
     def on_run_exe_action(self, widget, _):
-        print("run_exe called")
         dialog = Gtk.FileChooserNative(
             title="Choose Executable",
             action=Gtk.FileChooserAction.OPEN,
@@ -71,6 +70,7 @@ class FreebieApplication(Adw.Application):
 
     def on_exe_file_selected(self, widget: Gtk.FileChooserNative, _):
         path: str = widget.get_file().get_path() # type: ignore
+        print(f"Running exe: {path}")
         Thread(target=umu_run, daemon=True, args=[f"'{path}'"]).start()
         widget.destroy()
     
