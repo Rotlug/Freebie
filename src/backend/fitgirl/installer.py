@@ -49,15 +49,16 @@ class FitgirlInstaller(Installer):
 
         # Find Download GID
         gid: str = ""
+        super_short_game_slug = game.get_slug(True)[0:10]
         while gid == "":
             for d in aria2.get_downloads():
                 if "[METADATA]" in d.name: continue
                 name_slug = Game(d.name, "", "").get_slug(True)
-                if game.get_slug(True) in name_slug:
+                if super_short_game_slug in name_slug:
                     gid = d.gid
                     break
             sleep(3)
-
+        
         # Get Progress Percentage Periodically
         while True:
             download = aria2.get_download(gid)
