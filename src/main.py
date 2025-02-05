@@ -20,14 +20,15 @@
 from threading import Thread
 import sys
 import gi
-from .backend.utils import umu_run
+from .backend import json_utils
+from .backend.utils import DATA_DIR, umu_run
 from .backend.igdb_api import igdb
 from .backend.fitgirl.installer import proc
 
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 
-from gi.repository import Gtk, Gio, Adw
+from gi.repository import Gtk, Gio, Adw, GLib
 from .window import FreebieWindow
 
 class FreebieApplication(Adw.Application):
@@ -35,14 +36,33 @@ class FreebieApplication(Adw.Application):
 
     def __init__(self):
         super().__init__(application_id='com.github.rotlug.Freebie',
-                         flags=Gio.ApplicationFlags.DEFAULT_FLAGS)
+                         flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE)
         self.create_action('quit', lambda *_: self.quit, ['<primary>q'])
         self.create_action('about', self.on_about_action)
         self.create_action('preferences', self.on_preferences_action)
         self.create_action('run_exe', self.on_run_exe_action, ['<primary>e'])
         
+        self.add_main_option("game", ord("g"), GLib.OptionFlags.NONE, GLib.OptionArg.STRING, "The name of the game you want to run")
+
         Thread(target=igdb.save_cache_task, name="SaveMetadata", daemon=True).start()
         print("HEllo world")
+
+    def do_command_line(self, command_line):
+        options = command_line.get_options_dict()
+        # convert GVariantDict -> GVariant -> dict
+        options = options.end().unpack()
+        
+        if "game" in options:
+            name: str = options["game"]
+            installed = json_utils.get_file(f"{DATA_DIR}/installed.json")
+            if name not in installed:
+                print(f'"{name}" not found in {DATA_DIR}/installed.json')
+                return 1
+            exe = installed[name]["exe"]
+            umu_run(f'"{exe}"')
+        else: self.activate()
+        
+        return 0
 
     def do_activate(self):
         """Called when the application is activated.
@@ -108,6 +128,7 @@ class FreebieApplication(Adw.Application):
 def main(version):
     # ensure.ensure_wine_prefix() # Make sure that a wine prefix exists
     """The application's entry point."""
+    print(f"Arguments: {sys.argv}")
     app = FreebieApplication()
     return_code = app.run(sys.argv)
     

@@ -90,9 +90,11 @@ class FitgirlInstaller(Installer):
 
         # Look for desktop icon
         desktop_dir = f"{wine_prefix}/drive_c/users/Public/Desktop"
+        game_super_short_slug = game.get_slug(True)[0:10]
+
         for d in listdir(desktop_dir):
             slug = Game(d, "", "").get_slug(True)
-            if game.get_slug(True) in slug:
+            if game_super_short_slug in slug:
                 lnk_path = desktop_dir + "/" + d
                 self.add_game_to_installed(game, lnk_path, f"{DATA_DIR}/prefix/drive_c/Games/{game.get_slug()}")
                 return lnk_path
