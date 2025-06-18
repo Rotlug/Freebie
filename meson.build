@@ -12,7 +12,7 @@ pkgdatadir = join_paths(get_option('prefix'), get_option('datadir'), meson.proje
 conf = configuration_data()
 
 subdir('data')
-subdir('src')
+subdir('src/freebie')
 subdir('po')
 
 gnome.post_install(

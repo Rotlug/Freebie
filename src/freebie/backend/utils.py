@@ -1,5 +1,6 @@
 from datetime import datetime
 from subprocess import call
+import shutil
 
 import os
 
@@ -14,12 +15,18 @@ if DATA_DIR == non_sandboxed_dir and not os.path.exists(non_sandboxed_dir):
 
 import os, sys
 
-def restart():
-    # Get the current Python executable and script
-    python = sys.executable
+def is_in_path(exe: str):
+    return shutil.which(exe) is not None
 
-    # Replace the current process with a new one
-    os.execv(python, [python] + sys.argv)
+def restart():
+    if (is_in_path("freebie")):
+        os.execvp("freebie", ["freebie"] + sys.argv[1:])
+    else:
+        # Get the current Python executable and script
+        python = sys.executable
+
+        # Replace the current process with a new one
+        os.execv(python, [python] + sys.argv)
 
 def any_of_list_in(list_of_str: list, check_str: str) -> bool:
     result = False
@@ -75,8 +82,11 @@ def umu_run(exe: str):
     env["WINEPREFIX"] = f"{DATA_DIR}/prefix"
     
     python = sys.executable
-        
-    call(f'{python} {DATA_DIR}/proton/umu_run.py {exe}', shell=True, env=env)
+
+    if (is_in_path("umu-run")):
+        call(f'umu-run {exe}', shell=True, env=env)
+    else:
+        call(f'{python} {DATA_DIR}/proton/umu/umu_run.py {exe}', shell=True, env=env)
 
 def set_wine_sound_driver(sound_driver: str):
     sound_file = f"""Windows Registry Editor Version 5.00

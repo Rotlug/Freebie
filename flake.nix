@@ -23,6 +23,13 @@
 
               python312
               pyright
+              glib
+              gtk4
+              libadwaita
+              cmake
+              pkg-config
+              appstream
+              desktop-file-utils
             ] ++ (with pkgs.python312Packages; [
               pygobject-stubs
               pygobject3
@@ -32,6 +39,7 @@
               beautifulsoup4
               types-beautifulsoup4
               aria2p
+              pillow
             ]);
           };
         }

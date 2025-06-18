@@ -4,7 +4,7 @@
   "runtime": "org.gnome.Platform",
   "base": "org.winehq.Wine",
   "base_version": "stable-24.08",
-  "runtime-version": "47",
+  "runtime-version": "48",
   "command": "freebie",
   "finish-args": [
     "--allow=devel",

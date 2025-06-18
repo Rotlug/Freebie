@@ -58,9 +58,9 @@ class ProtonPage(Adw.NavigationPage):
     def download_umu(self):
         r = requests.get("https://github.com/Open-Wine-Components/umu-launcher/releases/latest")
         version = r.url.split("/")[-1].lstrip("v")
-        download_url = f"https://github.com/Open-Wine-Components/umu-launcher/releases/download/{version}/Zipapp.zip"
+        filename = f"umu-launcher-{version}-zipapp.tar"
+        download_url = f"https://github.com/Open-Wine-Components/umu-launcher/releases/download/{version}/{filename}"
         print("DOWNLOAD URL: " + download_url)
-        self.download_stream(download_url, f"{DATA_DIR}/proton/umu.zip")
+        self.download_stream(download_url, f"{DATA_DIR}/proton/{filename}")
         
-        call(f"unzip umu.zip", cwd=f"{DATA_DIR}/proton", shell=True)
-        call(f"tar -xf {DATA_DIR}/proton/Zipapp.tar", shell=True, cwd=f"{DATA_DIR}/proton")
+        call(f"tar -xf {DATA_DIR}/proton/{filename}", shell=True, cwd=f"{DATA_DIR}/proton")
