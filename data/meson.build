@@ -8,6 +8,7 @@ blueprints = custom_target('blueprints',
     'gtk/play_view.blp',
     'gtk/proton_page.blp',
     'gtk/igdb_page.blp',
+    'gtk/preferences.blp'
   ),
   output: '.',
   command: [find_program('blueprint-compiler'), 'batch-compile', '@OUTPUT@', '@CURRENT_SOURCE_DIR@', '@INPUT@'],

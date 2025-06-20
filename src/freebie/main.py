@@ -20,6 +20,8 @@
 from threading import Thread
 import sys
 import gi
+
+from .dialogs.preferences import FreebiePreferences
 from .backend import json_utils
 from .backend.utils import DATA_DIR, umu_run
 from .backend.igdb_api import igdb
@@ -107,7 +109,8 @@ class FreebieApplication(Adw.Application):
 
     def on_preferences_action(self, widget, _):
         """Callback for the app.preferences action."""
-        print('app.preferences action activated')
+        preferences_dialog = FreebiePreferences()
+        preferences_dialog.present(self.get_active_window())
 
     def create_action(self, name, callback, shortcuts: list[str] | None = None):
         """Add an application action.

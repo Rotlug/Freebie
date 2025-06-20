@@ -29,4 +29,5 @@ freebie_sources = [
 
 install_subdir('backend', install_dir: moduledir)
 install_subdir('pages', install_dir: moduledir)
+install_subdir('dialogs', install_dir: moduledir)
 install_data(freebie_sources, install_dir: moduledir)

@@ -42,10 +42,7 @@ class IGDBApiWrapper:
 
     def generate_access(self) -> None:
         if self.client_id == "" or self.secret == "":
-            with open(f"{DATA_DIR}/igdb.txt", "r") as f:
-                lines = f.readlines()
-                self.client_id = lines[0].strip()
-                self.secret = lines[1].strip()
+            self.get_credentials()
             
         self.seconds_left -= (time.time() - self.last_renewed)
 
@@ -55,6 +52,16 @@ class IGDBApiWrapper:
             assert type(self.access) == dict
             self.seconds_left = self.access["expires_in"]
             self.last_renewed = time.time()
+
+    def get_credentials(self):
+        with open(f"{DATA_DIR}/igdb.txt", "r") as f:
+                lines = f.readlines()
+                self.client_id = lines[0].strip()
+                self.secret = lines[1].strip()
+
+    def update_igdb_credentials_file(self, new_client_id: str, new_secret: str):
+        with open(f"{DATA_DIR}/igdb.txt", "w") as f:
+            f.writelines([new_client_id, new_secret])
 
     def search(self, game: Game, retry=False) -> Metadata | None:
         slug = game.get_slug(retry)

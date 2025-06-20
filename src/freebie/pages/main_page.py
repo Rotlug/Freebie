@@ -30,7 +30,7 @@ class MainPage(Adw.NavigationPage):
         # Add Views
         self.browse.append(BrowseView(self.search_entry, self.stack, self.nav)) # type: ignore
         self.play.append(PlayView(self.search_entry, self.stack, self.nav)) # type: ignore
-    
+
     def visible_child_changed(self, widget, _):
         self.search_button.set_active(False)
         

@@ -1,0 +1,22 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $FreebiePreferences : Adw.PreferencesDialog {
+
+    Adw.PreferencesPage {
+        Adw.PreferencesGroup igdb_group {
+            title: "IGDB Keys";
+            description: "The credentials used to access game covers, descriptions and ratings.";
+
+            Adw.EntryRow igdb_client_id_entry {
+                title: "title id";
+                show-apply-button: true;
+            }
+
+            Adw.PasswordEntryRow igdb_secret_entry {
+                title: "Secret";
+                show-apply-button: true;
+            }
+        }
+    }
+}
