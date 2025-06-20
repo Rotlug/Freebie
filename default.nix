@@ -21,7 +21,7 @@
   procps,
 }:
 
-python3Packages.buildPythonApplication rec {
+python3Packages.buildPythonApplication {
   pname = "freebie";
   version = "0.1";
   pyproject = false;
@@ -29,8 +29,8 @@ python3Packages.buildPythonApplication rec {
   src = fetchFromGitHub {
     owner = "Rotlug";
     repo = "Freebie";
-    rev = "24906e6d17dc16de9a814205681ddefa4c1f0aa1";
-    hash = "sha256-y/D8wb2YQMBsXv9R8dKqM36STAxu+pu3lmxZ0Lu1UMo=";
+    rev = "4242dce5ae0824e12aa521bffff5a4dc78de7960";
+    hash = "sha256-ap7FhRTXCBnVHgR8bfNb9qE4dPUO9w1zc6x/cze5LqQ=";
   };
 
   strictDeps = true;
