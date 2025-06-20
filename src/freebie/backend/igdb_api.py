@@ -56,8 +56,12 @@ class IGDBApiWrapper:
     def get_credentials(self):
         with open(f"{DATA_DIR}/igdb.txt", "r") as f:
                 lines = f.readlines()
-                self.client_id = lines[0].strip()
-                self.secret = lines[1].strip()
+                try:
+                    self.client_id = lines[0].strip()
+                    self.secret = lines[1].strip()
+                except:
+                    self.client_id = ""
+                    self.secret = ""
 
     def update_igdb_credentials_file(self, new_client_id: str, new_secret: str):
         with open(f"{DATA_DIR}/igdb.txt", "w") as f:
