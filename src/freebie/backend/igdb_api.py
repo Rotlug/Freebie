@@ -61,7 +61,7 @@ class IGDBApiWrapper:
 
     def update_igdb_credentials_file(self, new_client_id: str, new_secret: str):
         with open(f"{DATA_DIR}/igdb.txt", "w") as f:
-            f.writelines([new_client_id, new_secret])
+            f.write(f"{new_client_id}\n{new_secret}")
 
     def search(self, game: Game, retry=False) -> Metadata | None:
         slug = game.get_slug(retry)
