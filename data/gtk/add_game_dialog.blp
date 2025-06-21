@@ -5,7 +5,47 @@ template $AddGameDialog : Adw.Dialog {
     Adw.ToolbarView {
         [top]
         Adw.HeaderBar {
+            show-start-title-buttons: false;
+            show-end-title-buttons: false;
 
+            [end]
+            Button add_button {
+                label: "Add";
+                sensitive: false;
+
+                styles [
+                    "suggested-action"
+                ]
+            }
+
+            [start]
+            Button cancel_button {
+                label: "Cancel";
+            }
+        }
+
+        Adw.PreferencesPage {
+            Adw.PreferencesGroup {
+                Adw.EntryRow game_name_row {
+                    title: "Game Name";
+                }
+
+                Adw.ActionRow select_exe_row {
+                    title: "Executable";
+                    subtitle: "Select the .exe file of the game";
+
+                    [suffix]
+                    Button exe_file_chooser_button {
+                        valign: center;
+                        icon-name: "document-open-symbolic";
+                        tooltip-text: _("Select File");
+
+                        styles [
+                        "flat",
+                        ]
+                    }
+                }
+            }
         }
     }
 }

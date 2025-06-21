@@ -53,6 +53,19 @@ class GameManager:
 
         return games
 
+    def add_custom_game_to_installed(self, game: Game, exe_location: str):
+        json_utils.add_to_file(
+            f"{DATA_DIR}/installed.json",
+            game.name,
+            {
+                "exe": exe_location,
+                "dir": "/".join(exe_location.split("/")[:-1])
+            }
+        )
+
+        if self.play_view != None:
+            self.play_view.update_game_array()
+
     def get_game(self, game: Game):
         installer = game.installer()
         installer_thread = Thread(target=installer.get_game, args=[game], daemon=True)
@@ -74,7 +87,7 @@ class GameManager:
             self.play_view.update_game_array()
         if self.game_page != None:
             self.game_page.set_game(game)
-        
+    
     def update_button_task(self, game_page, nav: Adw.NavigationView):
         while True:
             page = nav.get_visible_page()
@@ -98,7 +111,7 @@ class GameManager:
                 button.set_sensitive(True)
                 button.set_label(f"Get ({game.size})")
                 button.add_css_class("suggested-action")    
-    
+
     def get_game_thread(self, game: Game): Thread(target=self.get_game, args=[game], daemon=True).start()
     def run_game_thread(self, game: Game): Thread(target=self.run_game, args=[game], daemon=True).start()
 

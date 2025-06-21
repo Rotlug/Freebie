@@ -89,7 +89,7 @@ class FreebieApplication(Adw.Application):
             modal=True,
             filter=Gtk.FileFilter(mime_types=["application/x-msdownload"])
         )
-        
+
         dialog.connect("response", self.on_exe_file_selected)
         dialog.show()
 
@@ -100,7 +100,10 @@ class FreebieApplication(Adw.Application):
         widget.destroy()
     
     def on_add_game_action(self, action: Gio.SimpleAction, _):
-        dialog = AddGameDialog()
+        window = self.get_active_window()
+
+        assert window is not None
+        dialog = AddGameDialog(window)
         dialog.present(self.get_active_window())
 
     def on_about_action(self, widget, _):
