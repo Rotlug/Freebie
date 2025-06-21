@@ -59,7 +59,7 @@ class GameManager:
             game.name,
             {
                 "exe": exe_location,
-                "dir": "/".join(exe_location.split("/")[:-1])
+                "dir": "gleba", # fake directory
             }
         )
 
