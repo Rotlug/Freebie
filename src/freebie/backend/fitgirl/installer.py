@@ -3,7 +3,7 @@ from warnings import catch_warnings
 
 from ...backend.utils import set_wine_sound_driver, umu_run
 from ..provider import Installer
-from ..game import Game
+from ..game import Game, InstalledGame
 from time import sleep
 import aria2p
 import subprocess
@@ -96,7 +96,9 @@ class FitgirlInstaller(Installer):
             slug = Game(d, "", "").get_slug(True)
             if game_super_short_slug in slug:
                 lnk_path = desktop_dir + "/" + d
-                self.add_game_to_installed(game, lnk_path, f"{DATA_DIR}/prefix/drive_c/Games/{game.get_slug()}")
+
+                installed_game = InstalledGame(name=game.name, exe=lnk_path, directory=f"{DATA_DIR}/prefix/drive_c/Games/{game.get_slug()}")
+                self.add_game_to_installed(installed_game)
                 return lnk_path
 
         # No Desktop icon found :(

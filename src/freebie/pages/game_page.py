@@ -1,10 +1,14 @@
+from typing import Union
 from gi.repository import Adw, Gtk, GLib, GdkPixbuf
+from gi.repository.Gio import InetSocketAddress
 
-from ..backend.game import Game
+from ..backend.game import Game, InstalledGame
 from PIL import Image, ImageFilter
 from ..game_box import url_pixbuf
 from ..game_manager import game_manager
 from threading import Thread
+
+from ..backend.igdb_api import igdb
 
 @Gtk.Template(resource_path='/com/github/rotlug/Freebie/gtk/game_page.ui')
 class GamePage(Adw.NavigationPage):
@@ -19,6 +23,8 @@ class GamePage(Adw.NavigationPage):
     cover: Gtk.Picture = Gtk.Template.Child()
     action_button: Gtk.Button = Gtk.Template.Child()
     remove_button: Gtk.Button = Gtk.Template.Child()
+
+    time_played: Gtk.Label = Gtk.Template.Child()
 
     def __init__(self, nav: Adw.NavigationView, window: Adw.ApplicationWindow):
         super().__init__()
@@ -35,8 +41,22 @@ class GamePage(Adw.NavigationPage):
         game_manager.game_page = self
 
     def set_game(self, game: Game):
-        assert game.metadata != None
+        if game.metadata is None:
+            if isinstance(game, InstalledGame):
+                game.metadata = igdb.search(game)
+            else:
+                return
+
+        if (game.metadata is None):
+            return
         
+        # Time Played
+        if (isinstance(game, InstalledGame)):
+            self.time_played.set_visible(True)
+            self.time_played.set_label(f"Time Played: {game_manager.format_duration(game.seconds_played)}")
+        else:
+            self.time_played.set_visible(False)
+
         self.game = game
         
         self.blurred_background.set_pixbuf(get_blurred_pixbuf(game))

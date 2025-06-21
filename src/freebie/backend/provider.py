@@ -1,6 +1,6 @@
 from aria2p import Download
 import requests
-from .game import Game
+from .game import Game, InstalledGame
 from bs4 import BeautifulSoup as bs
 from . import json_utils
 from .ensure import ensure_file, DATA_DIR
@@ -47,10 +47,5 @@ class Installer(Provider):
     def get_game(self, game: Game) -> str | None:
         pass
     
-    def add_game_to_installed(self, game: Game, lnk: str, installed_dir: str):
-        data = {
-            "exe": lnk,
-            "dir": installed_dir
-        }
-
-        json_utils.add_to_file(f"{DATA_DIR}/installed.json", game.name, data)
+    def add_game_to_installed(self, installed_game: InstalledGame):
+        json_utils.add_to_file(f"{DATA_DIR}/installed.json", installed_game.name, installed_game.to_dict())

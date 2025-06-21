@@ -78,7 +78,7 @@ class BrowseView(Gtk.Box):
     def add_game_to_library(self, game):
         box = GameBox(game)
         
-        box.connect(self.select_game) # type: ignore
+        box.connect_button(self.select_game) # type: ignore
         GLib.idle_add(self.library.append, box) # type: ignore
     
     def select_game(self, widget, game: Game):

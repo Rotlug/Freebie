@@ -16,9 +16,6 @@ def override_file(filename, data: dict) -> None:
         json.dump(data, f)
 
 def add_to_file(filename: str, key: str, value: Any) -> None:
-    if is_in_file(filename, key):
-        return
-
     new_file = get_file(filename)
     new_file[key] = value
 

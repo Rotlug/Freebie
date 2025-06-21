@@ -4,7 +4,7 @@ from gi.repository import Adw, Gtk
 from requests import patch
 
 from freebie.backend.igdb_api import igdb
-from freebie.backend.game import Game
+from freebie.backend.game import Game, InstalledGame
 from freebie.game_manager import game_manager
 
 
@@ -54,11 +54,13 @@ class AddGameDialog(Adw.Dialog):
         self.select_exe_row.set_subtitle(path)
 
     def on_add_button_clicked(self, _):
-        game = Game(self.game_name, "", "")
+        game = InstalledGame(self.game_name, exe=self.path, directory="")
         game.metadata = igdb.search(game)
+        if (game.metadata != None):
+            game.name = game.metadata.name
 
         # Add game to installed games
-        game_manager.add_custom_game_to_installed(game, self.path)
+        game_manager.add_custom_game_to_installed(game)
 
         self.close()
 

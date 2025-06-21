@@ -47,5 +47,5 @@ class GameBox(Gtk.Box):
         self.title.set_label(game.name)
         self.cover.set_pixbuf(url_pixbuf(game))
     
-    def connect(self, function):
+    def connect_button(self, function):
         self.cover_button.connect("clicked", function, self.game)

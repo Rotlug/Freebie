@@ -1,7 +1,7 @@
 from threading import Thread
 from gi.repository import Adw, Gtk, GLib
 from .game_page import GamePage
-from ..backend.game import Game
+from ..backend.game import Game, InstalledGame
 
 from ..game_manager import game_manager
 from ..backend.igdb_api import Metadata, igdb
@@ -28,15 +28,13 @@ class PlayView(Gtk.Box):
         self.library_stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
         
         ensure_file("installed.json", "{}")
-        self.games = []
+        self.games: list[InstalledGame] = []
         self.update_game_array()
     
     def update_game_array(self):
         self.games = []
 
-        for g in json_utils.get_file(f"{DATA_DIR}/installed.json").keys():
-            print(g)
-            game = Game(g, "", "")
+        for game in game_manager.get_all_installed_games():
             game.metadata = igdb.search(game)
 
             assert game.metadata != None
@@ -68,7 +66,7 @@ class PlayView(Gtk.Box):
     def add_game_to_library(self, game):
         box = GameBox(game)
 
-        box.connect(self.select_game) # type: ignore
+        box.connect_button(self.select_game) # type: ignore
         GLib.idle_add(self.library.append, box) # type: ignore
     
     def select_game(self, widget, game: Game):

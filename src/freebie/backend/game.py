@@ -32,6 +32,33 @@ class Game:
         result = result.rstrip('-')
         return result.strip()
 
+class InstalledGame(Game):
+    def __init__(self, name: str, exe: str, directory: str) -> None:
+        super().__init__(name, "", "")
+
+        self.exe = exe
+        self.directory = directory
+        self.seconds_played = 0
+
+    def to_dict(self):
+        return {
+                "exe": self.exe,
+                "dir": self.directory,
+                "seconds_played": self.seconds_played
+            }
+
+    @classmethod
+    def from_dict(cls, name: str, data: dict[str, str]):
+        installed_game = cls(
+            name=name,
+            exe=data.get("exe", ""),
+            directory=data.get("dir", "")
+        )
+
+        installed_game.seconds_played = data.get("seconds_played", 0)
+
+        return installed_game
+
 def remove_editions(slug: str):
     editions = [
         "digital deluxe",
