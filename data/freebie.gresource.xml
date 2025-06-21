@@ -11,5 +11,6 @@
     <file preprocess="xml-stripblanks">gtk/help-overlay.ui</file>
     <file preprocess="xml-stripblanks">gtk/igdb_page.ui</file>
     <file preprocess="xml-stripblanks">gtk/preferences.ui</file>
+    <file preprocess="xml-stripblanks">gtk/add_game_dialog.ui</file>
   </gresource>
 </gresources>

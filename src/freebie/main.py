@@ -21,6 +21,8 @@ from threading import Thread
 import sys
 import gi
 
+from freebie.dialogs.add_game import AddGameDialog
+
 from .dialogs.preferences import FreebiePreferences
 from .backend import json_utils
 from .backend.utils import DATA_DIR, umu_run
@@ -43,7 +45,8 @@ class FreebieApplication(Adw.Application):
         self.create_action('about', self.on_about_action)
         self.create_action('preferences', self.on_preferences_action)
         self.create_action('run_exe', self.on_run_exe_action, ['<primary>e'])
-        
+        self.create_action('add_game', self.on_add_game_action, ['<primary>p'])
+
         self.add_main_option("game", ord("g"), GLib.OptionFlags.NONE, GLib.OptionArg.STRING, "The name of the game you want to run")
 
         Thread(target=igdb.save_cache_task, name="SaveMetadata", daemon=True).start()
@@ -96,6 +99,10 @@ class FreebieApplication(Adw.Application):
         Thread(target=umu_run, daemon=True, args=[f"'{path}'"]).start()
         widget.destroy()
     
+    def on_add_game_action(self, action: Gio.SimpleAction, _):
+        dialog = AddGameDialog()
+        dialog.present(self.get_active_window())
+
     def on_about_action(self, widget, _):
         """Callback for the app.about action."""
         about = Adw.AboutDialog(

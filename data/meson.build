@@ -8,6 +8,7 @@ blueprints = custom_target('blueprints',
     'gtk/play_view.blp',
     'gtk/proton_page.blp',
     'gtk/igdb_page.blp',
+    'gtk/add_game_dialog.blp',
     'gtk/preferences.blp'
   ),
   output: '.',
