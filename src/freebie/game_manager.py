@@ -56,7 +56,7 @@ class GameManager:
     def add_custom_game_to_installed(self, game: Game, exe_location: str):
         json_utils.add_to_file(
             f"{DATA_DIR}/installed.json",
-            game.name,
+            game.metadata.name if game.metadata is not None else game.name,
             {
                 "exe": exe_location,
                 "dir": "gleba", # fake directory
