@@ -18,10 +18,15 @@ class MainPage(Adw.NavigationPage):
     browse: Gtk.Box = Gtk.Template.Child()
     play: Gtk.Box = Gtk.Template.Child()
 
-    def __init__(self, nav: Adw.NavigationView, **kwargs):
+    def __init__(self, nav: Adw.NavigationView, win: Gtk.Window, **kwargs):
         super().__init__(**kwargs)
                 
         self.nav = nav
+        self.win = win
+
+        self.searchbar.set_key_capture_widget(self.win)
+        self.searchbar.connect_entry(self.search_entry)
+
         self.searchbar.connect("notify::search-mode-enabled", self.on_searchbar_toggled)
         self.search_button.connect("toggled", self.on_toggle_search_action)
 

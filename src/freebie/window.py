@@ -42,5 +42,5 @@ class FreebieWindow(Adw.ApplicationWindow):
         elif not os.path.exists(f"{DATA_DIR}/igdb.txt"):
             self.nav_view.add(IGDBPage(self.nav_view)) #type: ignore
         else:
-            self.nav_view.add(MainPage(self.nav_view)) #type: ignore
+            self.nav_view.add(MainPage(self.nav_view, self)) #type: ignore
             self.nav_view.add(GamePage(self.nav_view, self)) # type: ignore
