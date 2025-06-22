@@ -135,6 +135,8 @@ class GameManager:
         if (self.game_page is not None):
             installed_game.metadata
             self.game_page.set_game(installed_game) # Update with current time played
+        if (self.play_view is not None):
+            self.play_view.update_game_array()
 
         del self.game_statuses[game.get_slug(True)] # Remove "Running" status from the game
 
