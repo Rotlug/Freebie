@@ -9,7 +9,8 @@ blueprints = custom_target('blueprints',
     'gtk/proton_page.blp',
     'gtk/igdb_page.blp',
     'gtk/add_game_dialog.blp',
-    'gtk/preferences.blp'
+    'gtk/preferences.blp',
+    'gtk/help-overlay.blp'
   ),
   output: '.',
   command: [find_program('blueprint-compiler'), 'batch-compile', '@OUTPUT@', '@CURRENT_SOURCE_DIR@', '@INPUT@'],
