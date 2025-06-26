@@ -29,8 +29,8 @@ python3Packages.buildPythonApplication {
   src = fetchFromGitHub {
     owner = "Rotlug";
     repo = "Freebie";
-    rev = "eca974d6ca68f307acbde296c653b2f0bd17347e";
-    hash = "sha256-RpQxZlBvHoCdtB9f0wdr2NV2vP7RYNjETpj+gfnS54A=";
+    rev = "83644147f8c14824edad417aa341354bd9ce2324";
+    hash = "sha256-swkmuZnD3LCf6NgrVFhO9iNgCTh9iIf3SV713yh20lk=";
   };
 
   strictDeps = true;
