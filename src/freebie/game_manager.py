@@ -200,7 +200,10 @@ class GameManager:
 
     def create_desktop_shortcut(self, installed_game: InstalledGame):
         icon_location = f"{DATA_DIR}/icons/{installed_game.get_slug(True)}_icon.png"
-        desktop_file_location = f"{os.path.expanduser('~/Desktop')}/{installed_game.name}.desktop"
+        desktop_file_locations = [
+            os.path.expanduser(f"~/Desktop/{installed_game.name}.desktop"), # ~/Desktop
+            os.path.expanduser(f"~/.local/share/applications/{installed_game.name}.desktop") # ~/.local/share/applications
+        ]
 
         if (installed_game.exe.endswith(".lnk")):
             command = f"winemenubuilder -t {wrap_in_quotes(installed_game.exe)} {icon_location}"
@@ -224,10 +227,12 @@ Terminal=false
 '''.strip()
 
         # Create desktop shortcut
-        with open(desktop_file_location, "w") as f:
-            f.write(desktop_shortcut)
+        for path in desktop_file_locations:
+            with open(path, "w") as f:
+                f.write(desktop_shortcut)
 
-        call(f"chmod +x {wrap_in_quotes(desktop_file_location)}", shell=True)
+
+            call(f"chmod +x {wrap_in_quotes(path)}", shell=True)
 
 def get_executable():
     if (is_in_path("freebie")):
