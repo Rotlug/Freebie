@@ -10,12 +10,12 @@
   gobject-introspection,
   gtk4,
   libadwaita,
-  icoutils,
   meson,
   ninja,
   nix-update-script,
   pkg-config,
   python3Packages,
+  icoutils,
   wrapGAppsHook4,
   lsb-release,
   pciutils,
@@ -30,8 +30,8 @@ python3Packages.buildPythonApplication {
   src = fetchFromGitHub {
     owner = "Rotlug";
     repo = "Freebie";
-    rev = "83644147f8c14824edad417aa341354bd9ce2324";
-    hash = "sha256-swkmuZnD3LCf6NgrVFhO9iNgCTh9iIf3SV713yh20lk=";
+    rev = "d643906e50d71a16cd2e56008c28d454deff445a";
+    hash = "sha256-qE9pu0lFCS6/ePetP83cLmXxsLBjbQNrW0zCI7eE7wg=";
   };
 
   strictDeps = true;
@@ -66,7 +66,7 @@ python3Packages.buildPythonApplication {
     icoutils
   ];
 
-  dependencies = with python3Packages; [ 
+  dependencies = with python3Packages; [
   	pygobject3
 	pycairo
 	requests
