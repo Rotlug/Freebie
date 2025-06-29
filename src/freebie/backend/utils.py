@@ -99,3 +99,7 @@ def set_wine_sound_driver(sound_driver: str):
         f.write(sound_file)
     
     umu_run(f"reg import {DATA_DIR}/sound.reg")
+
+def wrap_in_quotes(string: str):
+    return f'"{string.replace('"', '\\"')}"'
+

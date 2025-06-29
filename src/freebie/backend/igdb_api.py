@@ -31,7 +31,7 @@ class Metadata:
         return cls(
             cover_url = data['cover']['url'].lstrip('//').replace('thumb', '720p'),
             description = data.get("summary", ""),
-            rating = data.get("aggregated_rating", 0),
+            rating = round(data.get("aggregated_rating", 0)),
             release_date=utils.unix_time_to_string(data.get("first_release_date", 0)),
             name=data.get("name", "")
         )

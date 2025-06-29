@@ -10,6 +10,7 @@
   gobject-introspection,
   gtk4,
   libadwaita,
+  icoutils,
   meson,
   ninja,
   nix-update-script,
@@ -62,6 +63,7 @@ python3Packages.buildPythonApplication {
   propagatedNativeBuildInputs = [
     aria2
     umu-launcher
+    icoutils
   ];
 
   dependencies = with python3Packages; [ 

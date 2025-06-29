@@ -1,9 +1,10 @@
+import os
 from subprocess import call
 from threading import Thread
 import time
 from typing import Any
 
-from .backend.utils import umu_run
+from .backend.utils import is_in_path, umu_run, wrap_in_quotes
 from .backend.fitgirl.installer import FitgirlInstaller
 from .backend.fitgirl.provider import FitgirlProvider
 from .backend.game import Game, InstalledGame
@@ -197,6 +198,43 @@ class GameManager:
 
         return games
 
+    def create_desktop_shortcut(self, installed_game: InstalledGame):
+        icon_location = f"{DATA_DIR}/icons/{installed_game.get_slug(True)}_icon.png"
+        desktop_file_location = f"{os.path.expanduser('~/Desktop')}/{installed_game.name}.desktop"
+
+        if (installed_game.exe.endswith(".lnk")):
+            command = f"winemenubuilder -t {wrap_in_quotes(installed_game.exe)} {icon_location}"
+            # Generate Icon using winemenubuilder
+            umu_run(command)
+        elif (installed_game.exe.endswith(".exe") and is_in_path("wrestool")):
+            command = f"wrestool -x -t14 --output={wrap_in_quotes(icon_location)} {wrap_in_quotes(installed_game.exe)}"
+            call(command, shell=True)
+
+        desktop_shortcut = f'''
+[Desktop Entry]
+Type=Application
+Name={installed_game.name}
+Comment=
+Icon={icon_location}
+TryExec={get_executable()}
+Exec={get_executable()} --game={wrap_in_quotes(installed_game.name)}
+Categories=Game;
+StartupNotify=true
+Terminal=false
+'''.strip()
+
+        # Create desktop shortcut
+        with open(desktop_file_location, "w") as f:
+            f.write(desktop_shortcut)
+
+        call(f"chmod +x {wrap_in_quotes(desktop_file_location)}", shell=True)
+
+def get_executable():
+    if (is_in_path("freebie")):
+        return "freebie"
+    return "flatpak run com.github.rotlug.Freebie"
+
 # GameManager singleton
 ensure_directory("downloads")
+ensure_directory("icons")
 game_manager = GameManager()
