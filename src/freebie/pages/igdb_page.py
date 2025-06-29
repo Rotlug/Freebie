@@ -17,9 +17,9 @@ class IGDBPage(Adw.NavigationPage):
     subtitle: Gtk.Label = Gtk.Template.Child()
     apply: Gtk.Button = Gtk.Template.Child()
 
-    def __init__(self, nav: Adw.NavigationView):
+    def __init__(self, nav: Adw.NavigationView, **kwrags):
         self.nav = nav
-        super().__init__()
+        super().__init__(**kwrags)
 
         self.subtitle.set_markup('You can get your credentials using <a href="https://api-docs.igdb.com/#account-creation">this guide</a>.')    
         

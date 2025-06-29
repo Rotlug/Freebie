@@ -40,7 +40,7 @@ class FreebieWindow(Adw.ApplicationWindow):
         if not is_non_empty_directory(f"{DATA_DIR}/proton") or not is_non_empty_directory(f"{DATA_DIR}/prefix"):
             self.nav_view.add(ProtonPage(self.nav_view)) #type: ignore
         elif not os.path.exists(f"{DATA_DIR}/igdb.txt"):
-            self.nav_view.add(IGDBPage(self.nav_view)) #type: ignore
+            self.nav_view.add(IGDBPage(self.nav_view))
         else:
-            self.nav_view.add(MainPage(self.nav_view, self)) #type: ignore
-            self.nav_view.add(GamePage(self.nav_view, self)) # type: ignore
+            self.nav_view.add(MainPage(self.nav_view, self))
+            self.nav_view.add(GamePage(self.nav_view, self))

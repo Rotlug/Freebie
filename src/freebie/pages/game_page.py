@@ -1,5 +1,6 @@
 from typing import Union
 from gi.repository import Adw, Gtk, GLib, GdkPixbuf
+from gi.repository import Gio
 from gi.repository.Gio import InetSocketAddress
 
 from ..backend.game import Game, InstalledGame
@@ -26,8 +27,11 @@ class GamePage(Adw.NavigationPage):
 
     time_played: Gtk.Label = Gtk.Template.Child()
 
-    def __init__(self, nav: Adw.NavigationView, window: Adw.ApplicationWindow):
-        super().__init__()
+    toast_overlay: Adw.ToastOverlay = Gtk.Template.Child()
+    actions_menu: Gtk.MenuButton = Gtk.Template.Child()
+
+    def __init__(self, nav: Adw.NavigationView, window: Adw.ApplicationWindow, **kwrags):
+        super().__init__(**kwrags)
         self.nav = nav
         self.window = window
 
@@ -37,8 +41,28 @@ class GamePage(Adw.NavigationPage):
 
         self.action_button.connect("clicked", self.get_game)
         self.remove_button.connect("clicked", self.uninstall_game)
-        
+
         game_manager.game_page = self
+
+        self.action_group = Gio.SimpleActionGroup()
+        self.insert_action_group("game", self.action_group)
+
+        # Add a "create-desktop-shortcut" action
+        act = Gio.SimpleAction.new("create_desktop_shortcut", None)
+        act.connect("activate", self.create_desktop_shortcut)
+        self.action_group.add_action(act)
+
+    def create_desktop_shortcut(self, _action, _):
+        thread = Thread(target=self.create_desktop_shortcut_thread, daemon=True)
+        thread.start()
+
+    def create_desktop_shortcut_thread(self):
+        if (not isinstance(self.game, InstalledGame)): return
+
+        self.toast_overlay.add_toast(Adw.Toast(title="Creating Shortcut..."))
+        game_manager.create_desktop_shortcut(self.game)
+        self.toast_overlay.dismiss_all() # type: ignore
+        self.toast_overlay.add_toast(Adw.Toast(title="Desktop Shortcut Created"))
 
     def set_game(self, game: Game):
         if game.metadata is None:
@@ -52,9 +76,11 @@ class GamePage(Adw.NavigationPage):
         
         # Time Played
         if (isinstance(game, InstalledGame)):
+            self.actions_menu.set_visible(True)
             self.time_played.set_visible(True)
             self.time_played.set_label(f"Time Played: {game_manager.format_duration(game.seconds_played)}")
         else:
+            self.actions_menu.set_visible(False)
             self.time_played.set_visible(False)
 
         self.game = game

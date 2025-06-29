@@ -33,8 +33,8 @@ class MainPage(Adw.NavigationPage):
         self.stack.connect("notify::visible-child", self.visible_child_changed)
 
         # Add Views
-        self.browse.append(BrowseView(self.search_entry, self.stack, self.nav)) # type: ignore
-        self.play.append(PlayView(self.search_entry, self.stack, self.nav)) # type: ignore
+        self.browse.append(BrowseView(self.search_entry, self.stack, self.nav))
+        self.play.append(PlayView(self.search_entry, self.stack, self.nav))
 
     def visible_child_changed(self, widget, _):
         self.search_button.set_active(False)

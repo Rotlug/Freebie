@@ -5,105 +5,127 @@ template $GamePage: Adw.NavigationPage {
   title: "Details View";
   tag: "game";
 
-  Overlay view {
-    [overlay]
-    Adw.ToolbarView details_view_toolbar_view {
-      [top]
-      Adw.HeaderBar {
-        title-widget: Adw.WindowTitle window_title {};
+  Adw.ToastOverlay toast_overlay {
+    Overlay view {
+      [overlay]
+      Adw.ToolbarView details_view_toolbar_view {
+        [top]
+        Adw.HeaderBar {
+          title-widget: Adw.WindowTitle window_title {};
+        }
+
+        content: ScrolledWindow {
+          Box details_view_box {
+            margin-start: 24;
+            margin-end: 24;
+            margin-top: 24;
+            margin-bottom: 24;
+
+            Adw.Clamp {
+              maximum-size: 200;
+
+              Overlay {
+                Picture cover {
+                  halign: end;
+                  valign: start;
+                  content-fit: cover;
+                  width-request: 200;
+                  height-request: 300;
+
+                  styles [
+                    "card",
+                  ]
+                }
+              }
+            }
+
+            Box {
+              orientation: vertical;
+              margin-start: 10;
+              hexpand: true;
+
+              Label game_title {
+                wrap: true;
+                wrap-mode: word;
+                halign: start;
+                label: "Game Title";
+                styles [
+                  "title-1"
+                ]
+              }
+
+              Label game_subtitle {
+                wrap: true;
+                wrap-mode: word;
+                halign: start;
+                label: "7/10 • 24Gb";
+                styles [
+                  "heading"
+                ]
+              }
+
+              Label time_played {
+                wrap: true;
+                halign: start;
+                styles [
+                  "dim-label"
+                ]
+                label: "Time Played: 1 Hour, 4 Minutes and 22 seconds (Example)";
+              }
+
+              Label game_description {
+                wrap: true;
+                wrap-mode: word;
+                margin-top: 10;
+                halign: start;
+                label: "Description";
+              }
+
+              Box {
+                orientation: horizontal;
+                margin-top: 10;
+                spacing: 10;
+
+                Button action_button {
+                }
+
+                Button remove_button {
+                  styles [
+                    "destructive-action"
+                  ]
+
+                  label: "Delete";
+                }
+
+                MenuButton actions_menu {
+                  popover: PopoverMenu {
+                    menu-model: game_actions_menu;
+                  };
+
+                  icon-name: "view-more-symbolic";
+                  tooltip-text: "More Actions";
+
+                  styles [
+                    "flat"
+                  ]
+                }
+              }
+            }
+          }
+        };
       }
 
-      content: ScrolledWindow {
-        Box details_view_box {
-          margin-start: 24;
-          margin-end: 24;
-          margin-top: 24;
-          margin-bottom: 24;
-
-          Adw.Clamp {
-            maximum-size: 200;
-
-            Overlay {
-              Picture cover {
-                halign: end;
-                valign: start;
-                content-fit: cover;
-                width-request: 200;
-                height-request: 300;
-
-                styles [
-                  "card",
-                ]
-              }
-            }
-          }
-
-          Box {
-            orientation: vertical;
-            margin-start: 10;
-            hexpand: true;
-
-            Label game_title {
-              wrap: true;
-              wrap-mode: word;
-              halign: start;
-              label: "Game Title";
-              styles [
-                "title-1"
-              ]
-            }
-
-            Label game_subtitle {
-              wrap: true;
-              wrap-mode: word;
-              halign: start;
-              label: "7/10 • 24Gb";
-              styles [
-                "heading"
-              ]
-            }
-
-            Label time_played {
-              wrap: true;
-              halign: start;
-              styles [
-                "dim-label"
-              ]
-              label: "Time Played: 1 Hour, 4 Minutes and 22 seconds (Example)";
-            }
-
-            Label game_description {
-              wrap: true;
-              wrap-mode: word;
-              margin-top: 10;
-              halign: start;
-              label: "Description";
-            }
-            
-            Box {
-              orientation: horizontal;
-              margin-top: 10;
-
-              Button action_button {
-                margin-end: 10;
-              }
-
-              Button remove_button {
-                styles [
-                  "destructive-action"
-                ]
-
-                label: "Delete";
-              }
-            }
-          }
-        }
-      };
+      Picture blurred_background {
+        opacity: 0.25;
+        keep-aspect-ratio: false;
+      }
     }
+  }
+}
 
-    Picture blurred_background {
-      opacity: 0.25;
-      keep-aspect-ratio: false;
-    }
+menu game_actions_menu {
+  item {
+    label: "Create Desktop Shortcut";
+    action: "game.create_desktop_shortcut";
   }
 }
