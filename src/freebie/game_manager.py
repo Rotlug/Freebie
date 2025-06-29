@@ -71,7 +71,7 @@ class GameManager:
         installer_thread.start()
 
         game_slug = game.get_slug(True)
-        
+
         self.game_statuses[game_slug] = "Downloading... 0%"
         while installer_thread.is_alive():
             if game_slug in installer.downloads:
@@ -86,7 +86,13 @@ class GameManager:
         if self.play_view != None:
             self.play_view.update_game_array()
         if self.game_page != None:
-            self.game_page.set_game(game)
+            if (self.is_installed(game)):
+                installed = json_utils.get_file(f"{DATA_DIR}/installed.json")
+                installed_game = InstalledGame.from_dict(game.name, installed[game.name])
+
+                self.game_page.set_game(installed_game)
+            else:
+                self.game_page.set_game(game)
     
     def update_button_task(self, game_page, nav: Adw.NavigationView):
         while True:

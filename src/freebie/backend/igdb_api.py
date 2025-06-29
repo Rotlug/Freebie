@@ -34,8 +34,8 @@ class IGDBApiWrapper:
         self.access: dict | None = None
 
         # measure time since access renewal
-        self.seconds_left = 0
-        self.last_renewed = 0
+        self.seconds_left = 0.0
+        self.last_renewed = 0.0
         
         # json cache
         self.cache = json_utils.get_file(METADATA_FILE)
