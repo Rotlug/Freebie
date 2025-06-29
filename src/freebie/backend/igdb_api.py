@@ -1,3 +1,4 @@
+from typing import Any
 from .game import Game
 from . import utils, json_utils
 import requests
@@ -8,7 +9,7 @@ from .utils import DATA_DIR
 METADATA_FILE = f"{DATA_DIR}/metadata.json"
 
 class Metadata:
-    def __init__(self, name, cover_url, rating, release_date, description) -> None:
+    def __init__(self, name: str, cover_url: str, rating: int, release_date: str, description: str) -> None:
         self.name = name
         self.cover_url = cover_url
         self.rating = rating
@@ -24,6 +25,16 @@ class Metadata:
         print(self.release_date)
         print("-----------Description-------------")
         print(self.description)
+
+    @classmethod
+    def from_api_data(cls, data: dict[str, Any]):
+        return cls(
+            cover_url = data['cover']['url'].lstrip('//').replace('thumb', '720p'),
+            description = data.get("summary", ""),
+            rating = data.get("aggregated_rating", 0),
+            release_date=utils.unix_time_to_string(data.get("first_release_date", 0)),
+            name=data.get("name", "")
+        )
 
 # IGDBApiWrapper singleton
 class IGDBApiWrapper:
@@ -77,13 +88,14 @@ class IGDBApiWrapper:
             if result == None:
                 if retry: return None
                 else: return self.search(game, retry=True)
-            return self.dict_to_metadata(result)
+            return Metadata.from_api_data(result)
         
         # Get From API
         print(f"Fetching {slug} from api")
         self.generate_access() # Regenerate Access if time is running out
         assert self.access != None
-        data = requests.post('https://api.igdb.com/v4/games', **{'headers': {'Client-ID': self.client_id, 'Authorization': f'Bearer {self.access["access_token"]}'},'data': f'fields cover.url,name,url,summary,aggregated_rating,first_release_date; where slug="{slug}"; limit 1;'}).json()
+
+        data = self.fetch_data('https://api.igdb.com/v4/games', f'fields cover.url,name,url,summary,aggregated_rating,first_release_date; where slug="{slug}"; limit 1;')
 
         no_data = (data == [])
 
@@ -98,21 +110,14 @@ class IGDBApiWrapper:
         # Data Found - Save in cache and continue
         data = data[0]
         self.cache[slug] = data
-        return self.dict_to_metadata(data)
+        return Metadata.from_api_data(data)
 
-    def dict_to_metadata(self, data: dict) -> Metadata:
-        if 'first_release_date' not in data: data['first_release_date'] = 0
-        if 'aggregated_rating' not in data: data['aggregated_rating'] = 0
-        if 'summary' not in data: data['summary'] = ""
-        if 'name' not in data: data['name'] = "Name not found!"
-        
-        return Metadata(
-            cover_url = data['cover']['url'].lstrip('//').replace('thumb', '720p'),
-            description = data['summary'],
-            rating = round(data['aggregated_rating']),
-            release_date=utils.unix_time_to_string(data['first_release_date']),
-            name=data["name"]
-        )
+    # Helper function to fetch data from igdb api
+    def fetch_data(self, endpoint: str, data: str):
+        self.generate_access()
+        assert self.access is not None
+
+        return requests.post(endpoint, **{'headers': {'Client-ID': self.client_id, 'Authorization': f'Bearer {self.access["access_token"]}'},'data': data}).json()
 
     def save_cache_task(self):
         # Save cache to disk periodically
