@@ -21,6 +21,7 @@ from threading import Thread
 import sys
 import gi
 
+from freebie.backend.game import Game
 from freebie.dialogs.add_game import AddGameDialog
 
 from .dialogs.preferences import FreebiePreferences
@@ -28,6 +29,8 @@ from .backend import json_utils
 from .backend.utils import DATA_DIR, umu_run
 from .backend.igdb_api import igdb
 from .backend.fitgirl.installer import proc
+
+from freebie.game_manager import game_manager
 
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
@@ -56,15 +59,14 @@ class FreebieApplication(Adw.Application):
         options = command_line.get_options_dict()
         # convert GVariantDict -> GVariant -> dict
         options = options.end().unpack()
-        
+
         if "game" in options:
             name: str = options["game"]
-            installed = json_utils.get_file(f"{DATA_DIR}/installed.json")
-            if name not in installed:
-                print(f'"{name}" not found in {DATA_DIR}/installed.json')
-                return 1
-            exe = installed[name]["exe"]
-            umu_run(f'"{exe}"')
+            installed_game = game_manager.is_installed(Game(name, "", ""))
+            if (installed_game):
+                game_manager.run_game(installed_game)
+            else:
+                print(f"Error: {name} not found")
         else: self.activate()
         
         return 0

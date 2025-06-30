@@ -87,10 +87,8 @@ class GameManager:
         if self.play_view != None:
             self.play_view.update_game_array()
         if self.game_page != None:
-            if (self.is_installed(game)):
-                installed = json_utils.get_file(f"{DATA_DIR}/installed.json")
-                installed_game = InstalledGame.from_dict(game.name, installed[game.name])
-
+            installed_game = self.is_installed(game)
+            if (installed_game):
                 self.game_page.set_game(installed_game)
             else:
                 self.game_page.set_game(game)
@@ -157,8 +155,12 @@ class GameManager:
         if self.play_view != None:
             self.play_view.update_game_array()
         
-    def is_installed(self, game: Game):
-        return game.name in json_utils.get_file(f"{DATA_DIR}/installed.json")
+    def is_installed(self, game: Game) -> InstalledGame | None:
+        installed = json_utils.get_file(f"{DATA_DIR}/installed.json")
+        if game.name in installed:
+            return InstalledGame.from_dict(game.name, installed[game.name])
+
+        return None
 
     def format_duration(self, seconds: int) -> str:
         delta = timedelta(seconds=seconds)

@@ -103,7 +103,7 @@ class GamePage(Adw.NavigationPage):
         # Update button state when entering the page
         game_manager.update_button(game, self.action_button)
 
-        self.remove_button.set_visible(game_manager.is_installed(game))
+        self.remove_button.set_visible(game_manager.is_installed(game) is not None)
         
     def get_game(self, widget):
         self.action_button.set_sensitive(False)
