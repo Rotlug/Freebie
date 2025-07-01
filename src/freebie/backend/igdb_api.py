@@ -83,7 +83,6 @@ class IGDBApiWrapper:
 
         # Get From Cache
         if slug in self.cache:
-            print(f"Fetching {slug} from cache")
             result = self.cache[slug]
             if result == None:
                 if retry: return None
@@ -91,10 +90,6 @@ class IGDBApiWrapper:
             return Metadata.from_api_data(result)
         
         # Get From API
-        print(f"Fetching {slug} from api")
-        self.generate_access() # Regenerate Access if time is running out
-        assert self.access != None
-
         data = self.fetch_data('https://api.igdb.com/v4/games', f'fields cover.url,name,url,summary,aggregated_rating,first_release_date; where slug="{slug}"; limit 1;')
 
         no_data = (data == [])
@@ -126,7 +121,6 @@ class IGDBApiWrapper:
             time.sleep(60)
 
     def save_cache_to_disk(self):
-        print(f"Saved Cache to {METADATA_FILE}")
         json_utils.override_file(METADATA_FILE, self.cache)
 
 # IGDB Singleton

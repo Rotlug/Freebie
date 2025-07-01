@@ -37,7 +37,10 @@ class PlayView(Gtk.Box):
         for game in game_manager.get_all_installed_games():
             game.metadata = igdb.search(game)
 
-            assert game.metadata != None
+            if (game.metadata is None):
+                print(f"Warning: {game.name} doesn't have metadata. skipped showing in play view'")
+                continue
+
             game.name = game.metadata.name
             
             self.games.append(game)

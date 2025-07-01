@@ -104,9 +104,11 @@ class FreebieApplication(Adw.Application):
     def on_add_game_action(self, action: Gio.SimpleAction, _):
         window = self.get_active_window()
 
-        assert window is not None
-        dialog = AddGameDialog(window)
-        dialog.present(self.get_active_window())
+        if (window is not None):
+            dialog = AddGameDialog(window)
+            dialog.present(self.get_active_window())
+        else:
+            print("Warning: window is None")
 
     def on_about_action(self, widget, _):
         """Callback for the app.about action."""
