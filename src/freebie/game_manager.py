@@ -2,7 +2,7 @@ import os
 from subprocess import call
 from threading import Thread
 import time
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 from .backend.utils import is_in_path, umu_run, wrap_in_quotes
 from .backend.fitgirl.installer import FitgirlInstaller
@@ -18,6 +18,10 @@ from gi.repository import Gtk, Adw, GLib
 
 from datetime import timedelta
 
+if TYPE_CHECKING:
+    from freebie.pages.game_page import GamePage
+    from freebie.pages.play_view import PlayView
+
 class Source:
     def __init__(self, provider: type[Provider], installer: type[Installer]):
         self.provider = provider()
@@ -30,8 +34,8 @@ class GameManager:
         ]
 
         self.game_statuses: dict[str, str] = {}
-        self.play_view: Any = None # typeof PlayView
-        self.game_page: Any = None # typeof GamePage
+        self.play_view: PlayView | None  = None
+        self.game_page: GamePage | None = None
     
     def search(self, query: str) -> list[Game]:
         if query == "": return self.get_popular()
