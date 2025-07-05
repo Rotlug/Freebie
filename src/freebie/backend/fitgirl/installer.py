@@ -11,7 +11,9 @@ from os import listdir
 from shutil import rmtree
 from ..ensure import DATA_DIR, find
 
-proc = subprocess.Popen("aria2c --enable-rpc > /dev/null", shell=True) # Open ARIA2
+import atexit
+
+proc = subprocess.Popen(["aria2c", "--enable-rpc"], stdout=subprocess.DEVNULL)
 
 aria2 = aria2p.API(
             aria2p.Client(
@@ -24,6 +26,12 @@ aria2 = aria2p.API(
 class FitgirlInstaller(Installer):
     def __init__(self) -> None:
         super().__init__()
+        atexit.register(self.cleanup)
+
+    def cleanup(self):
+        print("Stopping aria2")
+        proc.kill()
+
 
     def get_game(self, game: Game) -> None:
         print(f"GAME_LINK {game.link}")
