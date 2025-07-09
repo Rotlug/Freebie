@@ -80,7 +80,8 @@ def umu_run(exe: str):
     env = os.environ
     env["GAMEID"] = "0"
     env["WINEPREFIX"] = f"{DATA_DIR}/prefix"
-    
+    env["PROTONPATH"]="GE-Proton"
+
     python = sys.executable
 
     if (is_in_path("umu-run")):
