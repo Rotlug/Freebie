@@ -18,7 +18,7 @@ class AddGameDialog(Adw.Dialog):
     exe_file_chooser_button: Gtk.Button = Gtk.Template.Child()
 
     select_exe_row: Adw.ActionRow = Gtk.Template.Child()
-    game_name_row: Adw.ActionRow = Gtk.Template.Child()
+    game_name_row: Adw.EntryRow = Gtk.Template.Child()
 
     def __init__(self, window: Gtk.Window, **kwargs: Any):
         super().__init__(**kwargs)
@@ -26,15 +26,24 @@ class AddGameDialog(Adw.Dialog):
         self.add_button.connect("clicked", self.on_add_button_clicked)
         self.cancel_button.connect("clicked", self.on_cancel_button_clicked)
         self.exe_file_chooser_button.connect("clicked", self.choose_exe_location)
+
         self.game_name_row.connect("changed", self.on_game_name_changed)
 
         self.window = window
         self.path: str = ""
         self.game_name = ""
 
+    def on_data_changed(self):
+        print(self.game_name)
+        print(self.path)
+
+        can_add_game = len(self.game_name) > 0 and len(self.path) > 0
+
+        self.add_button.set_sensitive(can_add_game)
+
     def on_game_name_changed(self, widget: Adw.EntryRow):
-        self.add_button.set_sensitive(widget.get_text_length() > 0)
         self.game_name = widget.get_text()
+        self.on_data_changed()
 
     def choose_exe_location(self, _):
         dialog = Gtk.FileChooserNative(
@@ -49,9 +58,16 @@ class AddGameDialog(Adw.Dialog):
         dialog.show()
 
     def on_file_selected(self, widget: Gtk.FileChooserNative, _):
-        path: str = widget.get_file().get_path() # type: ignore
+        f = widget.get_file()
+        if f is None: return
+
+        path = f.get_path()
+        if path is None: return
+
         self.path = path
         self.select_exe_row.set_subtitle(path)
+
+        self.on_data_changed()
 
     def on_add_button_clicked(self, _):
         game = InstalledGame(self.game_name, exe=self.path, directory="")
