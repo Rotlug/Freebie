@@ -49,6 +49,7 @@ class FreebieApplication(Adw.Application):
         self.create_action('preferences', self.on_preferences_action)
         self.create_action('run_exe', self.on_run_exe_action, ['<primary>e'])
         self.create_action('add_game', self.on_add_game_action, ['<primary>p'])
+        self.create_action('open_c_drive', self.on_open_c_drive_action, [])
 
         self.add_main_option("game", ord("g"), GLib.OptionFlags.NONE, GLib.OptionArg.STRING, "The name of the game you want to run")
 
@@ -125,6 +126,13 @@ class FreebieApplication(Adw.Application):
         """Callback for the app.preferences action."""
         preferences_dialog = FreebiePreferences()
         preferences_dialog.present(self.get_active_window())
+
+    def on_open_c_drive_action(self, widget, _):
+        launcher = Gtk.FileLauncher()
+        launcher.set_file(Gio.File.new_for_path(f"{DATA_DIR}/prefix/drive_c"))
+
+        launcher.launch()
+
 
     def create_action(self, name, callback, shortcuts: list[str] | None = None):
         """Add an application action.
