@@ -30,8 +30,8 @@ python3Packages.buildPythonApplication {
   src = fetchFromGitHub {
     owner = "Rotlug";
     repo = "Freebie";
-    rev = "ebf553fc1edf061daeec0a4bd9c2721d882c0e4a";
-    hash = "sha256-MiRpWOF+KIgs4WZdMe8QEkz2nbXwCQBjDJbErryCmWs=";
+    rev = "850302584101a0d284bccbacba188b7e5fdf04df";
+    hash = "sha256-LiyZgTd+PsQUWnQ8S+6bog/b3hxUzpFu8b3+SjQfP8s=";
   };
 
   strictDeps = true;
