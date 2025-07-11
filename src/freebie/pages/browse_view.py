@@ -33,10 +33,10 @@ class BrowseView(Gtk.Box):
         
         thread = Thread(target=self.populate_library, daemon=True, args=[text])
         thread.start()
-        GLib.idle_add(self.library.remove_all)
 
     def populate_library(self, text: str):
-        print("Populating library")
+        GLib.idle_add(self.library.remove_all)
+
         self.set_spinner_reveal(True)
         games = game_manager.search(text)
         game_names: list[str] = []

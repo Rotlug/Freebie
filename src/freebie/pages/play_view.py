@@ -20,7 +20,7 @@ class PlayView(Gtk.Box):
     def __init__(self, search_entry: Gtk.SearchEntry, stack: Adw.ViewStack, nav_view: Adw.NavigationView, **kwargs):
         super().__init__(**kwargs)
         self.search_entry = search_entry
-        self.search_entry.connect("search_changed", self.on_search_entry_search_changed)
+        self.search_entry.connect("changed", self.on_search_entry_search_changed)
         self.stack = stack
         self.nav_view = nav_view
         
