@@ -19,7 +19,7 @@ class BrowseView(Gtk.Box):
     def __init__(self, search_entry: Gtk.SearchEntry, stack: Adw.ViewStack, nav_view: Adw.NavigationView, **kwargs):
         super().__init__(**kwargs)
         self.search_entry = search_entry
-        self.search_entry.connect("search_changed", self.on_search_entry_search_changed)
+
         self.stack = stack
         self.nav_view = nav_view
 
@@ -36,6 +36,7 @@ class BrowseView(Gtk.Box):
         GLib.idle_add(self.library.remove_all)
 
     def populate_library(self, text: str):
+        print("Populating library")
         self.set_spinner_reveal(True)
         games = game_manager.search(text)
         game_names: list[str] = []

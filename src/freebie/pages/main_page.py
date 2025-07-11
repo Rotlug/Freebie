@@ -1,10 +1,8 @@
 from gi.repository import Adw
 from gi.repository import Gtk
-# from ..game_manager import GameManager
 from .browse_view import BrowseView
 from .play_view import PlayView
 
-# from ..backend.igdb_api import igdb
 
 @Gtk.Template(resource_path='/com/github/rotlug/Freebie/gtk/main_page.ui')
 class MainPage(Adw.NavigationPage):
@@ -20,7 +18,9 @@ class MainPage(Adw.NavigationPage):
 
     def __init__(self, nav: Adw.NavigationView, win: Gtk.Window, **kwargs):
         super().__init__(**kwargs)
-                
+
+        self.browse_view_opened = False # Keep track if the browse view has been opened in this session
+
         self.nav = nav
         self.win = win
 
@@ -33,19 +33,26 @@ class MainPage(Adw.NavigationPage):
         self.stack.connect("notify::visible-child", self.visible_child_changed)
 
         # Add Views
-        self.browse.append(BrowseView(self.search_entry, self.stack, self.nav))
+        self.browse_view = BrowseView(self.search_entry, self.stack, self.nav)
+        self.browse.append(self.browse_view)
+
         self.play.append(PlayView(self.search_entry, self.stack, self.nav))
 
-    def visible_child_changed(self, widget, _):
+        # Trigger visible_child_changed at startup
+        self.visible_child_changed(None, None)
+
+    def visible_child_changed(self, _, __):
         self.search_button.set_active(False)
         
         name = self.stack.get_visible_child().get_first_child().get_name() # type: ignore
         
         if name == "BrowseView":
-            self.search_entry.set_search_delay(500)
-        else:
-            self.search_entry.set_search_delay(0)
-        
+            if not self.browse_view_opened:
+                self.search_entry.connect("changed", self.browse_view.on_search_entry_search_changed)
+                self.browse_view.populate_library(self.search_entry.get_text())
+
+            self.browse_view_opened = True
+
     def on_searchbar_toggled(self, widget, paramspec):
         enabled = self.searchbar.get_search_mode()
         self.search_button.set_active(enabled)

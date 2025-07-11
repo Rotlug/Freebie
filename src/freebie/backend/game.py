@@ -69,7 +69,6 @@ def remove_editions(slug: str):
 
     for ed in editions:
         if ed in slug.lower():
-            print(f"FOUND {ed} in {slug}")
             slug = slug.split(ed)[0]
             break
     
