@@ -48,13 +48,12 @@ class FreebieWindow(Adw.ApplicationWindow):
             self.nav_view.add(GamePage(self.nav_view, self))
 
     def do_close_request(self) -> bool:
-        can_close = len(game_manager.game_statuses) == 0
-
-        print(game_manager.game_statuses)
+        # Check if there are any ongoing installations
+        can_close = len(game_manager.game_statuses) == 0 or all(list(map(lambda status: status == "Running", game_manager.game_statuses.values())))
 
         if not can_close:
             dialog = Adw.AlertDialog(
-                heading="Really Close?",
+                heading="Are you sure?",
                 body="Game installations are ongoing, closing will stop them!",
                 default_response="cancel"
             )
