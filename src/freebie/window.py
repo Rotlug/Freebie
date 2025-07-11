@@ -28,6 +28,8 @@ from .pages.game_page import GamePage
 from .pages.proton_page import ProtonPage
 from .pages.igdb_page import IGDBPage
 
+from freebie.game_manager import game_manager
+
 @Gtk.Template(resource_path='/com/github/rotlug/Freebie/gtk/window.ui')
 class FreebieWindow(Adw.ApplicationWindow):
     __gtype_name__ = 'FreebieWindow'
@@ -44,3 +46,30 @@ class FreebieWindow(Adw.ApplicationWindow):
         else:
             self.nav_view.add(MainPage(self.nav_view, self))
             self.nav_view.add(GamePage(self.nav_view, self))
+
+    def do_close_request(self) -> bool:
+        can_close = len(game_manager.game_statuses) == 0
+
+        print(game_manager.game_statuses)
+
+        if not can_close:
+            dialog = Adw.AlertDialog(
+                heading="Really Close?",
+                body="Game installations are ongoing, closing will stop them!",
+                default_response="cancel"
+            )
+
+            dialog.add_response("cancel", "Cancel")
+
+            dialog.add_response("close", "Close")
+            dialog.set_response_appearance("close", Adw.ResponseAppearance.DESTRUCTIVE)
+
+            dialog.connect("response", self.on_close_dialog_response)
+
+            dialog.present(self)
+
+        return not can_close
+
+    def on_close_dialog_response(self, dialog: Adw.Dialog, response: str):
+        if response == "close": self.destroy()
+

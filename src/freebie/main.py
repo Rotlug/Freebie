@@ -79,11 +79,12 @@ class FreebieApplication(Adw.Application):
         necessary.
         """
         win = self.get_active_window()
+
         if win == None:
             win = FreebieWindow(self) # type: ignore
-        
+
         win.present() # type: ignore
-    
+
     def on_run_exe_action(self, widget, _):
         dialog = Gtk.FileChooserNative(
             title="Choose Executable",
@@ -132,7 +133,6 @@ class FreebieApplication(Adw.Application):
         launcher.set_file(Gio.File.new_for_path(f"{DATA_DIR}/prefix/drive_c"))
 
         launcher.launch()
-
 
     def create_action(self, name, callback, shortcuts: list[str] | None = None):
         """Add an application action.

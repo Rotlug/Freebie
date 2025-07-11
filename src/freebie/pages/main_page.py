@@ -49,7 +49,6 @@ class MainPage(Adw.NavigationPage):
         # Trigger visible_child_changed at startup
         self.visible_child_changed(None, None, False)
 
-
     def visible_child_changed(self, _, __, is_user_action=True):
         self.search_button.set_active(False)
         
