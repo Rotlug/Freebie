@@ -6,7 +6,7 @@ from gi.repository.Gio import InetSocketAddress
 from ..backend.game import Game, InstalledGame
 from PIL import Image, ImageFilter
 from ..game_box import url_pixbuf
-from ..game_manager import game_manager
+from ..game_manager import DesktopShortcuts, game_manager
 from threading import Thread
 
 from ..backend.igdb_api import igdb
@@ -66,7 +66,9 @@ class GamePage(Adw.NavigationPage):
             return
 
         self.toast_overlay.add_toast(Adw.Toast(title="Creating Shortcut..."))
-        game_manager.create_desktop_shortcut(self.game)
+
+        DesktopShortcuts.create(self.game)
+
         self.toast_overlay.dismiss_all()  # type: ignore
         self.toast_overlay.add_toast(Adw.Toast(title="Desktop Shortcut Created"))
 
@@ -134,7 +136,7 @@ class GamePage(Adw.NavigationPage):
         dialog.present(self.window)
 
     def on_delete_dialog_response(self, dialog, response):
-        if response == "delete":
+        if response == "delete" and isinstance(self.game, InstalledGame):
             game_manager.uninstall(self.game)
             self.set_game(self.game)
             self.nav.pop_to_tag("main")

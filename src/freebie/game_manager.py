@@ -164,7 +164,9 @@ class GameManager:
             return self.run_game_thread
         return self.get_game_thread
 
-    def uninstall(self, game: Game):
+    def uninstall(self, game: InstalledGame):
+        DesktopShortcuts.remove(game)
+
         call(
             f"rm -r {json_utils.get_file(f'{DATA_DIR}/installed.json')[game.name]['dir']}",
             shell=True,
@@ -223,42 +225,54 @@ class GameManager:
 
         return games
 
-    def create_desktop_shortcut(self, installed_game: InstalledGame):
-        icon_location = f"{DATA_DIR}/icons/{installed_game.get_slug(True)}_icon.png"
-        desktop_file_locations = [
-            os.path.expanduser(f"~/Desktop/{installed_game.name}.desktop"),  # ~/Desktop
-            os.path.expanduser(
-                f"~/.local/share/applications/{installed_game.name}.desktop"
-            ),  # ~/.local/share/applications
-        ]
 
-        if installed_game.exe.endswith(".lnk"):
-            command = f"winemenubuilder -t {wrap_in_quotes(installed_game.exe)} {icon_location}"
+class DesktopShortcuts:
+    @staticmethod
+    def create(game: InstalledGame):
+        icon_location = f"{DATA_DIR}/icons/{game.get_slug(True)}_icon.png"
+
+        if game.exe.endswith(".lnk"):
+            command = f"winemenubuilder -t {wrap_in_quotes(game.exe)} {icon_location}"
             # Generate Icon using winemenubuilder
             umu_run(command)
-        elif installed_game.exe.endswith(".exe") and is_in_path("wrestool"):
-            command = f"wrestool -x -t14 --output={wrap_in_quotes(icon_location)} {wrap_in_quotes(installed_game.exe)}"
+        elif game.exe.endswith(".exe") and is_in_path("wrestool"):
+            command = f"wrestool -x -t14 --output={wrap_in_quotes(icon_location)} {wrap_in_quotes(game.exe)}"
             call(command, shell=True)
 
         desktop_shortcut = f"""
 [Desktop Entry]
 Type=Application
-Name={installed_game.name}
+Name={game.name}
 Comment=
 Icon={icon_location}
 TryExec={get_executable()}
-Exec={get_executable()} --game={wrap_in_quotes(installed_game.name)}
+Exec={get_executable()} --game={wrap_in_quotes(game.name)}
 Categories=Game;
 StartupNotify=true
 Terminal=false
 """.strip()
 
         # Create desktop shortcut
-        for path in desktop_file_locations:
+        for path in DesktopShortcuts._get_paths(game):
             with open(path, "w") as f:
                 f.write(desktop_shortcut)
 
             call(f"chmod +x {wrap_in_quotes(path)}", shell=True)
+
+    @staticmethod
+    def _get_paths(game: InstalledGame):
+        return [
+            os.path.expanduser(f"~/Desktop/{game.name}.desktop"),  # ~/Desktop
+            os.path.expanduser(
+                f"~/.local/share/applications/{game.name}.desktop"
+            ),  # ~/.local/share/applications
+        ]
+
+    @staticmethod
+    def remove(game: InstalledGame):
+        for path in DesktopShortcuts._get_paths(game):
+            if os.path.exists(path):
+                os.remove(path)
 
 
 def get_executable():
