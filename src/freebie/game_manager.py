@@ -47,14 +47,6 @@ class GameManager:
 
         return games
 
-    def remove_games_without_pictures(self, games: list[Game]):
-        new_games = []
-        for game in games:
-            if game.metadata != None:
-                new_games.append(game)
-
-        return new_games
-
     def get_popular(self) -> list[Game]:
         games = []
         for source in self.sources:
