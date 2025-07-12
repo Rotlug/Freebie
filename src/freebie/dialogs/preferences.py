@@ -3,7 +3,8 @@ from gi.repository import Adw, Gtk
 
 from ..backend.igdb_api import igdb
 
-@Gtk.Template(resource_path='/com/github/rotlug/Freebie/gtk/preferences.ui')
+
+@Gtk.Template(resource_path="/com/github/rotlug/Freebie/gtk/preferences.ui")
 class FreebiePreferences(Adw.PreferencesDialog):
     __gtype_name__ = "FreebiePreferences"
 
@@ -30,4 +31,3 @@ class FreebiePreferences(Adw.PreferencesDialog):
         # Update igdb secret
         igdb.secret = ""
         igdb.update_igdb_credentials_file(igdb.client_id, widget.get_text())
-

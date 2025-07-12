@@ -11,9 +11,10 @@ from threading import Thread
 
 from ..backend.igdb_api import igdb
 
-@Gtk.Template(resource_path='/com/github/rotlug/Freebie/gtk/game_page.ui')
+
+@Gtk.Template(resource_path="/com/github/rotlug/Freebie/gtk/game_page.ui")
 class GamePage(Adw.NavigationPage):
-    __gtype_name__ = 'GamePage'
+    __gtype_name__ = "GamePage"
     blurred_background: Gtk.Picture = Gtk.Template.Child()
     window_title: Adw.WindowTitle = Gtk.Template.Child()
 
@@ -30,13 +31,17 @@ class GamePage(Adw.NavigationPage):
     toast_overlay: Adw.ToastOverlay = Gtk.Template.Child()
     actions_menu: Gtk.MenuButton = Gtk.Template.Child()
 
-    def __init__(self, nav: Adw.NavigationView, window: Adw.ApplicationWindow, **kwrags):
+    def __init__(
+        self, nav: Adw.NavigationView, window: Adw.ApplicationWindow, **kwrags
+    ):
         super().__init__(**kwrags)
         self.nav = nav
         self.window = window
 
         # Start the button update task in the background
-        Thread(target=game_manager.update_button_task, args=[self, nav], daemon=True).start()
+        Thread(
+            target=game_manager.update_button_task, args=[self, nav], daemon=True
+        ).start()
         self.game: Game
 
         self.action_button.connect("clicked", self.get_game)
@@ -57,11 +62,12 @@ class GamePage(Adw.NavigationPage):
         thread.start()
 
     def create_desktop_shortcut_thread(self):
-        if (not isinstance(self.game, InstalledGame)): return
+        if not isinstance(self.game, InstalledGame):
+            return
 
         self.toast_overlay.add_toast(Adw.Toast(title="Creating Shortcut..."))
         game_manager.create_desktop_shortcut(self.game)
-        self.toast_overlay.dismiss_all() # type: ignore
+        self.toast_overlay.dismiss_all()  # type: ignore
         self.toast_overlay.add_toast(Adw.Toast(title="Desktop Shortcut Created"))
 
     def set_game(self, game: Game):
@@ -71,45 +77,47 @@ class GamePage(Adw.NavigationPage):
             else:
                 return
 
-        if (game.metadata is None):
+        if game.metadata is None:
             return
-        
+
         # Time Played
-        if (isinstance(game, InstalledGame)):
+        if isinstance(game, InstalledGame):
             self.actions_menu.set_visible(True)
             self.time_played.set_visible(True)
-            self.time_played.set_label(f"Time Played: {game_manager.format_duration(game.seconds_played)}")
+            self.time_played.set_label(
+                f"Time Played: {game_manager.format_duration(game.seconds_played)}"
+            )
         else:
             self.actions_menu.set_visible(False)
             self.time_played.set_visible(False)
 
         self.game = game
-        
+
         self.blurred_background.set_pixbuf(get_blurred_pixbuf(game))
         self.window_title.set_title(game.name)
-        
+
         self.game_title.set_label(game.name)
 
         rating = "" if game.metadata.rating == 0 else f"{game.metadata.rating}/100"
         size = f" • {game.size}" if game.size != "" else game.size
 
         self.game_subtitle.set_label(rating + size)
-        
+
         if game.metadata.description != None:
             self.game_description.set_label(game.metadata.description)
-        
+
         self.cover.set_pixbuf(url_pixbuf(game))
-        
+
         # Update button state when entering the page
         game_manager.update_button(game, self.action_button)
 
         self.remove_button.set_visible(game_manager.is_installed(game) is not None)
-        
+
     def get_game(self, widget):
         self.action_button.set_sensitive(False)
         target = game_manager.get_button_target(self.game)
         target(self.game)
-    
+
     def uninstall_game(self, widget):
         dialog = Adw.AlertDialog(
             heading="Delete Game?",
@@ -121,7 +129,7 @@ class GamePage(Adw.NavigationPage):
         dialog.add_response("cancel", "Cancel")
         dialog.add_response("delete", "Delete")
         dialog.set_response_appearance("delete", Adw.ResponseAppearance.DESTRUCTIVE)
-        
+
         dialog.connect("response", self.on_delete_dialog_response)
         dialog.present(self.window)
 
@@ -130,26 +138,27 @@ class GamePage(Adw.NavigationPage):
             game_manager.uninstall(self.game)
             self.set_game(self.game)
             self.nav.pop_to_tag("main")
-    
+
+
 def get_blurred_pixbuf(game: Game):
     pixbuf = url_pixbuf(game)
     assert pixbuf != None
     image = pixbuf2image(pixbuf)
-    image = (
-        image.convert("RGB")
-        .resize((100, 150))
-        .filter(ImageFilter.GaussianBlur(20))
-    )
+    image = image.convert("RGB").resize((100, 150)).filter(ImageFilter.GaussianBlur(20))
 
     return image2pixbuf(image)
+
 
 def image2pixbuf(im: Image.Image):
     """Convert Pillow image to GdkPixbuf"""
     data = im.tobytes()
     w, h = im.size
-    data = GLib.Bytes.new(data) # type: ignore
-    pix = GdkPixbuf.Pixbuf.new_from_bytes(data, GdkPixbuf.Colorspace.RGB, False, 8, w, h, w * 3)
+    data = GLib.Bytes.new(data)  # type: ignore
+    pix = GdkPixbuf.Pixbuf.new_from_bytes(
+        data, GdkPixbuf.Colorspace.RGB, False, 8, w, h, w * 3
+    )
     return pix
+
 
 def pixbuf2image(pix: GdkPixbuf.Pixbuf):
     """Convert gdkpixbuf to PIL image"""

@@ -6,13 +6,19 @@ import sys, os
 import requests
 
 from ..backend.utils import restart
-from ..backend.ensure import ensure_directory, DATA_DIR, ensure_wine_prefix, is_non_empty_directory
+from ..backend.ensure import (
+    ensure_directory,
+    DATA_DIR,
+    ensure_wine_prefix,
+    is_non_empty_directory,
+)
 
-@Gtk.Template(resource_path='/com/github/rotlug/Freebie/gtk/proton_page.ui')
+
+@Gtk.Template(resource_path="/com/github/rotlug/Freebie/gtk/proton_page.ui")
 class ProtonPage(Adw.NavigationPage):
-    __gtype_name__ = 'ProtonPage'
+    __gtype_name__ = "ProtonPage"
     progressbar: Gtk.ProgressBar = Gtk.Template.Child()
-    title : Gtk.Label = Gtk.Template.Child()
+    title: Gtk.Label = Gtk.Template.Child()
     subtitle: Gtk.Label = Gtk.Template.Child()
 
     def __init__(self, nav: Adw.NavigationView):
@@ -25,42 +31,54 @@ class ProtonPage(Adw.NavigationPage):
         ensure_directory("proton")
 
         # Download UMU-run if doesnt exist
-        if (not os.path.exists(f"{DATA_DIR}/proton/umu_run.py")):
+        if not os.path.exists(f"{DATA_DIR}/proton/umu_run.py"):
             self.title.set_label("Downloadimg UMU...")
-            self.subtitle.set_label("UMU Is a tool to run Steam games outside of Steam.")
+            self.subtitle.set_label(
+                "UMU Is a tool to run Steam games outside of Steam."
+            )
             self.download_umu()
 
         # Initialize Wine Prefix, if it doesn't exist
         if not is_non_empty_directory(f"{DATA_DIR}/prefix"):
             self.title.set_label("Creating Wine Prefix...")
-            self.subtitle.set_label("This is the folder that the games will be installed in.")
+            self.subtitle.set_label(
+                "This is the folder that the games will be installed in."
+            )
             ensure_wine_prefix()
 
         # Bye Bye
         restart()
-        
+
     def download_stream(self, url: str, dest: str):
         self.progressbar.set_fraction(0)
         r: requests.Response = requests.get(url, stream=True)
-        total_size = int(r.headers.get('content-length', 0))
+        total_size = int(r.headers.get("content-length", 0))
         downloaded_size = 0
 
-        with open(dest, 'wb') as file:
-            for chunk in r.iter_content(chunk_size=1024 * 1024): # Download the file in 1MB Chunks
+        with open(dest, "wb") as file:
+            for chunk in r.iter_content(
+                chunk_size=1024 * 1024
+            ):  # Download the file in 1MB Chunks
                 if chunk:
-                    file.write(chunk) # type: ignore
+                    file.write(chunk)  # type: ignore
                     downloaded_size += len(chunk)
-                    
+
                     # Calculate and print the progress percentage
-                    percent = (downloaded_size / total_size)
-                    GLib.idle_add(self.progressbar.set_fraction, percent) 
-    
+                    percent = downloaded_size / total_size
+                    GLib.idle_add(self.progressbar.set_fraction, percent)
+
     def download_umu(self):
-        r = requests.get("https://github.com/Open-Wine-Components/umu-launcher/releases/latest")
+        r = requests.get(
+            "https://github.com/Open-Wine-Components/umu-launcher/releases/latest"
+        )
         version = r.url.split("/")[-1].lstrip("v")
         filename = f"umu-launcher-{version}-zipapp.tar"
         download_url = f"https://github.com/Open-Wine-Components/umu-launcher/releases/download/{version}/{filename}"
         print("DOWNLOAD URL: " + download_url)
         self.download_stream(download_url, f"{DATA_DIR}/proton/{filename}")
-        
-        call(f"tar -xf {DATA_DIR}/proton/{filename}", shell=True, cwd=f"{DATA_DIR}/proton")
+
+        call(
+            f"tar -xf {DATA_DIR}/proton/{filename}",
+            shell=True,
+            cwd=f"{DATA_DIR}/proton",
+        )

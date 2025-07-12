@@ -30,17 +30,20 @@ from .pages.igdb_page import IGDBPage
 
 from freebie.game_manager import game_manager
 
-@Gtk.Template(resource_path='/com/github/rotlug/Freebie/gtk/window.ui')
+
+@Gtk.Template(resource_path="/com/github/rotlug/Freebie/gtk/window.ui")
 class FreebieWindow(Adw.ApplicationWindow):
-    __gtype_name__ = 'FreebieWindow'
+    __gtype_name__ = "FreebieWindow"
 
     nav_view: Adw.NavigationView = Gtk.Template.Child()
-    
+
     def __init__(self, application: Adw.Application):
         super().__init__(application=application)
-        
-        if not is_non_empty_directory(f"{DATA_DIR}/proton") or not is_non_empty_directory(f"{DATA_DIR}/prefix"):
-            self.nav_view.add(ProtonPage(self.nav_view)) #type: ignore
+
+        if not is_non_empty_directory(
+            f"{DATA_DIR}/proton"
+        ) or not is_non_empty_directory(f"{DATA_DIR}/prefix"):
+            self.nav_view.add(ProtonPage(self.nav_view))  # type: ignore
         elif not os.path.exists(f"{DATA_DIR}/igdb.txt"):
             self.nav_view.add(IGDBPage(self.nav_view))
         else:
@@ -49,13 +52,20 @@ class FreebieWindow(Adw.ApplicationWindow):
 
     def do_close_request(self) -> bool:
         # Check if there are any ongoing installations
-        can_close = len(game_manager.game_statuses) == 0 or all(list(map(lambda status: status == "Running", game_manager.game_statuses.values())))
+        can_close = len(game_manager.game_statuses) == 0 or all(
+            list(
+                map(
+                    lambda status: status == "Running",
+                    game_manager.game_statuses.values(),
+                )
+            )
+        )
 
         if not can_close:
             dialog = Adw.AlertDialog(
                 heading="Are you sure?",
                 body="Game installations are ongoing, closing will stop them!",
-                default_response="cancel"
+                default_response="cancel",
             )
 
             dialog.add_response("cancel", "Cancel")
@@ -70,5 +80,5 @@ class FreebieWindow(Adw.ApplicationWindow):
         return not can_close
 
     def on_close_dialog_response(self, dialog: Adw.Dialog, response: str):
-        if response == "close": self.destroy()
-
+        if response == "close":
+            self.destroy()

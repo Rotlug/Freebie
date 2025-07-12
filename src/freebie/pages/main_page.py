@@ -8,7 +8,8 @@ from .play_view import PlayView
 
 import atexit
 
-@Gtk.Template(resource_path='/com/github/rotlug/Freebie/gtk/main_page.ui')
+
+@Gtk.Template(resource_path="/com/github/rotlug/Freebie/gtk/main_page.ui")
 class MainPage(Adw.NavigationPage):
     __gtype_name__ = "MainPage"
     searchbar: Gtk.SearchBar = Gtk.Template.Child()
@@ -16,14 +17,16 @@ class MainPage(Adw.NavigationPage):
     search_button: Gtk.ToggleButton = Gtk.Template.Child()
 
     stack: Adw.ViewStack = Gtk.Template.Child()
-    
+
     browse: Gtk.Box = Gtk.Template.Child()
     play: Gtk.Box = Gtk.Template.Child()
 
     def __init__(self, nav: Adw.NavigationView, win: Gtk.Window, **kwargs):
         super().__init__(**kwargs)
 
-        self.browse_view_opened = False # Keep track if the browse view has been opened in this session
+        self.browse_view_opened = (
+            False  # Keep track if the browse view has been opened in this session
+        )
 
         self.nav = nav
         self.win = win
@@ -51,15 +54,18 @@ class MainPage(Adw.NavigationPage):
 
     def visible_child_changed(self, _, __, is_user_action=True):
         self.search_button.set_active(False)
-        
+
         name = self.stack.get_visible_child_name()
-        if (name is None): return
-        
+        if name is None:
+            return
+
         if name == "browse":
             if not self.browse_view_opened:
-                self.search_entry.connect("search_changed", self.browse_view.on_search_entry_search_changed)
+                self.search_entry.connect(
+                    "search_changed", self.browse_view.on_search_entry_search_changed
+                )
 
-                if (is_user_action):
+                if is_user_action:
                     self.search_entry.emit("search_changed")
 
             self.browse_view_opened = True
@@ -72,29 +78,29 @@ class MainPage(Adw.NavigationPage):
         toggled = self.search_button.get_active()
         self.searchbar.set_search_mode(toggled)
 
+
 class CurrentViewSaver:
     SAVE_FILE = f"{DATA_DIR}/last_view.txt"
+
     def __init__(self, stack: Adw.ViewStack) -> None:
         self.stack = stack
         self.stack.connect("notify::visible-child", self.on_visible_child_changed)
 
-        self.visible_child = "browse" # default to browse
+        self.visible_child = "browse"  # default to browse
 
         atexit.register(self.exit_handler)
 
-        if (os.path.exists(CurrentViewSaver.SAVE_FILE)):
+        if os.path.exists(CurrentViewSaver.SAVE_FILE):
             with open(CurrentViewSaver.SAVE_FILE, "r") as f:
                 self.visible_child = f.read()
 
     def on_visible_child_changed(self, stack: Adw.ViewStack, _):
         name = stack.get_visible_child_name()
-        if (name is None): return
+        if name is None:
+            return
 
         self.visible_child = name
 
     def exit_handler(self):
         with open(CurrentViewSaver.SAVE_FILE, "w") as f:
             f.write(self.visible_child)
-
-
-

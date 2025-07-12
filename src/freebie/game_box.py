@@ -7,11 +7,13 @@ from .backend.utils import DATA_DIR
 import os
 from .backend.game import Game
 
-pixbufs_cache_folder =  f"{DATA_DIR}/pixbufs"
+pixbufs_cache_folder = f"{DATA_DIR}/pixbufs"
+
 
 def url_pixbuf(game: Game):
-    if game.metadata is None: return
-    
+    if game.metadata is None:
+        return
+
     pixbuf: Pixbuf | None
     file_name = f"{pixbufs_cache_folder}/{game.get_slug()}.png"
 
@@ -23,18 +25,20 @@ def url_pixbuf(game: Game):
     response = urllib.request.urlopen(url)
     input_stream = Gio.MemoryInputStream.new_from_data(response.read(), None)
     pixbuf = Pixbuf.new_from_stream(input_stream, None)
-    
+
     assert type(pixbuf) == Pixbuf
     pixbuf.savev(file_name, "png")
 
     return pixbuf
 
+
 def get_game_box(game: Game):
     return GameBox(game)
 
-@Gtk.Template(resource_path='/com/github/rotlug/Freebie/gtk/game.ui')
+
+@Gtk.Template(resource_path="/com/github/rotlug/Freebie/gtk/game.ui")
 class GameBox(Gtk.Box):
-    __gtype_name__ = 'Game'
+    __gtype_name__ = "Game"
 
     title = Gtk.Template.Child()
     cover = Gtk.Template.Child()
@@ -46,6 +50,6 @@ class GameBox(Gtk.Box):
 
         self.title.set_label(game.name)
         self.cover.set_pixbuf(url_pixbuf(game))
-    
+
     def connect_button(self, function):
         self.cover_button.connect("clicked", function, self.game)

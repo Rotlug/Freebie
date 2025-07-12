@@ -22,24 +22,25 @@ if TYPE_CHECKING:
     from freebie.pages.game_page import GamePage
     from freebie.pages.play_view import PlayView
 
+
 class Source:
     def __init__(self, provider: type[Provider], installer: type[Installer]):
         self.provider = provider()
         self.installer = installer()
 
+
 class GameManager:
     def __init__(self) -> None:
-        self.sources = [
-            Source(FitgirlProvider, FitgirlInstaller)
-        ]
+        self.sources = [Source(FitgirlProvider, FitgirlInstaller)]
 
         self.game_statuses: dict[str, str] = {}
-        self.play_view: PlayView | None  = None
+        self.play_view: PlayView | None = None
         self.game_page: GamePage | None = None
-    
+
     def search(self, query: str) -> list[Game]:
-        if query == "": return self.get_popular()
-        
+        if query == "":
+            return self.get_popular()
+
         games: list[Game] = []
         for source in self.sources:
             games += source.provider.search(query)
@@ -49,10 +50,11 @@ class GameManager:
     def remove_games_without_pictures(self, games: list[Game]):
         new_games = []
         for game in games:
-            if game.metadata != None: new_games.append(game)
-        
+            if game.metadata != None:
+                new_games.append(game)
+
         return new_games
-    
+
     def get_popular(self) -> list[Game]:
         games = []
         for source in self.sources:
@@ -61,11 +63,7 @@ class GameManager:
         return games
 
     def add_custom_game_to_installed(self, game: InstalledGame):
-        json_utils.add_to_file(
-            f"{DATA_DIR}/installed.json",
-            game.name,
-            game.to_dict()
-        )
+        json_utils.add_to_file(f"{DATA_DIR}/installed.json", game.name, game.to_dict())
 
         if self.play_view != None:
             self.play_view.update_game_array()
@@ -80,30 +78,34 @@ class GameManager:
         self.game_statuses[game_slug] = "Downloading... 0%"
         while installer_thread.is_alive():
             if game_slug in installer.downloads:
-                self.game_statuses[game_slug] = f"Downloading... {installer.downloads[game_slug].progress_string()}"
+                self.game_statuses[game_slug] = (
+                    f"Downloading... {installer.downloads[game_slug].progress_string()}"
+                )
             else:
                 self.game_statuses[game_slug] = "Installing..."
             time.sleep(3)
 
         else:
             del self.game_statuses[game_slug]
-        
+
         if self.play_view != None:
             self.play_view.update_game_array()
         if self.game_page != None:
             installed_game = self.is_installed(game)
-            if (installed_game):
+            if installed_game:
                 self.game_page.set_game(installed_game)
             else:
                 self.game_page.set_game(game)
-    
+
     def update_button_task(self, game_page, nav: Adw.NavigationView):
         while True:
             page = nav.get_visible_page()
             if (page != None) and page.get_tag() == "game":
-                GLib.idle_add(self.update_button, game_page.game, game_page.action_button)
+                GLib.idle_add(
+                    self.update_button, game_page.game, game_page.action_button
+                )
             time.sleep(3)
-        
+
     def update_button(self, game: Game, button: Gtk.Button):
         slug = game.get_slug(True)
         if slug in self.game_statuses:
@@ -121,17 +123,21 @@ class GameManager:
                 button.set_label(f"Get ({game.size})")
                 button.add_css_class("suggested-action")
 
-    def get_game_thread(self, game: Game): Thread(target=self.get_game, args=[game], daemon=True).start()
-    def run_game_thread(self, game: Game): Thread(target=self.run_game, args=[game], daemon=True).start()
+    def get_game_thread(self, game: Game):
+        Thread(target=self.get_game, args=[game], daemon=True).start()
+
+    def run_game_thread(self, game: Game):
+        Thread(target=self.run_game, args=[game], daemon=True).start()
 
     def run_game(self, game: Game):
         self.game_statuses[game.get_slug(True)] = "Running"
         installed = json_utils.get_file(f"{DATA_DIR}/installed.json")
-        if game.name not in installed: return
-        
+        if game.name not in installed:
+            return
+
         installed_game = InstalledGame.from_dict(game.name, installed[game.name])
 
-        start_time = time.time() # Track number of seconds that game has been open
+        start_time = time.time()  # Track number of seconds that game has been open
 
         umu_run(f'"{installed_game.exe}"')
 
@@ -139,26 +145,34 @@ class GameManager:
 
         installed_game.seconds_played += seconds_elapsed
 
-        json_utils.add_to_file(f"{DATA_DIR}/installed.json", installed_game.name, installed_game.to_dict())
+        json_utils.add_to_file(
+            f"{DATA_DIR}/installed.json", installed_game.name, installed_game.to_dict()
+        )
 
-        if (self.game_page is not None):
+        if self.game_page is not None:
             installed_game.metadata
-            self.game_page.set_game(installed_game) # Update with current time played
-        if (self.play_view is not None):
+            self.game_page.set_game(installed_game)  # Update with current time played
+        if self.play_view is not None:
             self.play_view.update_game_array()
 
-        del self.game_statuses[game.get_slug(True)] # Remove "Running" status from the game
+        del self.game_statuses[
+            game.get_slug(True)
+        ]  # Remove "Running" status from the game
 
     def get_button_target(self, game: Game):
-        if self.is_installed(game): return self.run_game_thread
+        if self.is_installed(game):
+            return self.run_game_thread
         return self.get_game_thread
-    
+
     def uninstall(self, game: Game):
-        call(f"rm -r {json_utils.get_file(f"{DATA_DIR}/installed.json")[game.name]["dir"]}", shell=True)
+        call(
+            f"rm -r {json_utils.get_file(f'{DATA_DIR}/installed.json')[game.name]['dir']}",
+            shell=True,
+        )
         json_utils.remove_from_file(f"{DATA_DIR}/installed.json", game.name)
         if self.play_view != None:
             self.play_view.update_game_array()
-        
+
     def is_installed(self, game: Game) -> InstalledGame | None:
         installed = json_utils.get_file(f"{DATA_DIR}/installed.json")
         if game.name in installed:
@@ -182,7 +196,12 @@ class GameManager:
         if seconds:
             parts.append(f"{seconds} second{'s' if seconds != 1 else ''}")
 
-        return ", ".join(parts[:-1]) + (" and " + parts[-1] if len(parts) > 1 else parts[0]) if parts else "0 seconds"
+        return (
+            ", ".join(parts[:-1])
+            + (" and " + parts[-1] if len(parts) > 1 else parts[0])
+            if parts
+            else "0 seconds"
+        )
 
     def get_all_installed_games(self):
         installed = json_utils.get_file(f"{DATA_DIR}/installed.json")
@@ -207,19 +226,21 @@ class GameManager:
     def create_desktop_shortcut(self, installed_game: InstalledGame):
         icon_location = f"{DATA_DIR}/icons/{installed_game.get_slug(True)}_icon.png"
         desktop_file_locations = [
-            os.path.expanduser(f"~/Desktop/{installed_game.name}.desktop"), # ~/Desktop
-            os.path.expanduser(f"~/.local/share/applications/{installed_game.name}.desktop") # ~/.local/share/applications
+            os.path.expanduser(f"~/Desktop/{installed_game.name}.desktop"),  # ~/Desktop
+            os.path.expanduser(
+                f"~/.local/share/applications/{installed_game.name}.desktop"
+            ),  # ~/.local/share/applications
         ]
 
-        if (installed_game.exe.endswith(".lnk")):
+        if installed_game.exe.endswith(".lnk"):
             command = f"winemenubuilder -t {wrap_in_quotes(installed_game.exe)} {icon_location}"
             # Generate Icon using winemenubuilder
             umu_run(command)
-        elif (installed_game.exe.endswith(".exe") and is_in_path("wrestool")):
+        elif installed_game.exe.endswith(".exe") and is_in_path("wrestool"):
             command = f"wrestool -x -t14 --output={wrap_in_quotes(icon_location)} {wrap_in_quotes(installed_game.exe)}"
             call(command, shell=True)
 
-        desktop_shortcut = f'''
+        desktop_shortcut = f"""
 [Desktop Entry]
 Type=Application
 Name={installed_game.name}
@@ -230,20 +251,21 @@ Exec={get_executable()} --game={wrap_in_quotes(installed_game.name)}
 Categories=Game;
 StartupNotify=true
 Terminal=false
-'''.strip()
+""".strip()
 
         # Create desktop shortcut
         for path in desktop_file_locations:
             with open(path, "w") as f:
                 f.write(desktop_shortcut)
 
-
             call(f"chmod +x {wrap_in_quotes(path)}", shell=True)
 
+
 def get_executable():
-    if (is_in_path("freebie")):
+    if is_in_path("freebie"):
         return "freebie"
     return "flatpak run com.github.rotlug.Freebie"
+
 
 # GameManager singleton
 ensure_directory("downloads")

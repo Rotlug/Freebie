@@ -32,26 +32,35 @@ from .backend.fitgirl.installer import proc
 
 from freebie.game_manager import game_manager
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 from gi.repository import Gtk, Gio, Adw, GLib
 from .window import FreebieWindow
+
 
 class FreebieApplication(Adw.Application):
     """The main application singleton class."""
 
     def __init__(self):
-        super().__init__(application_id='com.github.rotlug.Freebie',
-                         flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE)
-        self.create_action('quit', lambda *_: self.quit, ['<primary>q'])
-        self.create_action('about', self.on_about_action)
-        self.create_action('preferences', self.on_preferences_action)
-        self.create_action('run_exe', self.on_run_exe_action, ['<primary>e'])
-        self.create_action('add_game', self.on_add_game_action, ['<primary>p'])
-        self.create_action('open_c_drive', self.on_open_c_drive_action, [])
+        super().__init__(
+            application_id="com.github.rotlug.Freebie",
+            flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE,
+        )
+        self.create_action("quit", lambda *_: self.quit, ["<primary>q"])
+        self.create_action("about", self.on_about_action)
+        self.create_action("preferences", self.on_preferences_action)
+        self.create_action("run_exe", self.on_run_exe_action, ["<primary>e"])
+        self.create_action("add_game", self.on_add_game_action, ["<primary>p"])
+        self.create_action("open_c_drive", self.on_open_c_drive_action, [])
 
-        self.add_main_option("game", ord("g"), GLib.OptionFlags.NONE, GLib.OptionArg.STRING, "The name of the game you want to run")
+        self.add_main_option(
+            "game",
+            ord("g"),
+            GLib.OptionFlags.NONE,
+            GLib.OptionArg.STRING,
+            "The name of the game you want to run",
+        )
 
         Thread(target=igdb.save_cache_task, name="SaveMetadata", daemon=True).start()
         print("HEllo world")
@@ -64,12 +73,13 @@ class FreebieApplication(Adw.Application):
         if "game" in options:
             name: str = options["game"]
             installed_game = game_manager.is_installed(Game(name, "", ""))
-            if (installed_game):
+            if installed_game:
                 game_manager.run_game(installed_game)
             else:
                 print(f"Error: {name} not found")
-        else: self.activate()
-        
+        else:
+            self.activate()
+
         return 0
 
     def do_activate(self):
@@ -81,9 +91,9 @@ class FreebieApplication(Adw.Application):
         win = self.get_active_window()
 
         if win == None:
-            win = FreebieWindow(self) # type: ignore
+            win = FreebieWindow(self)  # type: ignore
 
-        win.present() # type: ignore
+        win.present()  # type: ignore
 
     def on_run_exe_action(self, widget, _):
         dialog = Gtk.FileChooserNative(
@@ -91,22 +101,22 @@ class FreebieApplication(Adw.Application):
             action=Gtk.FileChooserAction.OPEN,
             transient_for=self.get_active_window(),
             modal=True,
-            filter=Gtk.FileFilter(mime_types=["application/x-msdownload"])
+            filter=Gtk.FileFilter(mime_types=["application/x-msdownload"]),
         )
 
         dialog.connect("response", self.on_exe_file_selected)
         dialog.show()
 
     def on_exe_file_selected(self, widget: Gtk.FileChooserNative, _):
-        path: str = widget.get_file().get_path() # type: ignore
+        path: str = widget.get_file().get_path()  # type: ignore
         print(f"Running exe: {path}")
         Thread(target=umu_run, daemon=True, args=[f"'{path}'"]).start()
         widget.destroy()
-    
+
     def on_add_game_action(self, action: Gio.SimpleAction, _):
         window = self.get_active_window()
 
-        if (window is not None):
+        if window is not None:
             dialog = AddGameDialog(window)
             dialog.present(self.get_active_window())
         else:
@@ -115,12 +125,13 @@ class FreebieApplication(Adw.Application):
     def on_about_action(self, widget, _):
         """Callback for the app.about action."""
         about = Adw.AboutDialog(
-                                application_name='Freebie',
-                                application_icon='com.github.rotlug.Freebie',
-                                developer_name='rotlug',
-                                version='0.1.0',
-                                developers=['rotlug'],
-                                copyright='© 2024 rotlug')
+            application_name="Freebie",
+            application_icon="com.github.rotlug.Freebie",
+            developer_name="rotlug",
+            version="0.1.0",
+            developers=["rotlug"],
+            copyright="© 2024 rotlug",
+        )
         about.present(self.get_active_window())
 
     def on_preferences_action(self, widget, _):
@@ -150,13 +161,14 @@ class FreebieApplication(Adw.Application):
         if shortcuts:
             self.set_accels_for_action(f"app.{name}", shortcuts)
 
+
 def main(version):
     # ensure.ensure_wine_prefix() # Make sure that a wine prefix exists
     """The application's entry point."""
     print(f"Arguments: {sys.argv}")
     app = FreebieApplication()
     return_code = app.run(sys.argv)
-    
+
     # Save cache to disk and quit
     igdb.save_cache_to_disk()
 

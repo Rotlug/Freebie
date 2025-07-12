@@ -6,6 +6,7 @@ if TYPE_CHECKING:
     from igdb_api import Metadata
     from .provider import Installer
 
+
 class Game:
     def __init__(self, name: str, link: str, size: str) -> None:
         self.name = name
@@ -13,7 +14,7 @@ class Game:
         self.size = size
         self.metadata: Metadata | None = None
         self.installer: type[Installer]
-    
+
     def get_slug(self, short=False):
         result = unidecode(self.name).lower()
         # [short] removes editions, deluxe editions etc..
@@ -27,10 +28,11 @@ class Game:
         result = result.replace("goty", "game of the year")
         result = result.replace("–", "-")
         result = utils.replace_multiple(result, "#$%&'()*+,./:;<=>?@[\\]^_`{|}~!", "")
-        result = result.replace(' ', '-').replace("---", "-")
+        result = result.replace(" ", "-").replace("---", "-")
         result = result.replace("--", "-")
-        result = result.rstrip('-')
+        result = result.rstrip("-")
         return result.strip()
+
 
 class InstalledGame(Game):
     def __init__(self, name: str, exe: str, directory: str) -> None:
@@ -42,34 +44,28 @@ class InstalledGame(Game):
 
     def to_dict(self):
         return {
-                "exe": self.exe,
-                "dir": self.directory,
-                "seconds_played": self.seconds_played
-            }
+            "exe": self.exe,
+            "dir": self.directory,
+            "seconds_played": self.seconds_played,
+        }
 
     @classmethod
     def from_dict(cls, name: str, data: dict[str, str]):
         installed_game = cls(
-            name=name,
-            exe=data.get("exe", ""),
-            directory=data.get("dir", "")
+            name=name, exe=data.get("exe", ""), directory=data.get("dir", "")
         )
 
         installed_game.seconds_played = data.get("seconds_played", 0)
 
         return installed_game
 
+
 def remove_editions(slug: str):
-    editions = [
-        "digital deluxe",
-        "deluxe",
-        "premium",
-        "the one who waits bundle"
-    ]
+    editions = ["digital deluxe", "deluxe", "premium", "the one who waits bundle"]
 
     for ed in editions:
         if ed in slug.lower():
             slug = slug.split(ed)[0]
             break
-    
+
     return slug

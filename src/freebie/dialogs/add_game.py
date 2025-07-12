@@ -1,4 +1,3 @@
-
 from typing import Any
 from gi.repository import Adw, Gtk
 from requests import patch
@@ -8,9 +7,8 @@ from freebie.backend.game import Game, InstalledGame
 from freebie.game_manager import game_manager
 
 
-@Gtk.Template(resource_path='/com/github/rotlug/Freebie/gtk/add_game_dialog.ui')
+@Gtk.Template(resource_path="/com/github/rotlug/Freebie/gtk/add_game_dialog.ui")
 class AddGameDialog(Adw.Dialog):
-
     __gtype_name__ = "AddGameDialog"
 
     add_button: Gtk.Button = Gtk.Template.Child()
@@ -51,7 +49,7 @@ class AddGameDialog(Adw.Dialog):
             action=Gtk.FileChooserAction.OPEN,
             transient_for=self.window,
             modal=True,
-            filter=Gtk.FileFilter(mime_types=["application/x-msdownload"])
+            filter=Gtk.FileFilter(mime_types=["application/x-msdownload"]),
         )
 
         dialog.connect("response", self.on_file_selected)
@@ -59,10 +57,12 @@ class AddGameDialog(Adw.Dialog):
 
     def on_file_selected(self, widget: Gtk.FileChooserNative, _):
         f = widget.get_file()
-        if f is None: return
+        if f is None:
+            return
 
         path = f.get_path()
-        if path is None: return
+        if path is None:
+            return
 
         self.path = path
         self.select_exe_row.set_subtitle(path)
@@ -72,7 +72,7 @@ class AddGameDialog(Adw.Dialog):
     def on_add_button_clicked(self, _):
         game = InstalledGame(self.game_name, exe=self.path, directory="")
         game.metadata = igdb.search(game)
-        if (game.metadata != None):
+        if game.metadata != None:
             game.name = game.metadata.name
 
         # Add game to installed games
@@ -82,4 +82,3 @@ class AddGameDialog(Adw.Dialog):
 
     def on_cancel_button_clicked(self, _):
         self.close()
-

@@ -26,7 +26,6 @@
 
             buildInputs = [
               flatpak-builder
-              # gnome-builder # Use GNOME Builder for building & running
               blueprint-compiler
               python312
               pyright
@@ -45,6 +44,8 @@
               types-beautifulsoup4
               aria2p
               pillow
+
+              ruff # Formatter
             ]);
 
             shellHook = "
