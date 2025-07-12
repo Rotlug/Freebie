@@ -30,8 +30,8 @@ python3Packages.buildPythonApplication {
   src = fetchFromGitHub {
     owner = "Rotlug";
     repo = "Freebie";
-    rev = "850302584101a0d284bccbacba188b7e5fdf04df";
-    hash = "sha256-LiyZgTd+PsQUWnQ8S+6bog/b3hxUzpFu8b3+SjQfP8s=";
+    rev = "b2a41c5c01adebc747b949514f86c3e68770d784";
+    hash = "sha256-Hz4XyiSGJqN/A4czh0G44U7HLLy9MNos26pdzC0Q2oU=";
   };
 
   strictDeps = true;
@@ -66,7 +66,7 @@ python3Packages.buildPythonApplication {
     icoutils
   ];
 
-  dependencies = with python3Packages; [ 
+  dependencies = with python3Packages; [
   	pygobject3
 	pycairo
 	requests
