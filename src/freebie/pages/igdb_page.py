@@ -1,10 +1,5 @@
 from gi.repository import Adw, Gtk
-
-import sys
-import os
-
 from ..backend.utils import restart
-
 from ..backend.ensure import DATA_DIR
 
 

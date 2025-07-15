@@ -27,7 +27,7 @@ class Provider:
             ).decode(
                 "utf-8"
             )  # turns it to 'utf-8' (good, supports diacritics for example the é in Pokémon)
-        except:
+        except Exception:
             pass
 
         soup = bs(request_text, "html.parser")

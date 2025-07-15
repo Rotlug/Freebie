@@ -1,7 +1,5 @@
-from typing import Union
 from gi.repository import Adw, Gtk, GLib, GdkPixbuf
 from gi.repository import Gio
-from gi.repository.Gio import InetSocketAddress
 
 from ..backend.game import Game, InstalledGame
 from PIL import Image, ImageFilter
@@ -105,7 +103,7 @@ class GamePage(Adw.NavigationPage):
 
         self.game_subtitle.set_label(rating + size)
 
-        if game.metadata.description != None:
+        if game.metadata.description is not None:
             self.game_description.set_label(game.metadata.description)
 
         self.cover.set_pixbuf(url_pixbuf(game))
@@ -144,7 +142,7 @@ class GamePage(Adw.NavigationPage):
 
 def get_blurred_pixbuf(game: Game):
     pixbuf = url_pixbuf(game)
-    assert pixbuf != None
+    assert pixbuf is not None
     image = pixbuf2image(pixbuf)
     image = image.convert("RGB").resize((100, 150)).filter(ImageFilter.GaussianBlur(20))
 
@@ -169,7 +167,7 @@ def pixbuf2image(pix: GdkPixbuf.Pixbuf):
     h = pix.props.height
     stride = pix.props.rowstride
     mode = "RGB"
-    if pix.props.has_alpha == True:
+    if pix.props.has_alpha:
         mode = "RGBA"
     im = Image.frombytes(mode, (w, h), data, "raw", mode, stride)
     return im

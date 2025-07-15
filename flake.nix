@@ -34,6 +34,10 @@
               cmake
               aria2
               umu-launcher
+
+              # Gnome builder
+              gnome-builder
+              python312Packages.flake8
             ] ++ (with pkgs.python312Packages; [
               pygobject-stubs
               pygobject3

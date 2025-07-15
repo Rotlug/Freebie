@@ -1,9 +1,8 @@
 from typing import Any
 from gi.repository import Adw, Gtk
-from requests import patch
 
 from freebie.backend.igdb_api import igdb
-from freebie.backend.game import Game, InstalledGame
+from freebie.backend.game import InstalledGame
 from freebie.game_manager import game_manager
 
 
@@ -72,7 +71,7 @@ class AddGameDialog(Adw.Dialog):
     def on_add_button_clicked(self, _):
         game = InstalledGame(self.game_name, exe=self.path, directory="")
         game.metadata = igdb.search(game)
-        if game.metadata != None:
+        if game.metadata is not None:
             game.name = game.metadata.name
 
         # Add game to installed games

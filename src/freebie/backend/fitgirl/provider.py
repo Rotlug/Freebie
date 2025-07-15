@@ -25,7 +25,6 @@ class FitgirlProvider(Provider):
             link_tag = title_tag.find("a")  # type: ignore
             link: str = link_tag["href"]  # type: ignore
 
-            size_tag: Tag = tag.find("div", {"class", "entry-summary"})  # type: ignore
             size_p: str = (
                 (
                     tag.find("p")

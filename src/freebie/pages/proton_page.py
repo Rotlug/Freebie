@@ -1,7 +1,7 @@
 from subprocess import call
 from threading import Thread
 from gi.repository import Adw, Gtk, GLib
-import sys, os
+import os
 
 import requests
 

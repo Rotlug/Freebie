@@ -2,7 +2,7 @@ import os
 from subprocess import call
 from threading import Thread
 import time
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from .backend.utils import is_in_path, umu_run, wrap_in_quotes
 from .backend.fitgirl.installer import FitgirlInstaller
@@ -10,7 +10,7 @@ from .backend.fitgirl.provider import FitgirlProvider
 from .backend.game import Game, InstalledGame
 from .backend.provider import Installer, Provider
 
-from .backend.ensure import ensure_directory, DATA_DIR, find
+from .backend.ensure import ensure_directory, DATA_DIR
 
 from .backend import json_utils
 
@@ -57,7 +57,7 @@ class GameManager:
     def add_custom_game_to_installed(self, game: InstalledGame):
         json_utils.add_to_file(f"{DATA_DIR}/installed.json", game.name, game.to_dict())
 
-        if self.play_view != None:
+        if self.play_view is not None:
             self.play_view.update_game_array()
 
     def get_game(self, game: Game):
@@ -80,9 +80,9 @@ class GameManager:
         else:
             del self.game_statuses[game_slug]
 
-        if self.play_view != None:
+        if self.play_view is not None:
             self.play_view.update_game_array()
-        if self.game_page != None:
+        if self.game_page is not None:
             installed_game = self.is_installed(game)
             if installed_game:
                 self.game_page.set_game(installed_game)
@@ -92,7 +92,7 @@ class GameManager:
     def update_button_task(self, game_page, nav: Adw.NavigationView):
         while True:
             page = nav.get_visible_page()
-            if (page != None) and page.get_tag() == "game":
+            if (page is not None) and page.get_tag() == "game":
                 GLib.idle_add(
                     self.update_button, game_page.game, game_page.action_button
                 )
@@ -164,7 +164,7 @@ class GameManager:
             shell=True,
         )
         json_utils.remove_from_file(f"{DATA_DIR}/installed.json", game.name)
-        if self.play_view != None:
+        if self.play_view is not None:
             self.play_view.update_game_array()
 
     def is_installed(self, game: Game) -> InstalledGame | None:

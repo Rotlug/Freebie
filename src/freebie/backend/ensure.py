@@ -7,7 +7,7 @@ def ensure_file(file_name: str, initial_contents: str | None = None):
     if os.path.exists(f"{DATA_DIR}/{file_name}"):
         return
 
-    if initial_contents == None:
+    if initial_contents is None:
         call(f"touch {DATA_DIR}/{file_name}", shell=True)
     else:
         call(f'echo "{initial_contents}" > {DATA_DIR}/{file_name}', shell=True)

@@ -1,6 +1,3 @@
-import os
-from warnings import catch_warnings
-
 from ...backend.utils import set_wine_sound_driver, umu_run
 from ..provider import Installer
 from ..game import Game, InstalledGame
@@ -9,7 +6,7 @@ import aria2p
 import subprocess
 from os import listdir
 from shutil import rmtree
-from ..ensure import DATA_DIR, find
+from ..ensure import DATA_DIR
 
 import atexit
 
@@ -35,7 +32,7 @@ class FitgirlInstaller(Installer):
 
         try:  # 1337x magnet link
             magnet_link: str = soup.find("a", {"id": "openPopup"})["href"]  # type: ignore
-        except:
+        except Exception:
             magnet_link: str = soup.find(
                 lambda tag: tag.name == "a" and tag.text == "magnet"
             )["href"]  # type: ignore

@@ -61,7 +61,7 @@ class BrowseView(Gtk.Box):
 
             game.metadata = igdb.search(game)
 
-            if (game.metadata != None) and self.eligible_to_search(text):
+            if (game.metadata is not None) and self.eligible_to_search(text):
                 game.name = game.metadata.name
 
                 if game.name not in game_names:  # Avoid duplicate games

@@ -1,14 +1,12 @@
-from threading import Thread
 from gi.repository import Adw, Gtk, GLib
 from .game_page import GamePage
 from ..backend.game import Game, InstalledGame
 
 from ..game_manager import game_manager
-from ..backend.igdb_api import Metadata, igdb
+from ..backend.igdb_api import igdb
 
 from ..game_box import GameBox
-from ..backend import json_utils
-from ..backend.ensure import DATA_DIR, ensure_file
+from ..backend.ensure import ensure_file
 
 
 @Gtk.Template(resource_path="/com/github/rotlug/Freebie/gtk/play_view.ui")

@@ -25,18 +25,17 @@ from freebie.backend.game import Game
 from freebie.dialogs.add_game import AddGameDialog
 
 from .dialogs.preferences import FreebiePreferences
-from .backend import json_utils
 from .backend.utils import DATA_DIR, umu_run
 from .backend.igdb_api import igdb
 from .backend.fitgirl.installer import proc
 
 from freebie.game_manager import game_manager
 
-gi.require_version("Gtk", "4.0")
-gi.require_version("Adw", "1")
-
 from gi.repository import Gtk, Gio, Adw, GLib
 from .window import FreebieWindow
+
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
 
 class FreebieApplication(Adw.Application):
@@ -90,7 +89,7 @@ class FreebieApplication(Adw.Application):
         """
         win = self.get_active_window()
 
-        if win == None:
+        if win is None:
             win = FreebieWindow(self)  # type: ignore
 
         win.present()  # type: ignore

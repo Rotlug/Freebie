@@ -1,4 +1,4 @@
-from gi.repository import Gtk, Gio, Adw
+from gi.repository import Gtk, Gio
 import urllib.request
 from gi.repository.GdkPixbuf import Pixbuf
 
@@ -26,7 +26,7 @@ def url_pixbuf(game: Game):
     input_stream = Gio.MemoryInputStream.new_from_data(response.read(), None)
     pixbuf = Pixbuf.new_from_stream(input_stream, None)
 
-    assert type(pixbuf) == Pixbuf
+    assert isinstance(pixbuf, Pixbuf)
     pixbuf.savev(file_name, "png")
 
     return pixbuf

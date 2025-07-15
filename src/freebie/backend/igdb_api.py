@@ -66,12 +66,12 @@ class IGDBApiWrapper:
 
         self.seconds_left -= time.time() - self.last_renewed
 
-        if (self.access == None) or self.seconds_left <= 50:
+        if (self.access is None) or self.seconds_left <= 50:
             self.access = requests.post(
                 f"https://id.twitch.tv/oauth2/token?client_id={self.client_id}&client_secret={self.secret}&grant_type=client_credentials"
             ).json()
 
-            assert type(self.access) == dict
+            assert isinstance(self.access, dict)
             self.seconds_left = self.access["expires_in"]
             self.last_renewed = time.time()
 
@@ -81,7 +81,7 @@ class IGDBApiWrapper:
             try:
                 self.client_id = lines[0].strip()
                 self.secret = lines[1].strip()
-            except:
+            except Exception:
                 self.client_id = ""
                 self.secret = ""
 
@@ -95,7 +95,7 @@ class IGDBApiWrapper:
         # Get From Cache
         if slug in self.cache:
             result = self.cache[slug]
-            if result == None:
+            if result is None:
                 if retry:
                     return None
                 else:

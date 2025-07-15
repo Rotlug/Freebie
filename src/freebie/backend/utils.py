@@ -3,8 +3,7 @@ from subprocess import call
 import shutil
 
 import os
-
-from unidecode import unidecode
+import sys
 
 non_sandboxed_dir = os.path.expanduser("~/.local/share/freebie")
 DATA_DIR = os.getenv("XDG_DATA_HOME", non_sandboxed_dir)
@@ -12,8 +11,6 @@ DATA_DIR = os.getenv("XDG_DATA_HOME", non_sandboxed_dir)
 # If not running inside Flatpak, make sure to create the directory
 if DATA_DIR == non_sandboxed_dir and not os.path.exists(non_sandboxed_dir):
     os.mkdir(non_sandboxed_dir)
-
-import os, sys
 
 
 def is_in_path(exe: str):
