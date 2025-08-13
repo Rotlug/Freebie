@@ -66,6 +66,8 @@ class GameManager:
             self.play_view.update_game_array()
 
     def get_game(self, game: Game):
+        assert self.application is not None
+
         installer = game.installer()
         installer_thread = Thread(target=installer.get_game, args=[game], daemon=True)
         installer_thread.start()
@@ -90,13 +92,13 @@ class GameManager:
         if self.game_page is not None:
             installed_game = self.is_installed(game)
             if installed_game:
+                # Installation finished successfuly!
                 self.game_page.set_game(installed_game)
+                Notifications.install_finished(game, self.application)
             else:
+                # Installation failed :(
                 self.game_page.set_game(game)
-
-        # Send notification that the game finished downloading
-        if self.application is not None:
-            Notifications.finished_download(game, self.application)
+                Notifications.install_failed(game, self.application)
 
     def update_button_task(self, game_page, nav: Adw.NavigationView):
         while True:
