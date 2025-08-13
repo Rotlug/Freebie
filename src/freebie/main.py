@@ -29,7 +29,7 @@ from .backend.utils import DATA_DIR, umu_run
 from .backend.igdb_api import igdb
 from .backend.fitgirl.installer import proc
 
-from freebie.game_manager import game_manager
+from freebie.util.game_manager import game_manager
 
 from gi.repository import Gtk, Gio, Adw, GLib
 from .window import FreebieWindow
@@ -166,6 +166,9 @@ def main(version):
     """The application's entry point."""
     print(f"Arguments: {sys.argv}")
     app = FreebieApplication()
+
+    game_manager.application = app
+
     return_code = app.run(sys.argv)
 
     # Save cache to disk and quit

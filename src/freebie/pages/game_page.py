@@ -1,10 +1,14 @@
 from gi.repository import Adw, Gtk, GLib, GdkPixbuf
 from gi.repository import Gio
 
+from freebie.util.notifications import Notifications
+
 from ..backend.game import Game, InstalledGame
 from PIL import Image, ImageFilter
 from ..game_box import url_pixbuf
-from ..game_manager import DesktopShortcuts, game_manager
+from freebie.util.game_manager import game_manager
+from freebie.util.desktop_shortcuts import DesktopShortcuts
+
 from threading import Thread
 
 from ..backend.igdb_api import igdb

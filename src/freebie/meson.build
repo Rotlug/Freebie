@@ -23,11 +23,12 @@ freebie_sources = [
   '__init__.py',
   'main.py',
   'window.py',
-  'game_manager.py',
   'game_box.py'
 ]
 
 install_subdir('backend', install_dir: moduledir)
 install_subdir('pages', install_dir: moduledir)
 install_subdir('dialogs', install_dir: moduledir)
+install_subdir('util', install_dir: moduledir)
+
 install_data(freebie_sources, install_dir: moduledir)

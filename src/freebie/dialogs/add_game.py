@@ -3,7 +3,7 @@ from gi.repository import Adw, Gtk
 
 from freebie.backend.igdb_api import igdb
 from freebie.backend.game import InstalledGame
-from freebie.game_manager import game_manager
+from freebie.util.game_manager import game_manager
 
 
 @Gtk.Template(resource_path="/com/github/rotlug/Freebie/gtk/add_game_dialog.ui")

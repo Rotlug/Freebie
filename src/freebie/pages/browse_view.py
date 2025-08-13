@@ -3,7 +3,7 @@ from gi.repository import Adw, Gtk, GLib
 from ..pages.game_page import GamePage
 from ..backend.game import Game
 
-from ..game_manager import game_manager
+from freebie.util.game_manager import game_manager
 from ..backend.igdb_api import igdb
 
 from ..game_box import GameBox

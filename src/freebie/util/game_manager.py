@@ -4,19 +4,22 @@ from threading import Thread
 import time
 from typing import TYPE_CHECKING
 
-from .backend.utils import is_in_path, umu_run, wrap_in_quotes
-from .backend.fitgirl.installer import FitgirlInstaller
-from .backend.fitgirl.provider import FitgirlProvider
-from .backend.game import Game, InstalledGame
-from .backend.provider import Installer, Provider
+from freebie.backend.utils import is_in_path, umu_run, wrap_in_quotes
+from freebie.backend.fitgirl.installer import FitgirlInstaller
+from freebie.backend.fitgirl.provider import FitgirlProvider
+from freebie.backend.game import Game, InstalledGame
+from freebie.backend.provider import Installer, Provider
 
-from .backend.ensure import ensure_directory, DATA_DIR
+from freebie.backend.ensure import ensure_directory, DATA_DIR
 
-from .backend import json_utils
+from freebie.backend import json_utils
 
-from gi.repository import Gtk, Adw, GLib
+from gi.repository import Gio, Gtk, Adw, GLib
 
 from datetime import timedelta
+
+from freebie.util.desktop_shortcuts import DesktopShortcuts
+from freebie.util.notifications import Notifications
 
 if TYPE_CHECKING:
     from freebie.pages.game_page import GamePage
@@ -36,6 +39,8 @@ class GameManager:
         self.game_statuses: dict[str, str] = {}
         self.play_view: PlayView | None = None
         self.game_page: GamePage | None = None
+
+        self.application: Gtk.Application | None = None
 
     def search(self, query: str) -> list[Game]:
         if query == "":
@@ -88,6 +93,10 @@ class GameManager:
                 self.game_page.set_game(installed_game)
             else:
                 self.game_page.set_game(game)
+
+        # Send notification that the game finished downloading
+        if self.application is not None:
+            Notifications.finished_download(game, self.application)
 
     def update_button_task(self, game_page, nav: Adw.NavigationView):
         while True:
@@ -216,61 +225,6 @@ class GameManager:
             games.append(game)
 
         return games
-
-
-class DesktopShortcuts:
-    @staticmethod
-    def create(game: InstalledGame):
-        icon_location = f"{DATA_DIR}/icons/{game.get_slug(True)}_icon.png"
-
-        if game.exe.endswith(".lnk"):
-            command = f"winemenubuilder -t {wrap_in_quotes(game.exe)} {icon_location}"
-            # Generate Icon using winemenubuilder
-            umu_run(command)
-        elif game.exe.endswith(".exe") and is_in_path("wrestool"):
-            command = f"wrestool -x -t14 --output={wrap_in_quotes(icon_location)} {wrap_in_quotes(game.exe)}"
-            call(command, shell=True)
-
-        desktop_shortcut = f"""
-[Desktop Entry]
-Type=Application
-Name={game.name}
-Comment=
-Icon={icon_location}
-TryExec={get_executable()}
-Exec={get_executable()} --game={wrap_in_quotes(game.name)}
-Categories=Game;
-StartupNotify=true
-Terminal=false
-""".strip()
-
-        # Create desktop shortcut
-        for path in DesktopShortcuts._get_paths(game):
-            with open(path, "w") as f:
-                f.write(desktop_shortcut)
-
-            call(f"chmod +x {wrap_in_quotes(path)}", shell=True)
-
-    @staticmethod
-    def _get_paths(game: InstalledGame):
-        return [
-            os.path.expanduser(f"~/Desktop/{game.name}.desktop"),  # ~/Desktop
-            os.path.expanduser(
-                f"~/.local/share/applications/{game.name}.desktop"
-            ),  # ~/.local/share/applications
-        ]
-
-    @staticmethod
-    def remove(game: InstalledGame):
-        for path in DesktopShortcuts._get_paths(game):
-            if os.path.exists(path):
-                os.remove(path)
-
-
-def get_executable():
-    if is_in_path("freebie"):
-        return "freebie"
-    return "flatpak run com.github.rotlug.Freebie"
 
 
 # GameManager singleton

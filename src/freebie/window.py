@@ -28,7 +28,7 @@ from .pages.game_page import GamePage
 from .pages.proton_page import ProtonPage
 from .pages.igdb_page import IGDBPage
 
-from freebie.game_manager import game_manager
+from freebie.util.game_manager import game_manager
 
 
 @Gtk.Template(resource_path="/com/github/rotlug/Freebie/gtk/window.ui")
