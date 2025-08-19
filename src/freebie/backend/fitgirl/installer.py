@@ -94,7 +94,7 @@ class FitgirlInstaller(Installer):
 
         # Look for desktop icon
         desktop_dir = f"{wine_prefix}/drive_c/users/Public/Desktop"
-        game_super_short_slug = game.get_slug(True)[0:10]
+        game_super_short_slug = game.get_slug(True)[0:5]
 
         for d in listdir(desktop_dir):
             slug = Game(d, "", "").get_slug(True)

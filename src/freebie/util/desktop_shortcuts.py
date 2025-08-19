@@ -4,6 +4,18 @@ from subprocess import call
 from freebie.backend.game import InstalledGame
 from freebie.backend.utils import DATA_DIR, is_in_path, umu_run, wrap_in_quotes
 
+DESKTOP_SHORTCUT_TEMPLATE = """
+[Desktop Entry]
+Type=Application
+Name={name}
+Comment=
+Icon={icon_location}
+TryExec={freebie_exe}
+Exec={freebie_exe} --game={name_in_quotes}
+Categories=Game;
+StartupNotify=true
+Terminal=false
+""".strip()
 
 class DesktopShortcuts:
     @staticmethod
@@ -17,26 +29,21 @@ class DesktopShortcuts:
         elif game.exe.endswith(".exe") and is_in_path("wrestool"):
             command = f"wrestool -x -t14 --output={wrap_in_quotes(icon_location)} {wrap_in_quotes(game.exe)}"
             call(command, shell=True)
-
-        desktop_shortcut = f"""
-[Desktop Entry]
-Type=Application
-Name={game.name}
-Comment=
-Icon={icon_location}
-TryExec={DesktopShortcuts.get_executable()}
-Exec={DesktopShortcuts.get_executable()} --game={wrap_in_quotes(game.name)}
-Categories=Game;
-StartupNotify=true
-Terminal=false
-""".strip()
-
+        
+        # Populate templates
+        desktop_shortcut = DESKTOP_SHORTCUT_TEMPLATE
+        desktop_shortcut = desktop_shortcut.replace("{name}", game.name)
+        desktop_shortcut = desktop_shortcut.replace("{name_in_quotes}", wrap_in_quotes(game.name))
+        desktop_shortcut = desktop_shortcut.replace("{freebie_exe}", DesktopShortcuts.get_executable())
+        desktop_shortcut = desktop_shortcut.replace("{icon_location}", icon_location)
+        
         # Create desktop shortcut
         for path in DesktopShortcuts._get_paths(game):
             with open(path, "w") as f:
                 f.write(desktop_shortcut)
 
             call(f"chmod +x {wrap_in_quotes(path)}", shell=True)
+    
 
     @staticmethod
     def _get_paths(game: InstalledGame):

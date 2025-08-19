@@ -1,10 +1,9 @@
-import os
 from subprocess import call
 from threading import Thread
 import time
 from typing import TYPE_CHECKING
 
-from freebie.backend.utils import is_in_path, umu_run, wrap_in_quotes
+from freebie.backend.utils import umu_run
 from freebie.backend.fitgirl.installer import FitgirlInstaller
 from freebie.backend.fitgirl.provider import FitgirlProvider
 from freebie.backend.game import Game, InstalledGame
@@ -14,7 +13,7 @@ from freebie.backend.ensure import ensure_directory, DATA_DIR
 
 from freebie.backend import json_utils
 
-from gi.repository import Gio, Gtk, Adw, GLib
+from gi.repository import Gtk, Adw, GLib
 
 from datetime import timedelta
 
@@ -53,7 +52,7 @@ class GameManager:
         return games
 
     def get_popular(self) -> list[Game]:
-        games = []
+        games: list[Game] = []
         for source in self.sources:
             games += source.provider.get_popular()
 

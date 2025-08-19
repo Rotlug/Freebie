@@ -1,7 +1,6 @@
 from gi.repository import Adw, Gtk, GLib, GdkPixbuf
 from gi.repository import Gio
 
-from freebie.util.notifications import Notifications
 
 from ..backend.game import Game, InstalledGame
 from PIL import Image, ImageFilter
@@ -103,9 +102,11 @@ class GamePage(Adw.NavigationPage):
         self.game_title.set_label(game.name)
 
         rating = "" if game.metadata.rating == 0 else f"{game.metadata.rating}/100"
-        size = f" • {game.size}" if game.size != "" else game.size
+        size = f" • {game.size}" if game.size != "" else "" 
+        
+        final_text = (rating + size).strip().removeprefix("•").strip()
 
-        self.game_subtitle.set_label(rating + size)
+        self.game_subtitle.set_label(final_text)
 
         if game.metadata.description is not None:
             self.game_description.set_label(game.metadata.description)
