@@ -4,7 +4,8 @@ from gi.repository import Gio
 
 from ..backend.game import Game, InstalledGame
 from PIL import Image, ImageFilter
-from ..game_box import url_pixbuf
+from freebie.widgets.game_box import url_pixbuf
+
 from freebie.util.game_manager import game_manager
 from freebie.util.desktop_shortcuts import DesktopShortcuts
 

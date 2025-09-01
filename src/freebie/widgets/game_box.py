@@ -2,10 +2,10 @@ from gi.repository import Gtk, Gio
 import urllib.request
 from gi.repository.GdkPixbuf import Pixbuf
 
-from .backend.utils import DATA_DIR
+from freebie.backend.utils import DATA_DIR
 
 import os
-from .backend.game import Game
+from freebie.backend.game import Game
 
 pixbufs_cache_folder = f"{DATA_DIR}/pixbufs"
 
@@ -40,9 +40,9 @@ def get_game_box(game: Game):
 class GameBox(Gtk.Box):
     __gtype_name__ = "Game"
 
-    title = Gtk.Template.Child()
-    cover = Gtk.Template.Child()
-    cover_button = Gtk.Template.Child()
+    title: Gtk.Label = Gtk.Template.Child()
+    cover: Gtk.Picture = Gtk.Template.Child()
+    cover_button: Gtk.Button = Gtk.Template.Child()
 
     def __init__(self, game: Game, **kwargs):
         super().__init__(**kwargs)
@@ -50,6 +50,10 @@ class GameBox(Gtk.Box):
 
         self.title.set_label(game.name)
         self.cover.set_pixbuf(url_pixbuf(game))
+        self.cover_button.set_can_focus(True)
+        
 
     def connect_button(self, function):
         self.cover_button.connect("clicked", function, self.game)
+ 
+

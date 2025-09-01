@@ -1,11 +1,12 @@
 from gi.repository import Adw, Gtk, GLib
+
+from freebie.widgets.game_box import GameBox
 from .game_page import GamePage
 from ..backend.game import Game, InstalledGame
 
 from freebie.util.game_manager import game_manager
 from ..backend.igdb_api import igdb
 
-from ..game_box import GameBox
 from ..backend.ensure import ensure_file
 
 

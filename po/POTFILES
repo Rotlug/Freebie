@@ -4,3 +4,5 @@ data/com.github.rotlug.Freebie.gschema.xml
 src/main.py
 src/window.py
 src/window.ui
+
+data/gtk/add_game_dialog.ui

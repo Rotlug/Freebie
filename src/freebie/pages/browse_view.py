@@ -6,8 +6,7 @@ from ..backend.game import Game
 from freebie.util.game_manager import game_manager
 from ..backend.igdb_api import igdb
 
-from ..game_box import GameBox
-
+from freebie.widgets.game_box import GameBox
 
 @Gtk.Template(resource_path="/com/github/rotlug/Freebie/gtk/browse_view.ui")
 class BrowseView(Gtk.Box):
