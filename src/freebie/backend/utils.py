@@ -28,7 +28,7 @@ def restart():
         os.execv(python, [python] + sys.argv)
 
 
-def any_of_list_in(list_of_str: list, check_str: str) -> bool:
+def any_of_list_in(list_of_str: list[str], check_str: str) -> bool:
     result = False
 
     for string in list_of_str:
