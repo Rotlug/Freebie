@@ -3,7 +3,7 @@
   appstream,
   blueprint-compiler,
   desktop-file-utils,
-  fetchFromGitHub,
+  fetchfromgithub,
   umu-launcher,
   aria2,
   glib,
@@ -14,29 +14,28 @@
   ninja,
   nix-update-script,
   pkg-config,
-  python3Packages,
+  python3packages,
   icoutils,
-  wrapGAppsHook4,
+  wrapgappshook4,
   lsb-release,
   pciutils,
   procps,
 }:
-
-python3Packages.buildPythonApplication {
+python3packages.buildpythonapplication {
   pname = "freebie";
   version = "0.1";
   pyproject = false;
 
-  src = fetchFromGitHub {
-    owner = "Rotlug";
-    repo = "Freebie";
-    rev = "b2a41c5c01adebc747b949514f86c3e68770d784";
-    hash = "sha256-Hz4XyiSGJqN/A4czh0G44U7HLLy9MNos26pdzC0Q2oU=";
+  src = fetchfromgithub {
+    owner = "rotlug";
+    repo = "freebie";
+    rev = "8bc872449bd7224bf43b5c6ddd8f0cb3197bdd1a";
+    hash = "sha256-cv2wq7zxbfd+tywcma214rkugoh9c3etfmiyy6q1j6s=";
   };
 
-  strictDeps = true;
+  strictdeps = true;
 
-  nativeBuildInputs = [
+  nativebuildinputs = [
     appstream
     blueprint-compiler
     desktop-file-utils # for `desktop-file-validate`
@@ -46,55 +45,55 @@ python3Packages.buildPythonApplication {
     meson
     ninja
     pkg-config
-    wrapGAppsHook4
+    wrapgappshook4
   ];
 
-  buildInputs = [
-      libadwaita
+  buildinputs = [
+    libadwaita
 
-      # Undocumented (subprocess.Popen())
-      lsb-release
-      pciutils
-      procps
+    # undocumented (subprocess.popen())
+    lsb-release
+    pciutils
+    procps
 
-      aria2
+    aria2
   ];
 
-  propagatedNativeBuildInputs = [
+  propagatednativebuildinputs = [
     aria2
     umu-launcher
     icoutils
   ];
 
-  dependencies = with python3Packages; [
-  	pygobject3
-	pycairo
-	requests
-	unidecode
-	beautifulsoup4
-	aria2p
-	pillow
-];
+  dependencies = with python3packages; [
+    pygobject3
+    pycairo
+    requests
+    unidecode
+    beautifulsoup4
+    aria2p
+    pillow
+  ];
 
-  dontWrapGApps = true;
-  makeWrapperArgs = [ "\${gappsWrapperArgs[@]}" "--prefix PATH : ${lib.makeBinPath [ aria2 umu-launcher ]}" ];
+  dontwrapgapps = true;
+  makewrapperargs = ["\${gappswrapperargs[@]}" "--prefix path : ${lib.makebinpath [aria2 umu-launcher]}"];
 
-  # NOTE: `postCheck` is intentionally not used here, as the entire checkPhase
-  # is skipped by `buildPythonApplication`
-  # https://github.com/NixOS/nixpkgs/blob/9d4343b7b27a3e6f08fc22ead568233ff24bbbde/pkgs/development/interpreters/python/mk-python-derivation.nix#L296
-  #postInstallCheck = ''
-   # mesonCheckPhase
+  # note: `postcheck` is intentionally not used here, as the entire checkphase
+  # is skipped by `buildpythonapplication`
+  # https://github.com/nixos/nixpkgs/blob/9d4343b7b27a3e6f08fc22ead568233ff24bbbde/pkgs/development/interpreters/python/mk-python-derivation.nix#l296
+  #postinstallcheck = ''
+  # mesoncheckphase
   #'';
 
   passthru = {
-    updateScript = nix-update-script { };
+    updatescript = nix-update-script {};
   };
 
   meta = {
     description = "test";
-    homepage = "https://github.com/Rotlug/Freebie";
-    license = lib.licenses.gpl3Plus;
-    mainProgram = "freebie";
+    homepage = "https://github.com/rotlug/freebie";
+    license = lib.licenses.gpl3plus;
+    mainprogram = "freebie";
     platforms = lib.platforms.linux;
   };
 }
