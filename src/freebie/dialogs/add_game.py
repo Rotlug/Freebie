@@ -44,7 +44,7 @@ class AddGameDialog(Adw.Dialog):
 
     def choose_exe_location(self, _):
         dialog = Gtk.FileChooserNative(
-            title=_("Choose Executable"),
+            title="Choose Executable",
             action=Gtk.FileChooserAction.OPEN,
             transient_for=self.window,
             modal=True,
