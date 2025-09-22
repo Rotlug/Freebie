@@ -1,5 +1,4 @@
 from gi.repository import Gio, Gtk
-
 from freebie.backend.game import Game
 
 class Notifications:

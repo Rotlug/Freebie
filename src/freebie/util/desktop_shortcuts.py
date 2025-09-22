@@ -20,13 +20,15 @@ Terminal=false
 class DesktopShortcuts:
     @staticmethod
     def create(game: InstalledGame):
-        icon_location = f"{DATA_DIR}/icons/{game.get_slug(True)}_icon.png"
+        icon_location = f"{DATA_DIR}/icons/{game.get_slug(True)}_icon"
 
         if game.exe.endswith(".lnk"):
+            icon_location += ".png"
             command = f"winemenubuilder -t {wrap_in_quotes(game.exe)} {icon_location}"
             # Generate Icon using winemenubuilder
             umu_run(command)
         elif game.exe.endswith(".exe") and is_in_path("wrestool"):
+            icon_location += ".ico"
             command = f"wrestool -x -t14 --output={wrap_in_quotes(icon_location)} {wrap_in_quotes(game.exe)}"
             call(command, shell=True)
         

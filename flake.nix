@@ -37,6 +37,7 @@
                 cmake
                 aria2
                 umu-launcher
+                icoutils
               ]
               ++ (with pkgs.python312Packages; [
                 pygobject-stubs
