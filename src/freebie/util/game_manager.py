@@ -141,7 +141,13 @@ class GameManager:
 
         start_time = time.time()  # Track number of seconds that game has been open
 
-        umu_run(f'"{installed_game.exe}"')
+        # Figure out directory for exes
+        directory: str = installed_game.directory
+
+        if directory == "":
+            directory = "/".join(installed_game.exe.split("/")[0:-1])
+
+        umu_run(f'"{installed_game.exe}"', cwd=directory)
 
         seconds_elapsed = int(time.time() - start_time)
 

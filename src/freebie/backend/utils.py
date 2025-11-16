@@ -78,18 +78,27 @@ def quotes_if_space(string: str):
     return new_string
 
 
-def umu_run(exe: str):
+def umu_run(exe: str, cwd: str | None = None):
     env = os.environ
     env["GAMEID"] = "0"
     env["WINEPREFIX"] = f"{DATA_DIR}/prefix"
-    env["PROTONPATH"] = "GE-Proton"
+
+    if env["PROTONPATH"] == "":
+        env["PROTONPATH"] = "GE-Proton"
+
+    print(f"Using proton env variable: {env['PROTONPATH']}")
 
     python = sys.executable
 
     if is_in_path("umu-run"):
-        call(f"umu-run {exe}", shell=True, env=env)
+        call(f"umu-run {exe}", shell=True, env=env, cwd=cwd)
     else:
-        call(f"{python} {DATA_DIR}/proton/umu/umu_run.py {exe}", shell=True, env=env)
+        call(
+            f"{python} {DATA_DIR}/proton/umu/umu_run.py {exe}",
+            shell=True,
+            env=env,
+            cwd=cwd,
+        )
 
 
 def set_wine_sound_driver(sound_driver: str):
