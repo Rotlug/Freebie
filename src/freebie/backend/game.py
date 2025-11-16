@@ -8,12 +8,7 @@ if TYPE_CHECKING:
 
 
 class Game:
-    EMULATOR_NAMES = [
-        "emulator",
-        "yuzu",
-        "ryujinx",
-        "cemu"
-    ]
+    EMULATOR_NAMES = ["emulator", "yuzu", "ryujinx", "cemu"]
 
     def __init__(self, name: str, link: str, size: str) -> None:
         self.name = name
@@ -21,7 +16,7 @@ class Game:
         self.size = size
         self.metadata: Metadata | None = None
         self.installer: type[Installer]
-        
+
     def get_slug(self, short=False):
         result = unidecode(self.name).lower()
         # [short] removes editions, deluxe editions etc..
@@ -39,9 +34,10 @@ class Game:
         result = result.replace("--", "-")
         result = result.rstrip("-")
         return result.strip()
-    
+
     def is_emulated(self):
         return utils.any_of_list_in(Game.EMULATOR_NAMES, self.name.lower())
+
 
 class InstalledGame(Game):
     def __init__(self, name: str, exe: str, directory: str) -> None:

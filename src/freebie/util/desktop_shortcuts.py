@@ -17,6 +17,7 @@ StartupNotify=true
 Terminal=false
 """.strip()
 
+
 class DesktopShortcuts:
     @staticmethod
     def create(game: InstalledGame):
@@ -31,21 +32,24 @@ class DesktopShortcuts:
             icon_location += ".ico"
             command = f"wrestool -x -t14 --output={wrap_in_quotes(icon_location)} {wrap_in_quotes(game.exe)}"
             call(command, shell=True)
-        
+
         # Populate templates
         desktop_shortcut = DESKTOP_SHORTCUT_TEMPLATE
         desktop_shortcut = desktop_shortcut.replace("{name}", game.name)
-        desktop_shortcut = desktop_shortcut.replace("{name_in_quotes}", wrap_in_quotes(game.name))
-        desktop_shortcut = desktop_shortcut.replace("{freebie_exe}", DesktopShortcuts.get_executable())
+        desktop_shortcut = desktop_shortcut.replace(
+            "{name_in_quotes}", wrap_in_quotes(game.name)
+        )
+        desktop_shortcut = desktop_shortcut.replace(
+            "{freebie_exe}", DesktopShortcuts.get_executable()
+        )
         desktop_shortcut = desktop_shortcut.replace("{icon_location}", icon_location)
-        
+
         # Create desktop shortcut
         for path in DesktopShortcuts._get_paths(game):
             with open(path, "w") as f:
                 f.write(desktop_shortcut)
 
             call(f"chmod +x {wrap_in_quotes(path)}", shell=True)
-    
 
     @staticmethod
     def _get_paths(game: InstalledGame):

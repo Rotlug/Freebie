@@ -1,6 +1,7 @@
 from gi.repository import Gio, Gtk
 from freebie.backend.game import Game
 
+
 class Notifications:
     @staticmethod
     def send(application: Gtk.Application, notif: Gio.Notification):
