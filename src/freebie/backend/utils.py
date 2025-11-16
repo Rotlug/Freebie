@@ -81,9 +81,10 @@ def quotes_if_space(string: str):
 def umu_run(exe: str, cwd: str | None = None):
     env = os.environ
     env["GAMEID"] = "0"
-    env["WINEPREFIX"] = f"{DATA_DIR}/prefix"
 
-    if env["PROTONPATH"] == "":
+    if not env["WINEPREFIX"]:
+        env["WINEPREFIX"] = f"{DATA_DIR}/prefix"
+    if not env["PROTONPATH"]:
         env["PROTONPATH"] = "GE-Proton"
 
     print(f"Using proton env variable: {env['PROTONPATH']}")
