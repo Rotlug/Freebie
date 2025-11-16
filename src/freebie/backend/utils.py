@@ -82,9 +82,9 @@ def umu_run(exe: str, cwd: str | None = None):
     env = os.environ
     env["GAMEID"] = "0"
 
-    if not env["WINEPREFIX"]:
+    if not env.get("WINEPREFIX"):
         env["WINEPREFIX"] = f"{DATA_DIR}/prefix"
-    if not env["PROTONPATH"]:
+    if not env.get("PROTONPATH"):
         env["PROTONPATH"] = "GE-Proton"
 
     print(f"Using proton env variable: {env['PROTONPATH']}")
