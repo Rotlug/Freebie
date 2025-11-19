@@ -25,18 +25,21 @@ class FitgirlProvider(Provider):
             link_tag = title_tag.find("a")  # type: ignore
             link: str = link_tag["href"]  # type: ignore
 
-            size_p: str = (
-                (
-                    tag.find("p")
-                    .get_text()  # type: ignore
-                    .lower()
-                    .split("original size:")[1]
-                    .split("b")[0]
-                    + "b"
+            try:
+                size_p: str = (
+                    (
+                        tag.find("p")
+                        .get_text()  # type: ignore
+                        .lower()
+                        .split("original size:")[1]
+                        .split("b")[0]
+                        + "b"
+                    )
+                    .upper()
+                    .strip()
                 )
-                .upper()
-                .strip()
-            )
+            except Exception:
+                size_p = "?"
 
             game = Game(name=title, link=link, size=size_p)
             game.installer = FitgirlInstaller
