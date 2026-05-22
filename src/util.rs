@@ -47,7 +47,13 @@ pub fn wine_desktop() -> PathBuf {
         .join("Desktop")
 }
 
+/// The users `Games` directory inside of the wine prefix (`~/.local/share/freebie/prefix/drive_c/Games`)
+pub fn wine_games() -> PathBuf {
+    prefix().join("drive_c").join("Games")
+}
+
 /* Wine utils */
+/// Run an `umu-launcher` command using the correct wine prefix and proton versions.
 pub async fn umu(args: &[&str]) -> io::Result<()> {
     println!("Running umu command: umu-run {}", args.join(" "));
     process::Command::new("umu-run")
