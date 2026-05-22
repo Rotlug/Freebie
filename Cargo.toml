@@ -1,0 +1,19 @@
+[package]
+name = "freebie"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.102"
+dirs = "6.0.0"
+futures-util = "0.3.32"
+librqbit = "8.1.1"
+relm4 = { version = "0.11.0", features = ["gnome_49", "libadwaita"] }
+reqwest = { version = "0.13.3", features = ["json"] }
+scraper = "0.27.0"
+serde = { version = "1.0.228", features = ["derive", "rc"] }
+serde_json = "1.0.149"
+serde_with = "3.20.0"
+thiserror = "2.0.18"
+tokio = { version = "1.52.3", features = ["full"] }
+unicode-normalization = "0.1.25"
