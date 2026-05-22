@@ -18,6 +18,7 @@
             rustc
             rustPlatform.bindgenHook
             pkg-config
+            wrapGAppsHook4
           ];
 
           buildInputs = with pkgs; [
@@ -25,11 +26,17 @@
             libadwaita
             openssl
             libseccomp
+            glycin-loaders
+            bubblewrap
           ];
 
           propagatedBuildInputs = with pkgs; [
             umu-launcher
           ];
+
+          shellHook = ''
+            export XDG_DATA_DIRS="${pkgs.glycin-loaders}/share:${pkgs.gsettings-desktop-schemas}/share:${pkgs.gtk4}/share/gsettings-schemas/${pkgs.gtk4.name}:$XDG_DATA_DIRS"
+          '';
         };
       };
     };
