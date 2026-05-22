@@ -83,18 +83,16 @@ impl MetadataManager {
     }
 
     /// Given a list of game names, returns relevant metadata about said games.
-    pub async fn get_games(&mut self, games: &[Game]) -> anyhow::Result<Vec<Metadata>> {
+    pub async fn get_games(&self, slugs: &[&str]) -> anyhow::Result<Vec<Metadata>> {
         let mut metadatas: Vec<Metadata> = vec![];
 
         let mut futures = vec![];
 
         // igdb allows for maximmum 20 games at a time
-        for chunk in games.chunks(20) {
-            let slugs: Vec<&str> = chunk.iter().map(|g| g.slug.as_str()).collect();
-
+        for chunk in slugs.chunks(20) {
             let data = format!(
                 "fields cover.url,name,summary,slug,aggregated_rating; where slug = {} & cover.url != null; limit 20;",
-                Self::combine(&slugs)
+                Self::combine(chunk)
             );
 
             futures.push(async {
