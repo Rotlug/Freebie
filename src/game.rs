@@ -4,6 +4,7 @@ use librqbit::{AddTorrent, AddTorrentOptions};
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 use std::{
+    collections::HashMap,
     fs,
     path::{Path, PathBuf},
     sync::{Arc, Mutex},
@@ -13,6 +14,7 @@ use tokio::{self};
 
 use crate::{
     error::{DownloadError, InstallError},
+    igdb,
     util::{downloads, set_prefix_mute, slug::SlugExt, umu, wine_desktop, wine_games},
 };
 
@@ -27,6 +29,9 @@ pub struct Game {
     /// The url-friendly version of the games title
     /// (for example: "`tetris-effect-connected`")
     pub slug: String,
+
+    /// The games metadata from IGDB, or `None` if it hasn't been fetched yet.
+    pub metadata: Option<igdb::Metadata>,
 
     /// The games current installation state
     #[serde(default)]
@@ -172,8 +177,8 @@ impl Game {
 }
 
 /// Search for video games on `fitgirl-repacks.site` and collect the results.
-pub async fn search(query: &str) -> anyhow::Result<Vec<Game>> {
-    let mut games = vec![];
+pub async fn search(query: &str) -> anyhow::Result<HashMap<String, Game>> {
+    let mut games = HashMap::new();
 
     let url = format!("https://fitgirl-repacks.site/?s={query}");
 
@@ -207,6 +212,7 @@ pub async fn search(query: &str) -> anyhow::Result<Vec<Game>> {
             let slug = link.split('/').nth(3).unwrap().to_string();
 
             Some(Game {
+                metadata: None,
                 link,
                 size,
                 slug,
@@ -215,7 +221,7 @@ pub async fn search(query: &str) -> anyhow::Result<Vec<Game>> {
         };
 
         if let Some(game) = parse() {
-            games.push(game);
+            games.insert(game.slug.clone(), game);
         }
     }
 

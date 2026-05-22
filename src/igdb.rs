@@ -1,6 +1,8 @@
 //! Fetches metadata about video games, such as rating, title, description and cover art
 //! from IGDB.
 
+use std::collections::HashMap;
+use std::hash::Hash;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
@@ -81,8 +83,11 @@ impl MetadataManager {
     }
 
     /// Given a list of game names, returns relevant metadata about said games.
-    pub async fn get_games(&self, slugs: &[&str]) -> anyhow::Result<Vec<Metadata>> {
-        let mut metadatas: Vec<Metadata> = vec![];
+    pub async fn get_games(
+        &self,
+        slugs: &[impl AsRef<str>],
+    ) -> anyhow::Result<HashMap<String, Metadata>> {
+        let mut metadatas = HashMap::new();
 
         let mut futures = vec![];
 
@@ -108,7 +113,9 @@ impl MetadataManager {
 
         let results = futures_util::future::join_all(futures).await;
         for batch in results.into_iter().flatten() {
-            metadatas.extend(batch.into_iter());
+            for meta in batch {
+                metadatas.insert(meta.slug.clone(), meta);
+            }
         }
 
         Ok(metadatas)
@@ -175,6 +182,12 @@ pub struct Metadata {
     pub rating: Option<f32>,
 }
 
+impl Hash for Metadata {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.slug.hash(state);
+    }
+}
+
 /// The video game's cover art
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Cover {
@@ -185,7 +198,6 @@ pub struct Cover {
 
 impl Cover {
     pub async fn download(&self) -> reqwest::Result<Vec<u8>> {
-        println!("{}", &self.url);
         let bytes = reqwest::get(&self.url)
             .await?
             .bytes()
