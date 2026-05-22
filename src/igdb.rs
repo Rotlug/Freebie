@@ -21,6 +21,13 @@ struct AccessToken {
     access_token: String,
 }
 
+/// The credentials used to get an `AccessToken` from the api
+#[derive(Default)]
+pub struct Credentials {
+    pub client_id: String,
+    pub client_secret: String,
+}
+
 /// `MetadataManager` is used to request metadata about multiple video games at once
 /// from igdb, and prevents the access to the api from expiring
 #[derive(Default)]
@@ -34,20 +41,16 @@ pub struct MetadataManager {
     /// The `access_token` hasn't been renewed yet.
     access_last_renewed: Arc<Mutex<Option<Instant>>>,
 
-    /// The client ID crediential for the api
-    client_id: String,
-    /// The client secret crediential for the api
-    client_secret: String,
+    credentials: Credentials,
 }
 
 impl MetadataManager {
-    pub fn new(client_id: String, client_secret: String) -> Self {
+    pub fn new(credentials: Credentials) -> Self {
         let reqwest_client = reqwest::Client::new();
 
         Self {
             reqwest_client,
-            client_id,
-            client_secret,
+            credentials,
             ..Default::default()
         }
     }
@@ -67,7 +70,7 @@ impl MetadataManager {
     pub async fn authenticate(&self) -> anyhow::Result<()> {
         let url = format!(
             "https://id.twitch.tv/oauth2/token?client_id={}&client_secret={}&grant_type=client_credentials",
-            self.client_id, self.client_secret
+            self.credentials.client_id, self.credentials.client_secret
         );
 
         let resp = self.reqwest_client.post(url).send().await?.text().await?;
@@ -118,7 +121,7 @@ impl MetadataManager {
         Ok(self
             .reqwest_client
             .post(url)
-            .header("Client-ID", &self.client_id)
+            .header("Client-ID", &self.credentials.client_id)
             .header(
                 "Authorization",
                 format!(
