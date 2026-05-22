@@ -177,3 +177,16 @@ pub struct Cover {
     _id: i32,
     pub url: String,
 }
+
+impl Cover {
+    pub async fn download(&self) -> reqwest::Result<Vec<u8>> {
+        let bytes = reqwest::get(&self.url)
+            .await?
+            .bytes()
+            .await?
+            .into_iter()
+            .collect();
+
+        Ok(bytes)
+    }
+}
