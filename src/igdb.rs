@@ -10,8 +10,6 @@ use serde_with::DurationSeconds;
 use serde_with::serde_as;
 use tokio::sync::Mutex;
 
-use crate::game::Game;
-
 /// The token returned from igdb after requesting access
 #[serde_as]
 #[derive(Deserialize, Debug)]
@@ -97,7 +95,13 @@ impl MetadataManager {
 
             futures.push(async {
                 let resp = self.fetch("https://api.igdb.com/v4/games", data).await?;
-                let batch: Vec<Metadata> = serde_json::from_str(&resp)?;
+                let mut batch: Vec<Metadata> = serde_json::from_str(&resp)?;
+                // Fix the cover.url
+                for meta in &mut batch {
+                    meta.cover.url =
+                        format!("https:/{}", meta.cover.url.replace("thumb", "cover_big"));
+                }
+
                 Ok::<Vec<Metadata>, anyhow::Error>(batch)
             });
         }
@@ -181,6 +185,7 @@ pub struct Cover {
 
 impl Cover {
     pub async fn download(&self) -> reqwest::Result<Vec<u8>> {
+        println!("{}", &self.url);
         let bytes = reqwest::get(&self.url)
             .await?
             .bytes()
