@@ -24,6 +24,7 @@
             gtk4
             libadwaita
             openssl
+            libseccomp
           ];
 
           propagatedBuildInputs = with pkgs; [
