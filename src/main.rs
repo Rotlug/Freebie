@@ -6,7 +6,10 @@ use relm4::prelude::*;
 use crate::{
     game::Game,
     igdb::MetadataManager,
-    ui::main_page::{self, MainPage},
+    ui::{
+        game_page::{self, GamePage},
+        main_page::{self, MainPage},
+    },
 };
 
 mod error;
@@ -18,6 +21,8 @@ mod ui;
 
 struct App {
     main_page: Controller<MainPage>,
+    game_page: AsyncController<GamePage>,
+
     metadata_manager: Arc<MetadataManager>,
     current_search: Option<tokio::task::JoinHandle<anyhow::Result<()>>>,
 }
@@ -32,6 +37,7 @@ enum Inbox {
     SearchTriggered(String),
     SearchBarEmpty,
     MetadataRequest(Vec<String>),
+    GameSelected(Arc<Game>, gtk::gdk::Texture),
 }
 
 #[derive(Debug)]
@@ -50,10 +56,16 @@ impl AsyncComponent for App {
         adw::Window {
             set_size_request: (900, 500),
 
+            #[name = "nav_view"]
             adw::NavigationView {
                 #[name = "nav_main_page"]
                 add = &adw::NavigationPage {
                     set_child = Some(model.main_page.widget()),
+                },
+
+                #[name = "nav_game_page"]
+                add = &adw::NavigationPage {
+                  set_child = Some(model.game_page.widget()),
                 }
             }
         }
@@ -74,12 +86,17 @@ impl AsyncComponent for App {
             |msg| match msg {
                 ui::main_page::Outbox::NewSearch(query) => Inbox::SearchTriggered(query),
                 ui::main_page::Outbox::SearchBarEmpty => Inbox::SearchBarEmpty,
-                ui::main_page::Outbox::ChangeView(view) => todo!(),
+                main_page::Outbox::GameSelected(game, texture) => {
+                    Inbox::GameSelected(game, texture)
+                }
             },
         );
 
+        let game_page = GamePage::builder().launch(()).detach();
+
         let model = Self {
             main_page,
+            game_page,
             metadata_manager,
             current_search: None,
         };
@@ -89,8 +106,9 @@ impl AsyncComponent for App {
         AsyncComponentParts { model, widgets }
     }
 
-    async fn update(
+    async fn update_with_view(
         &mut self,
+        widgets: &mut Self::Widgets,
         message: Self::Input,
         sender: AsyncComponentSender<Self>,
         root: &Self::Root,
@@ -134,9 +152,7 @@ impl AsyncComponent for App {
 
                 self.current_search = Some(new_handle);
             }
-
             Inbox::MetadataRequest(slugs) => {}
-
             Inbox::SearchBarEmpty => {
                 let games = game::popular()
                     .await
@@ -150,7 +166,14 @@ impl AsyncComponent for App {
                     .send(Command::SearchFinished(games))
                     .unwrap();
             }
+            Inbox::GameSelected(game, texture) => {
+                self.game_page
+                    .emit(game_page::Inbox::NewGame(game, texture));
+                widgets.nav_view.push(&widgets.nav_game_page);
+            }
         }
+
+        self.update_view(widgets, sender);
     }
 
     async fn update_cmd(

@@ -2,7 +2,10 @@ use adw::prelude::*;
 use relm4::{binding::BoolBinding, binding::ConnectBindingExt, prelude::*};
 use std::sync::Arc;
 
-use crate::{game::Game, ui::game_button::GameButton};
+use crate::{
+    game::Game,
+    ui::game_button::{self, GameButton},
+};
 
 pub struct BrowseView {
     game_buttons: AsyncFactoryVecDeque<GameButton>,
@@ -17,7 +20,7 @@ pub enum Inbox {
 
 #[derive(Debug)]
 pub enum Outbox {
-    GameSelected(Arc<Game>),
+    GameSelected(Arc<Game>, gtk::gdk::Texture),
 }
 
 #[relm4::component(pub)]
@@ -77,7 +80,13 @@ impl SimpleComponent for BrowseView {
             .column_spacing(12)
             .build();
 
-        let game_buttons = AsyncFactoryVecDeque::builder().launch(flow_box).detach();
+        let game_buttons = AsyncFactoryVecDeque::builder().launch(flow_box).forward(
+            sender.output_sender(),
+            |msg| match msg {
+                game_button::Outbox::Clicked(game, texture) => Outbox::GameSelected(game, texture),
+            },
+        );
+
         let model = Self {
             game_buttons,
             search_ongoing: BoolBinding::default(),

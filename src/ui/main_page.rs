@@ -27,7 +27,7 @@ pub enum View {
 pub enum Outbox {
     NewSearch(String),
     SearchBarEmpty,
-    ChangeView(View),
+    GameSelected(Arc<Game>, gtk::gdk::Texture),
 }
 
 #[derive(Debug)]
@@ -95,8 +95,10 @@ impl SimpleComponent for MainPage {
     ) -> ComponentParts<Self> {
         let browse_view = BrowseView::builder()
             .launch(())
-            .forward(sender.input_sender(), |msg| match msg {
-                browse_view::Outbox::GameSelected(game) => todo!(),
+            .forward(sender.output_sender(), |msg| match msg {
+                browse_view::Outbox::GameSelected(game, texture) => {
+                    Outbox::GameSelected(game, texture)
+                }
             });
         let search_enabled = BoolBinding::default();
         let model = Self {

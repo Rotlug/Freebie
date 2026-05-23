@@ -10,10 +10,15 @@ pub struct GameButton {
     texture: gdk::Texture,
 }
 
+#[derive(Debug)]
+pub enum Outbox {
+    Clicked(Arc<Game>, gdk::Texture),
+}
+
 #[relm4::factory(pub async)]
 impl AsyncFactoryComponent for GameButton {
     type Input = ();
-    type Output = ();
+    type Output = Outbox;
     type Init = Arc<Game>;
     type ParentWidget = gtk::FlowBox;
     type CommandOutput = ();
@@ -87,6 +92,16 @@ impl AsyncFactoryComponent for GameButton {
         let widgets = view_output!();
 
         widgets.cover.set_paintable(Some(&self.texture));
+
+        let outbox = sender.output_sender().clone();
+        let video_game = self.game.clone();
+        let texture = self.texture.clone();
+
+        widgets.cover_button.connect_clicked(move |_| {
+            outbox
+                .send(Outbox::Clicked(video_game.clone(), texture.clone()))
+                .unwrap()
+        });
 
         widgets
     }
