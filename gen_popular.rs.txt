@@ -1,0 +1,83 @@
+//! Helper script to fetch the popluar games
+//! (These are the games the user sees when nothing is searched yet.)
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let slugs = [
+        "elden-ring",
+        "red-dead-redemption-2",
+        "ghost-of-tsushima-directors-cut",
+        "stray",
+        "hollow-knight-silksong",
+        "resident-evil-requiem",
+        "god-of-war-ragnarok",
+        "forza-horizon-6",
+        "cyberpunk-2077",
+        "baldurs-gate-3",
+        "the-legend-of-zelda-tears-of-the-kingdom",
+        "alan-wake-2",
+        "starfield",
+        "final-fantasy-7-rebirth",
+        "grand-theft-auto-v",
+        "hades-2",
+        "it-takes-two",
+        "the-last-of-us-part-1",
+        "cuphead",
+        "disco-elysium",
+        "outer-wilds",
+        "persona-5-royal",
+    ];
+
+    let game_futures = slugs.map(|slug| async move {
+        let result = game::search(&slug.replace('-', " "))
+            .await?
+            .into_iter()
+            .inspect(|result| println!("{slug}: {}", result.0))
+            .find(|(found_slug, _)| found_slug.as_str() == slug)
+            .ok_or_else(|| anyhow::anyhow!("No exact match found for slug: {slug}"))?
+            .1;
+
+        Ok::<Game, anyhow::Error>(result)
+    });
+    let mut games: Vec<Game> = futures_util::future::join_all(game_futures)
+        .await
+        .into_iter()
+        .filter_map(|res| match res {
+            Ok(game) => Some(game),
+            Err(e) => {
+                eprintln!("Failed to fetch a game: {e}");
+                None
+            }
+        })
+        .collect();
+
+    for game in &mut games {
+        game.slug = match game.slug.as_str() {
+            "hades-2" => "hades-ii".into(),
+            _ => continue,
+        }
+    }
+    let slugs: Vec<&String> = games.iter().map(|g| &g.slug).collect();
+
+    let metadata_manager = Arc::new(MetadataManager::new(igdb::Credentials {
+        client_id: "7c9e7z9nn822m4y00n0xkmwch6y2mu".into(),
+        client_secret: "fydcw9o03z77uvckldtlzdz0qyxetf".into(),
+    }));
+
+    let metas = metadata_manager.get_games(&slugs).await?;
+    for (_, meta) in metas {
+        let Some(game) = games.iter_mut().find(|g| g.slug == meta.slug) else {
+            println!("Couldn't find metadata for {}", meta.slug);
+            continue;
+        };
+
+        game.metadata = Some(meta);
+    }
+
+    let games: Vec<Game> = games.into_iter().filter(|g| g.metadata.is_some()).collect();
+
+    let result_string = serde_json::to_string(&games)?;
+
+    tokio::fs::write(base().join("popular.json"), &result_string).await?;
+    Ok(())
+}
