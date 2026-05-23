@@ -15,7 +15,7 @@ use tokio::{self};
 use crate::{
     error::{DownloadError, InstallError},
     igdb,
-    util::{downloads, set_prefix_mute, slug::SlugExt, umu, wine_desktop, wine_games},
+    util::{base, downloads, set_prefix_mute, slug::SlugExt, umu, wine_desktop, wine_games},
 };
 
 /// A Video game that can be downloaded and installed.
@@ -224,6 +224,15 @@ pub async fn search(query: &str) -> anyhow::Result<HashMap<String, Game>> {
             games.insert(game.slug.clone(), game);
         }
     }
+
+    Ok(games)
+}
+
+pub async fn popular() -> anyhow::Result<HashMap<String, Game>> {
+    let games_string = tokio::fs::read_to_string(base().join("popular.json")).await?;
+
+    let games: Vec<Game> = serde_json::from_str(&games_string)?;
+    let games: HashMap<String, Game> = games.into_iter().map(|g| (g.slug.clone(), g)).collect();
 
     Ok(games)
 }

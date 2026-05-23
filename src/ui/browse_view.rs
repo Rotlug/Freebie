@@ -1,17 +1,18 @@
 use adw::prelude::*;
-use relm4::{binding::BoolBinding, prelude::*};
+use relm4::{binding::BoolBinding, binding::ConnectBindingExt, prelude::*};
 use std::sync::Arc;
 
 use crate::{game::Game, ui::game_button::GameButton};
 
 pub struct BrowseView {
     game_buttons: AsyncFactoryVecDeque<GameButton>,
-    is_searching: BoolBinding,
+    search_ongoing: BoolBinding,
 }
 
 #[derive(Debug)]
 pub enum Inbox {
     ReceivedGames(Vec<Arc<Game>>),
+    SearchStarted,
 }
 
 #[derive(Debug)]
@@ -28,6 +29,28 @@ impl SimpleComponent for BrowseView {
     view! {
         #[name = "browse_view"]
         gtk::Box {
+            set_orientation: gtk::Orientation::Vertical,
+
+            gtk::Revealer::with_binding(&model.search_ongoing) {
+                #[name = "spinner_box"]
+                gtk::Box {
+                    set_orientation: gtk::Orientation::Horizontal,
+                    set_halign: gtk::Align::Center,
+                    set_valign: gtk::Align::Center,
+                    set_margin_bottom: 7,
+
+                    adw::Spinner {
+                        set_width_request: 15,
+                        set_margin_end: 5
+                    },
+
+                    gtk::Label {
+                        set_label: "Searching...",
+                        set_css_classes: &["dimmed"]
+                    }
+                },
+            },
+
             gtk::ScrolledWindow {
                 set_hexpand: true,
                 set_vexpand: true,
@@ -57,7 +80,7 @@ impl SimpleComponent for BrowseView {
         let game_buttons = AsyncFactoryVecDeque::builder().launch(flow_box).detach();
         let model = Self {
             game_buttons,
-            is_searching: BoolBinding::default(),
+            search_ongoing: BoolBinding::default(),
         };
         let widgets = view_output!();
 
@@ -67,11 +90,15 @@ impl SimpleComponent for BrowseView {
     fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>) {
         match message {
             Inbox::ReceivedGames(games) => {
+                self.search_ongoing.set_value(false);
                 let mut guard = self.game_buttons.guard();
                 guard.clear();
                 for game in games {
                     guard.push_back(game);
                 }
+            }
+            Inbox::SearchStarted => {
+                self.search_ongoing.set_value(true);
             }
         }
     }

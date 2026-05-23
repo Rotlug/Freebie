@@ -26,12 +26,14 @@ pub enum View {
 #[derive(Debug)]
 pub enum Outbox {
     NewSearch(String),
+    SearchBarEmpty,
     ChangeView(View),
 }
 
 #[derive(Debug)]
 pub enum Inbox {
     ReceivedGames(Vec<Arc<Game>>),
+    SearchStarted,
 }
 
 #[relm4::component(pub)]
@@ -106,11 +108,14 @@ impl SimpleComponent for MainPage {
         let widgets = view_output!();
         widgets.search_bar.connect_entry(&widgets.search_entry);
 
-        let sender = sender.output_sender().clone();
+        let outbox = sender.output_sender().clone();
+
         widgets.search_entry.connect_search_changed(move |entry| {
             let query = entry.text().to_string();
-            if query.len() >= 3 {
-                sender.send(Outbox::NewSearch(query)).unwrap();
+            match query.len() {
+                0 => outbox.send(Outbox::SearchBarEmpty).unwrap(),
+                3.. => outbox.send(Outbox::NewSearch(query)).unwrap(),
+                _ => {}
             }
         });
 
@@ -122,6 +127,9 @@ impl SimpleComponent for MainPage {
             Inbox::ReceivedGames(games) => {
                 self.browse_view
                     .emit(browse_view::Inbox::ReceivedGames(games));
+            }
+            Inbox::SearchStarted => {
+                self.browse_view.emit(browse_view::Inbox::SearchStarted);
             }
         }
     }

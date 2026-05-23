@@ -30,6 +30,7 @@ enum Outbox {
 #[derive(Debug)]
 enum Inbox {
     SearchTriggered(String),
+    SearchBarEmpty,
     MetadataRequest(Vec<String>),
 }
 
@@ -72,6 +73,7 @@ impl AsyncComponent for App {
             sender.input_sender(),
             |msg| match msg {
                 ui::main_page::Outbox::NewSearch(query) => Inbox::SearchTriggered(query),
+                ui::main_page::Outbox::SearchBarEmpty => Inbox::SearchBarEmpty,
                 ui::main_page::Outbox::ChangeView(view) => todo!(),
             },
         );
@@ -99,6 +101,8 @@ impl AsyncComponent for App {
                 if let Some(handle) = self.current_search.take() {
                     handle.abort();
                 }
+
+                self.main_page.emit(main_page::Inbox::SearchStarted);
 
                 let sender = sender.command_sender().clone();
                 let metadata_manager = self.metadata_manager.clone();
@@ -132,6 +136,20 @@ impl AsyncComponent for App {
             }
 
             Inbox::MetadataRequest(slugs) => {}
+
+            Inbox::SearchBarEmpty => {
+                let games = game::popular()
+                    .await
+                    .unwrap()
+                    .into_iter()
+                    .map(|g| Arc::new(g.1))
+                    .collect();
+
+                sender
+                    .command_sender()
+                    .send(Command::SearchFinished(games))
+                    .unwrap();
+            }
         }
     }
 
