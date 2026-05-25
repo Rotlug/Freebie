@@ -69,8 +69,8 @@ impl AsyncFactoryComponent for GameButton {
 
     async fn init_model(
         init: Self::Init,
-        index: &DynamicIndex,
-        sender: AsyncFactorySender<Self>,
+        _index: &DynamicIndex,
+        _sender: AsyncFactorySender<Self>,
     ) -> Self {
         let metadata = init.metadata.as_ref().unwrap();
         let bytes = metadata.cover.download().await.unwrap();
@@ -84,9 +84,9 @@ impl AsyncFactoryComponent for GameButton {
 
     fn init_widgets(
         &mut self,
-        index: &DynamicIndex,
+        _index: &DynamicIndex,
         root: Self::Root,
-        returned_widget: &<Self::ParentWidget as relm4::factory::FactoryView>::ReturnedWidget,
+        _returned_widget: &<Self::ParentWidget as relm4::factory::FactoryView>::ReturnedWidget,
         sender: AsyncFactorySender<Self>,
     ) -> Self::Widgets {
         let widgets = view_output!();
@@ -100,7 +100,7 @@ impl AsyncFactoryComponent for GameButton {
         widgets.cover_button.connect_clicked(move |_| {
             outbox
                 .send(Outbox::Clicked(video_game.clone(), texture.clone()))
-                .unwrap()
+                .unwrap();
         });
 
         widgets

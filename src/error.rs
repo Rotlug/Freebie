@@ -24,6 +24,9 @@ pub enum InstallError {
     #[error("Setup.exe was not found")]
     SetupExeNotFound,
 
+    #[error("Error while serializing games: {0}")]
+    SerdeError(#[from] serde_json::Error),
+
     #[error("Desktop shortcut not found")]
     DesktopShortcutNotFound,
 }

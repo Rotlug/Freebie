@@ -1,7 +1,9 @@
 use std::sync::Arc;
 
 use crate::{
+    ActiveGames,
     game::Game,
+    igdb::{self, MetadataManager},
     ui::browse_view::{self, BrowseView},
 };
 use adw::prelude::*;
@@ -13,43 +15,44 @@ use relm4::{
 
 pub struct MainPage {
     root_window: adw::Window,
-    browse_view: Controller<BrowseView>,
-    search_enabled: BoolBinding,
+    browse_view: AsyncController<BrowseView>,
+    search_visible: BoolBinding,
+    active_view: View,
 }
 
 #[derive(Debug)]
 pub enum View {
     Browse,
-    Play,
 }
 
 #[derive(Debug)]
 pub enum Outbox {
-    NewSearch(String),
-    SearchBarEmpty,
     GameSelected(Arc<Game>, gtk::gdk::Texture),
 }
 
 #[derive(Debug)]
 pub enum Inbox {
-    ReceivedGames(Vec<Arc<Game>>),
-    SearchStarted,
+    SearchStarted(String),
+    SearchBarEmpty,
+    ViewChanged(View),
 }
 
-#[relm4::component(pub)]
-impl SimpleComponent for MainPage {
+#[relm4::component(pub async)]
+impl AsyncComponent for MainPage {
     type Input = Inbox;
     type Output = Outbox;
-    type Init = adw::Window;
+    type Init = (adw::Window, ActiveGames);
+    type CommandOutput = ();
 
     view! {
         adw::ToolbarView {
             add_top_bar = &adw::HeaderBar {
-                pack_start = &gtk::ToggleButton::with_binding(&model.search_enabled) {
+                pack_start = &gtk::ToggleButton::with_binding(&model.search_visible) {
                     set_icon_name: "system-search-symbolic",
                 },
 
                 #[wrap(Some)]
+                #[name="view_switcher"]
                 set_title_widget = &adw::ViewSwitcher {
                     set_policy: adw::ViewSwitcherPolicy::Wide,
                     set_stack: Some(&stack),
@@ -71,7 +74,7 @@ impl SimpleComponent for MainPage {
             #[name="search_bar"]
             add_top_bar = &gtk::SearchBar {
                 set_key_capture_widget: Some(&model.root_window),
-                add_binding: (&model.search_enabled, "search-mode-enabled"),
+                add_binding: (&model.search_visible, "search-mode-enabled"),
 
                 #[wrap(Some)]
                 set_child = &adw::Clamp {
@@ -88,51 +91,86 @@ impl SimpleComponent for MainPage {
         }
     }
 
-    fn init(
+    async fn init(
         init: Self::Init,
         root: Self::Root,
-        sender: ComponentSender<Self>,
-    ) -> ComponentParts<Self> {
+        sender: AsyncComponentSender<Self>,
+    ) -> AsyncComponentParts<Self> {
+        let active_games = init.1;
+        let metadata = Arc::new(MetadataManager::new(igdb::Credentials {
+            client_id: "7c9e7z9nn822m4y00n0xkmwch6y2mu".into(),
+            client_secret: "fydcw9o03z77uvckldtlzdz0qyxetf".into(),
+        }));
+
         let browse_view = BrowseView::builder()
-            .launch(())
+            .launch((active_games.clone(), metadata.clone()))
             .forward(sender.output_sender(), |msg| match msg {
                 browse_view::Outbox::GameSelected(game, texture) => {
                     Outbox::GameSelected(game, texture)
                 }
             });
-        let search_enabled = BoolBinding::default();
+
+        let search_visible = BoolBinding::default();
         let model = Self {
-            root_window: init,
+            root_window: init.0,
             browse_view,
-            search_enabled,
+            search_visible,
+            active_view: View::Browse,
         };
 
         let widgets = view_output!();
         widgets.search_bar.connect_entry(&widgets.search_entry);
 
-        let outbox = sender.output_sender().clone();
-
+        // Search signals
+        let inbox = sender.input_sender().clone();
         widgets.search_entry.connect_search_changed(move |entry| {
             let query = entry.text().to_string();
-            match query.len() {
-                0 => outbox.send(Outbox::SearchBarEmpty).unwrap(),
-                3.. => outbox.send(Outbox::NewSearch(query)).unwrap(),
-                _ => {}
-            }
+            inbox
+                .send(match query.len() {
+                    0 => Inbox::SearchBarEmpty,
+                    3.. => Inbox::SearchStarted(query),
+                    _ => return,
+                })
+                .unwrap();
         });
 
-        ComponentParts { model, widgets }
+        // View switcher signals
+        let inbox = sender.input_sender().clone();
+        widgets
+            .stack
+            .connect_visible_child_name_notify(move |stack| {
+                if let Some(visible_child) = stack.visible_child_name() {
+                    inbox
+                        .send(match visible_child.as_str() {
+                            "browse" => Inbox::ViewChanged(View::Browse),
+                            _ => return,
+                        })
+                        .unwrap();
+                }
+            });
+
+        AsyncComponentParts { model, widgets }
     }
 
-    fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>) {
+    async fn update(
+        &mut self,
+        message: Self::Input,
+        _sender: AsyncComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
         match message {
-            Inbox::ReceivedGames(games) => {
-                self.browse_view
-                    .emit(browse_view::Inbox::ReceivedGames(games));
-            }
-            Inbox::SearchStarted => {
-                self.browse_view.emit(browse_view::Inbox::SearchStarted);
-            }
+            Inbox::ViewChanged(view) => self.active_view = view,
+            Inbox::SearchStarted(query) => match self.active_view {
+                View::Browse => {
+                    self.browse_view
+                        .emit(browse_view::Inbox::SearchStarted(query));
+                }
+            },
+            Inbox::SearchBarEmpty => match self.active_view {
+                View::Browse => {
+                    self.browse_view.emit(browse_view::Inbox::SearchBarEmpty);
+                }
+            },
         }
     }
 }

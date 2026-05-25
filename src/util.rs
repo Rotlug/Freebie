@@ -1,8 +1,10 @@
 //! Various helper functions and methods
 
-use std::path::PathBuf;
+use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
 use tokio::{fs, io, process};
+
+use crate::game::Game;
 
 pub mod slug;
 
@@ -50,6 +52,21 @@ pub fn wine_desktop() -> PathBuf {
 /// The users `Games` directory inside of the wine prefix (`~/.local/share/freebie/prefix/drive_c/Games`)
 pub fn wine_games() -> PathBuf {
     prefix().join("drive_c").join("Games")
+}
+
+/// Get the path of the `.json` file that saves the installed games data
+pub fn installed_games_file() -> PathBuf {
+    base().join("installed_games.json")
+}
+
+/// Get all of the installed games from the `installed_games_file()` path. or an empty `HashMap`
+/// if the file doesn't exist yet or failed to be read.
+pub async fn installed_games() -> anyhow::Result<HashMap<String, Arc<Game>>> {
+    let Ok(string) = tokio::fs::read_to_string(installed_games_file()).await else {
+        return Ok(HashMap::new());
+    };
+
+    Ok(serde_json::from_str(&string)?)
 }
 
 /* Wine utils */

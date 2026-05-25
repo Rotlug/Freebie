@@ -1,15 +1,18 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+};
 
 use adw::prelude::*;
 use relm4::prelude::*;
 
 use crate::{
     game::Game,
-    igdb::MetadataManager,
     ui::{
         game_page::{self, GamePage},
         main_page::{self, MainPage},
     },
+    util::{ensure_directories_exist, installed_games, installed_games_file},
 };
 
 mod error;
@@ -19,38 +22,29 @@ mod game;
 mod igdb;
 mod ui;
 
+/// "Active" games are games that the user has interacted with during the runtime of the program.
+/// Therefore, we need to keep track of them so their state doesn't get lost when
+/// reentering the game page, canceling a search, etc..
+pub type ActiveGames = Arc<Mutex<HashMap<String, Arc<Game>>>>;
+
 struct App {
-    main_page: Controller<MainPage>,
+    main_page: AsyncController<MainPage>,
     game_page: AsyncController<GamePage>,
-
-    metadata_manager: Arc<MetadataManager>,
-    current_search: Option<tokio::task::JoinHandle<anyhow::Result<()>>>,
+    active_games: ActiveGames,
 }
 
 #[derive(Debug)]
-enum Outbox {
-    SendMetadata(HashMap<String, igdb::Metadata>),
-}
-
-#[derive(Debug)]
-enum Inbox {
-    SearchTriggered(String),
-    SearchBarEmpty,
-    MetadataRequest(Vec<String>),
+pub enum Inbox {
     GameSelected(Arc<Game>, gtk::gdk::Texture),
-}
-
-#[derive(Debug)]
-enum Command {
-    SearchFinished(Vec<Arc<Game>>),
+    Exit,
 }
 
 #[relm4::component(async)]
 impl AsyncComponent for App {
-    type Output = Outbox;
+    type Output = ();
     type Input = Inbox;
     type Init = ();
-    type CommandOutput = Command;
+    type CommandOutput = ();
 
     view! {
         adw::Window {
@@ -72,37 +66,41 @@ impl AsyncComponent for App {
     }
 
     async fn init(
-        init: Self::Init,
+        _init: Self::Init,
         root: Self::Root,
         sender: AsyncComponentSender<Self>,
     ) -> AsyncComponentParts<Self> {
-        let metadata_manager = Arc::new(MetadataManager::new(igdb::Credentials {
-            client_id: "7c9e7z9nn822m4y00n0xkmwch6y2mu".into(),
-            client_secret: "fydcw9o03z77uvckldtlzdz0qyxetf".into(),
-        }));
+        ensure_directories_exist().await;
 
-        let main_page = MainPage::builder().launch(root.clone()).forward(
-            sender.input_sender(),
-            |msg| match msg {
-                ui::main_page::Outbox::NewSearch(query) => Inbox::SearchTriggered(query),
-                ui::main_page::Outbox::SearchBarEmpty => Inbox::SearchBarEmpty,
+        let active_games = Arc::new(Mutex::new(
+            installed_games()
+                .await
+                .inspect_err(|g| {
+                    _ = dbg!(g);
+                })
+                .unwrap(),
+        ));
+
+        let main_page = MainPage::builder()
+            .launch((root.clone(), active_games.clone()))
+            .forward(sender.input_sender(), |msg| match msg {
                 main_page::Outbox::GameSelected(game, texture) => {
                     Inbox::GameSelected(game, texture)
                 }
-            },
-        );
-
-        let game_page = GamePage::builder().launch(()).detach();
+            });
+        let game_page = GamePage::builder().launch(active_games.clone()).detach();
 
         let model = Self {
             main_page,
             game_page,
-            metadata_manager,
-            current_search: None,
+            active_games,
         };
-
         let widgets = view_output!();
 
+        if let Some(app) = root.application() {
+            let inbox = sender.input_sender().clone();
+            app.connect_shutdown(move |_| inbox.clone().send(Inbox::Exit).unwrap());
+        }
         AsyncComponentParts { model, widgets }
     }
 
@@ -110,83 +108,34 @@ impl AsyncComponent for App {
         &mut self,
         widgets: &mut Self::Widgets,
         message: Self::Input,
-        sender: AsyncComponentSender<Self>,
-        root: &Self::Root,
+        _sender: AsyncComponentSender<Self>,
+        _root: &Self::Root,
     ) {
         match message {
-            Inbox::SearchTriggered(query) => {
-                // cancel previous search
-                if let Some(handle) = self.current_search.take() {
-                    handle.abort();
-                }
-
-                self.main_page.emit(main_page::Inbox::SearchStarted);
-
-                let sender = sender.command_sender().clone();
-                let metadata_manager = self.metadata_manager.clone();
-
-                let new_handle = tokio::spawn(async move {
-                    let mut games = game::search(&query).await?;
-
-                    let slugs: Vec<String> = games.keys().cloned().collect();
-                    let metas = metadata_manager.get_games(&slugs).await?;
-
-                    // Map metadata to games
-                    for meta in metas.into_values() {
-                        if let Some(game) = games.get_mut(&meta.slug) {
-                            game.metadata = Some(meta);
-                        }
-                    }
-
-                    sender
-                        .send(Command::SearchFinished(
-                            games
-                                .into_values()
-                                .filter(|g| g.metadata.is_some())
-                                .map(Arc::new)
-                                .collect(),
-                        ))
-                        .unwrap();
-                    Ok::<(), anyhow::Error>(())
-                });
-
-                self.current_search = Some(new_handle);
-            }
-            Inbox::MetadataRequest(slugs) => {}
-            Inbox::SearchBarEmpty => {
-                let games = game::popular()
-                    .await
-                    .unwrap()
-                    .into_iter()
-                    .map(|g| Arc::new(g.1))
-                    .collect();
-
-                sender
-                    .command_sender()
-                    .send(Command::SearchFinished(games))
-                    .unwrap();
-            }
             Inbox::GameSelected(game, texture) => {
                 self.game_page
-                    .emit(game_page::Inbox::NewGame(game, texture));
+                    .emit(game_page::Inbox::ChangeGame(game, texture));
+
                 widgets.nav_view.push(&widgets.nav_game_page);
             }
-        }
+            Inbox::Exit => {
+                // Save to disk only the state of games which finished installing
+                let installed_games: HashMap<String, Arc<Game>> = {
+                    let guard = self.active_games.lock().unwrap().clone();
+                    guard
+                        .into_iter()
+                        .filter(|(_, game)| {
+                            let state = &*game.state.lock().unwrap();
+                            matches!(state, game::State::Installed { .. })
+                        })
+                        .collect()
+                };
 
-        self.update_view(widgets, sender);
-    }
-
-    async fn update_cmd(
-        &mut self,
-        message: Self::CommandOutput,
-        sender: AsyncComponentSender<Self>,
-        root: &Self::Root,
-    ) {
-        match message {
-            Command::SearchFinished(games) => {
-                self.current_search = None;
-
-                self.main_page.emit(main_page::Inbox::ReceivedGames(games));
+                if let Ok(string) = serde_json::to_string(&installed_games) {
+                    tokio::fs::write(installed_games_file(), &string)
+                        .await
+                        .unwrap();
+                }
             }
         }
     }

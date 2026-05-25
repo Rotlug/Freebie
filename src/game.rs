@@ -8,7 +8,7 @@ use std::{
     fs,
     path::{Path, PathBuf},
     sync::{Arc, Mutex},
-    time::Duration,
+    time::{Duration, SystemTime},
 };
 use tokio::{self};
 
@@ -33,30 +33,33 @@ pub struct Game {
     /// The games metadata from IGDB, or `None` if it hasn't been fetched yet.
     pub metadata: Option<igdb::Metadata>,
 
-    /// The games current installation state
-    #[serde(default)]
+    /// The games current installation state.
     pub state: Arc<Mutex<State>>,
 }
 
 /// A Games current installation state
-#[derive(Default, Debug, Serialize, Deserialize)]
+#[derive(Default, Debug, Serialize, Deserialize, Clone)]
 pub enum State {
     /// The game is uninstalled
     #[default]
     Uninstalled,
+    /// Steps in preperation for downloading (finding the download link, adding the torrent to the session, etc..)
+    Preparing,
     /// The game is currently in the middle of being downloaded. the
     /// `String` contains a human-readable version of the current percentage.
     /// (for example: `"25.46%"`)
     Downloading(String),
     /// The game's installer is currently running.
     Installing,
-    /// The game is already installed
+    /// The game is already installed.
     Installed {
         /// The game's installation directory. usually this is the directory above
         /// The game's `exe` location.
         path: PathBuf,
         /// The location for the games `exe` or `lnk` file.
         exe: PathBuf,
+        /// The games total time played
+        time_played: Duration,
     },
 }
 
@@ -66,22 +69,27 @@ impl Game {
         &self,
         session: &Arc<librqbit::Session>,
     ) -> Result<PathBuf, DownloadError> {
-        let html = reqwest::get(&self.link).await?.text().await?;
-        let document = Html::parse_document(&html);
+        *self.state.lock().unwrap() = State::Preparing;
 
-        // Find first magnet link in page
-        let magnet = document
-            .select(&Selector::parse("a").unwrap())
-            .find_map(|link| {
-                let href = link.attr("href")?;
+        let magnet = {
+            let html = reqwest::get(&self.link).await?.text().await?;
+            let document = Html::parse_document(&html);
 
-                if href.starts_with("magnet") {
-                    return Some(href);
-                }
+            // Find first magnet link in page
+            document
+                .select(&Selector::parse("a").unwrap())
+                .find_map(|link| {
+                    let href = link.attr("href")?;
 
-                None
-            })
-            .ok_or(DownloadError::MagnetLinkNotFound)?;
+                    if href.starts_with("magnet") {
+                        // Crucial: return an owned String so it doesn't borrow from 'document'
+                        return Some(href.to_string());
+                    }
+
+                    None
+                })
+                .ok_or(DownloadError::MagnetLinkNotFound)?
+        };
 
         let output_dir = downloads().join(&self.slug);
 
@@ -111,7 +119,6 @@ impl Game {
                     .progress_percent_human_readable()
                     .to_string();
 
-                dbg!(&progress);
                 *self.state.lock().unwrap() = State::Downloading(progress);
                 tokio::time::sleep(Duration::from_secs(1)).await;
             }
@@ -152,6 +159,9 @@ impl Game {
         .await?;
         set_prefix_mute(false).await?;
 
+        // Remove the download directory
+        fs::remove_dir_all(download_dir)?;
+
         // Look for a matching .desktop shortcut
         for entry in fs::read_dir(wine_desktop())?.flatten() {
             let Ok(file_name) = entry.file_name().into_string() else {
@@ -165,7 +175,9 @@ impl Game {
                 *self.state.lock().unwrap() = State::Installed {
                     path: wine_games().join(&self.slug),
                     exe: entry.path(),
+                    time_played: Duration::default(),
                 };
+
                 return Ok(entry.path());
             }
         }
@@ -173,6 +185,23 @@ impl Game {
         // No Desktop shortcut has been found, installation failed.
         *self.state.lock().unwrap() = State::Uninstalled;
         Err(InstallError::DesktopShortcutNotFound)
+    }
+
+    /// Launch the game, if its installed.
+    pub async fn play(&self) -> anyhow::Result<()> {
+        let state = self.state.lock().unwrap().clone();
+        if let State::Installed { exe, .. } = state {
+            let start = SystemTime::now();
+            umu(&[&exe.display().to_string()]).await?;
+            if let State::Installed {
+                mut time_played, ..
+            } = *self.state.lock().unwrap()
+            {
+                time_played += start.elapsed().unwrap();
+            }
+        }
+
+        Ok(())
     }
 }
 
@@ -228,11 +257,8 @@ pub async fn search(query: &str) -> anyhow::Result<HashMap<String, Game>> {
     Ok(games)
 }
 
-pub async fn popular() -> anyhow::Result<HashMap<String, Game>> {
+pub async fn popular() -> anyhow::Result<Vec<Arc<Game>>> {
     let games_string = tokio::fs::read_to_string(base().join("popular.json")).await?;
-
-    let games: Vec<Game> = serde_json::from_str(&games_string)?;
-    let games: HashMap<String, Game> = games.into_iter().map(|g| (g.slug.clone(), g)).collect();
-
+    let games: Vec<Arc<Game>> = serde_json::from_str(&games_string)?;
     Ok(games)
 }

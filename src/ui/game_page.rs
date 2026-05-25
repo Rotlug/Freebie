@@ -1,24 +1,36 @@
+//! The game page is the page where the user can look at the games metadata and install it.
+
 use adw::prelude::*;
 use relm4::prelude::*;
 use std::sync::Arc;
 
-use crate::{game::Game, ui::blurred_paintable};
+use crate::{
+    ActiveGames,
+    game::Game,
+    ui::{
+        action_button::{self, ActionButton},
+        blurred_paintable,
+    },
+};
 
 #[derive(Debug)]
 pub enum Inbox {
-    NewGame(Arc<Game>, gtk::gdk::Texture),
+    ChangeGame(Arc<Game>, gtk::gdk::Texture),
+    ActionButtonClicked,
 }
 
 pub struct GamePage {
     game: Option<Arc<Game>>,
     texture: Option<gtk::gdk::Texture>,
+    action_button: AsyncController<ActionButton>,
+    active_games: ActiveGames,
 }
 
 #[relm4::component(pub async)]
 impl AsyncComponent for GamePage {
     type Input = Inbox;
     type Output = ();
-    type Init = ();
+    type Init = ActiveGames;
     type CommandOutput = ();
 
     view! {
@@ -102,13 +114,20 @@ impl AsyncComponent for GamePage {
                                     set_label: &model.description(),
 
                                     set_css_classes: &["document"],
+                                },
+
+                                gtk::Box {
+                                    set_orientation: gtk::Orientation::Horizontal,
+                                    set_margin_top: 10,
+                                    set_spacing: 10,
+
+                                    append = model.action_button.widget(),
                                 }
                             }
                         }
                     }
                 },
             },
-
         }
     }
 
@@ -117,9 +136,18 @@ impl AsyncComponent for GamePage {
         root: Self::Root,
         sender: AsyncComponentSender<Self>,
     ) -> AsyncComponentParts<Self> {
+        let action_button =
+            ActionButton::builder()
+                .launch(())
+                .forward(sender.input_sender(), |msg| match msg {
+                    action_button::Outbox::Clicked => Inbox::ActionButtonClicked,
+                });
+
         let model = Self {
+            active_games: init,
             game: None,
             texture: None,
+            action_button,
         };
 
         let widgets = view_output!();
@@ -132,16 +160,31 @@ impl AsyncComponent for GamePage {
         widgets: &mut Self::Widgets,
         message: Self::Input,
         sender: AsyncComponentSender<Self>,
-        root: &Self::Root,
+        _root: &Self::Root,
     ) {
         match message {
-            Inbox::NewGame(game, texture) => {
-                self.game = Some(game);
+            Inbox::ChangeGame(game, texture) => {
+                self.game = Some(game.clone());
                 self.texture = Some(texture.clone());
 
+                // set cover pic
                 widgets.cover.set_paintable(Some(&texture));
+                // set the background to a blurred version of the cover
                 let blurred = blurred_paintable(&texture, 20.0).unwrap();
                 widgets.blurred_background.set_paintable(Some(&blurred));
+
+                self.action_button.emit(action_button::Inbox::Update(game));
+            }
+            Inbox::ActionButtonClicked => {
+                if let Some(game) = self.game.clone() {
+                    self.active_games
+                        .lock()
+                        .unwrap()
+                        .insert(game.slug.clone(), game.clone());
+
+                    self.action_button
+                        .emit(action_button::Inbox::GameAction(game));
+                }
             }
         }
 
@@ -149,6 +192,7 @@ impl AsyncComponent for GamePage {
     }
 }
 
+/// Functions to display the games info
 impl GamePage {
     fn description(&self) -> &str {
         self.game
