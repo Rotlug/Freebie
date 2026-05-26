@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{path::PathBuf, sync::Arc};
 
 use crate::{
     ActiveGames, TextureCache,
@@ -6,9 +6,11 @@ use crate::{
     igdb::MetadataManager,
     settings::Settings,
     ui::{
+        add_game_dialog::{self, AddGameDialog},
         browse_view::{self, BrowseView},
         play_view::{self, PlayView},
     },
+    util::umu,
 };
 use adw::prelude::*;
 use relm4::{
@@ -17,12 +19,28 @@ use relm4::{
     prelude::*,
 };
 
+relm4::new_action_group!(AppActionGroup, "app");
+relm4::new_stateless_action!(RunExeAction, AppActionGroup, "run_exe");
+relm4::new_stateless_action!(AddGameAction, AppActionGroup, "add_game");
+
 pub struct MainPage {
     root_window: adw::Window,
+
+    // Views
     browse_view: AsyncController<BrowseView>,
     play_view: AsyncController<PlayView>,
+
+    // Dialog to add games not from freebie
+    add_game_dialog: AsyncController<AddGameDialog>,
+
+    // Is the search bar currently visible
     search_visible: BoolBinding,
+
+    // The currently visible view
     active_view: View,
+
+    metadata: Arc<MetadataManager>,
+    active_games: ActiveGames,
 }
 
 #[derive(Debug)]
@@ -45,6 +63,8 @@ pub enum Inbox {
     /// fires when the search bar is empty, taking `search_delay` into account.
     SearchBarEmpty,
     ViewChanged(View),
+    RunExe(PathBuf),
+    AddGame(Game),
 }
 
 #[relm4::component(pub async)]
@@ -59,6 +79,14 @@ impl AsyncComponent for MainPage {
             add_top_bar = &adw::HeaderBar {
                 pack_start = &gtk::ToggleButton::with_binding(&model.search_visible) {
                     set_icon_name: "system-search-symbolic",
+                },
+
+                pack_end = &gtk::MenuButton {
+                    set_icon_name: "open-menu-symbolic",
+                    set_primary: true,
+                    set_tooltip_text: Some("menu"),
+
+                    set_menu_model: Some(&primary_menu)
                 },
 
                 #[wrap(Some)]
@@ -129,6 +157,7 @@ impl AsyncComponent for MainPage {
                 }
             });
 
+        // Views
         let play_view = PlayView::builder()
             .launch((active_games.clone(), texture_cache.clone()))
             .forward(sender.output_sender(), |msg| match msg {
@@ -137,13 +166,58 @@ impl AsyncComponent for MainPage {
                 }
             });
 
+        let add_game_dialog = AddGameDialog::builder()
+            .launch(root_window.clone()) // Passes Init parameters (empty tuple in this case)
+            .forward(sender.input_sender(), |output| match output {
+                add_game_dialog::Outbox::GameAdded(game) => Inbox::AddGame(game),
+                add_game_dialog::Outbox::Cancelled => Inbox::SearchBarEmpty,
+            });
+
+        // Search
         let search_visible = BoolBinding::new(false);
+
+        // Menu
+        relm4::menu! {
+            primary_menu: {
+                section! {
+                    "Run Executable" => RunExeAction,
+                    "Add Game" => AddGameAction
+                }
+            }
+        }
+
+        let mut app_group = relm4::actions::RelmActionGroup::<AppActionGroup>::new();
+
+        let inbox = sender.input_sender().clone();
+        let window = root_window.clone();
+        let run_exe_action = relm4::actions::RelmAction::<RunExeAction>::new_stateless(move |_| {
+            let inbox = inbox.clone();
+            open_executable_picker(&window, move |path| {
+                inbox.send(Inbox::RunExe(path)).unwrap();
+            });
+        });
+
+        app_group.add_action(run_exe_action);
+
+        let dialog = add_game_dialog.sender().clone();
+        let add_game_action =
+            relm4::actions::RelmAction::<AddGameAction>::new_stateless(move |_| {
+                dialog.emit(add_game_dialog::Inbox::Present);
+            });
+        app_group.add_action(add_game_action);
+
+        app_group.register_for_widget(&root_window);
+
+        // Model
         let model = Self {
             root_window,
             browse_view,
             play_view,
+            add_game_dialog,
             search_visible,
             active_view: View::Browse,
+            metadata,
+            active_games,
         };
 
         let widgets = view_output!();
@@ -217,6 +291,63 @@ impl AsyncComponent for MainPage {
                 View::Play => self.play_view.emit(play_view::Inbox::SearchStarted(text)),
                 View::Browse => {}
             },
+            Inbox::RunExe(path) => {
+                tokio::spawn(async move {
+                    _ = umu(&[&path.display().to_string()]).await;
+                });
+            }
+            Inbox::AddGame(mut game) => {
+                let slugs = [&game.slug];
+                let Ok(metas) = self.metadata.get_games(&slugs).await else {
+                    return;
+                };
+
+                for (meta_slug, meta) in metas {
+                    if meta_slug == game.slug {
+                        game.metadata = Some(meta);
+                        self.active_games
+                            .lock()
+                            .unwrap()
+                            .insert(meta_slug, Arc::new(game));
+
+                        self.play_view.emit(play_view::Inbox::Update);
+                        break;
+                    }
+                }
+            }
         }
     }
+}
+
+/// Opens a file dialog restricted to executables (.exe, .lnk)
+pub fn open_executable_picker<W, F>(parent_window: &W, on_success: F)
+where
+    W: IsA<gtk::Window>,
+    F: FnOnce(PathBuf) + 'static,
+{
+    let file_picker = gtk::FileDialog::new();
+    file_picker.set_title("Pick Executable");
+
+    // Configure the file filters
+    let filter = gtk::FileFilter::new();
+    filter.set_name(Some("Executables (*.exe, *.lnk)"));
+    filter.add_suffix("exe");
+    filter.add_suffix("lnk");
+
+    let filters = gtk::gio::ListStore::new::<gtk::FileFilter>();
+    filters.append(&filter);
+    file_picker.set_filters(Some(&filters));
+
+    // Open the dialog
+    file_picker.open(
+        Some(parent_window),
+        gtk::gio::Cancellable::NONE,
+        move |file| {
+            if let Ok(file) = file
+                && let Some(path) = file.path()
+            {
+                on_success(path);
+            }
+        },
+    );
 }
