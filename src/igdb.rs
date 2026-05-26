@@ -194,6 +194,9 @@ pub struct Cover {
     #[serde(rename = "id")]
     _id: i32,
     pub url: String,
+
+    #[serde(skip)]
+    pub texture_cache: Mutex<Option<relm4::gtk::gdk::Texture>>,
 }
 
 impl Cover {

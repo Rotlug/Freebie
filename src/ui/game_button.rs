@@ -73,8 +73,14 @@ impl AsyncFactoryComponent for GameButton {
         _sender: AsyncFactorySender<Self>,
     ) -> Self {
         let metadata = init.metadata.as_ref().unwrap();
-        let bytes = metadata.cover.download().await.unwrap();
-        let texture = bytes_to_texture(bytes).await.unwrap();
+        let texture = if let Some(ref texture) = *metadata.cover.texture_cache.lock().await {
+            texture.clone()
+        } else {
+            let bytes = metadata.cover.download().await.unwrap();
+            let texture = bytes_to_texture(bytes).await.unwrap();
+            *metadata.cover.texture_cache.lock().await = Some(texture.clone());
+            texture
+        };
 
         Self {
             game: init,
