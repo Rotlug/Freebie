@@ -2,7 +2,7 @@ use adw::prelude::*;
 use relm4::prelude::*;
 use std::{
     path::PathBuf,
-    sync::{Arc, Mutex},
+    sync::{Arc, RwLock},
     time::Duration,
 };
 
@@ -162,7 +162,7 @@ impl AsyncComponent for AddGameDialog {
                         size: String::new(),
                         slug: self.game_name.slug(),
                         metadata: None,
-                        state: Arc::new(Mutex::new(game::State::Installed {
+                        state: Arc::new(RwLock::new(game::State::Installed {
                             path: exe_path.parent().unwrap().into(),
                             exe: exe_path,
                             time_played: Duration::default(),

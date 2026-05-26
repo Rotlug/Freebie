@@ -7,7 +7,7 @@ use std::{
     collections::HashMap,
     fs,
     path::{Path, PathBuf},
-    sync::{Arc, Mutex},
+    sync::{Arc, RwLock},
     time::{Duration, Instant},
 };
 use tokio::{self};
@@ -34,7 +34,7 @@ pub struct Game {
     pub metadata: Option<igdb::Metadata>,
 
     /// The games current installation state.
-    pub state: Arc<Mutex<State>>,
+    pub state: Arc<RwLock<State>>,
 }
 
 /// A Games current installation state
@@ -71,7 +71,7 @@ impl Game {
         &self,
         session: &Arc<librqbit::Session>,
     ) -> Result<PathBuf, DownloadError> {
-        *self.state.lock().unwrap() = State::Preparing;
+        *self.state.write().unwrap() = State::Preparing;
 
         let magnet = {
             let html = reqwest::get(&self.link).await?.text().await?;
@@ -121,7 +121,7 @@ impl Game {
                     .progress_percent_human_readable()
                     .to_string();
 
-                *self.state.lock().unwrap() = State::Downloading(progress);
+                *self.state.write().unwrap() = State::Downloading(progress);
                 tokio::time::sleep(Duration::from_secs(1)).await;
             }
         };
@@ -145,7 +145,7 @@ impl Game {
     /// Returns the path to the executable OR the path to the desktop shortcut (`.lnk` file)
     pub async fn install(&self, download_dir: impl AsRef<Path>) -> Result<PathBuf, InstallError> {
         // Look for the setup.exe file
-        *self.state.lock().unwrap() = State::Installing;
+        *self.state.write().unwrap() = State::Installing;
         let setup = download_dir.as_ref().join("setup.exe");
         if !fs::exists(&setup)? {
             return Err(InstallError::SetupExeNotFound);
@@ -174,7 +174,7 @@ impl Game {
             };
 
             if self.slug.contains(&file_name.ultra_slug()) {
-                *self.state.lock().unwrap() = State::Installed {
+                *self.state.write().unwrap() = State::Installed {
                     path: wine_games().join(&self.slug),
                     exe: entry.path(),
                     time_played: Duration::default(),
@@ -186,14 +186,14 @@ impl Game {
         }
 
         // No Desktop shortcut has been found, installation failed.
-        *self.state.lock().unwrap() = State::Uninstalled;
+        *self.state.write().unwrap() = State::Uninstalled;
         Err(InstallError::DesktopShortcutNotFound)
     }
 
     /// Uninstalls the game. WARNING: REMOVES ALL FILES FROM THE GAMES INSTALLATION DIRECTORY.
     pub async fn uninstall(&self) -> anyhow::Result<()> {
         let path = {
-            let guard = self.state.lock().unwrap();
+            let guard = self.state.read().unwrap();
             match *guard {
                 State::Installed { ref path, .. } => Some(path.clone()),
                 _ => None,
@@ -204,20 +204,20 @@ impl Game {
             tokio::fs::remove_dir_all(path).await?;
         }
 
-        *self.state.lock().unwrap() = State::Uninstalled;
+        *self.state.write().unwrap() = State::Uninstalled;
 
         Ok(())
     }
 
     /// Is the game installed.
     pub fn installed(&self) -> bool {
-        matches!(*self.state.lock().unwrap(), State::Installed { .. })
+        matches!(*self.state.read().unwrap(), State::Installed { .. })
     }
 
     /// Launch the game, if its installed.
     pub async fn play(&self) -> anyhow::Result<()> {
         let exe = {
-            let mut state = self.state.lock().unwrap();
+            let mut state = self.state.write().unwrap();
             if let State::Installed {
                 ref exe,
                 ref mut is_open,
@@ -238,7 +238,7 @@ impl Game {
 
             let elapsed = start.elapsed();
 
-            let mut state = self.state.lock().unwrap();
+            let mut state = self.state.write().unwrap();
             if let State::Installed {
                 ref mut time_played,
                 ref mut is_open,
@@ -294,7 +294,7 @@ pub async fn search(query: &str) -> anyhow::Result<HashMap<String, Game>> {
                 link,
                 size,
                 slug,
-                state: Arc::new(Mutex::new(State::default())),
+                state: Arc::new(RwLock::new(State::default())),
             })
         };
 

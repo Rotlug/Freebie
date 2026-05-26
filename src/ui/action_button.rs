@@ -74,7 +74,7 @@ impl AsyncComponent for ActionButton {
     ) {
         match message {
             Inbox::GameAction(game) => {
-                let mut state = game.state.lock().unwrap();
+                let mut state = game.state.write().unwrap();
 
                 match *state {
                     game::State::Uninstalled => {
@@ -156,7 +156,7 @@ impl AsyncComponent for ActionButton {
             Command::GameClosed => {}
             Command::GameInstalled(game) => {
                 _ = sender.output(Outbox::Update(game.clone()));
-                let state = &*game.state.lock().unwrap();
+                let state = &*game.state.read().unwrap();
                 if let game::State::Installed { exe, .. } = state {
                     println!("Game installed successfuly!");
                     println!("Desktop shortcut found in: {}", exe.display());
@@ -169,13 +169,13 @@ impl AsyncComponent for ActionButton {
 impl ActionButton {
     fn sensitive(game: &Game) -> bool {
         matches!(
-            *game.state.lock().unwrap(),
+            *game.state.read().unwrap(),
             game::State::Uninstalled | game::State::Installed { is_open: false, .. }
         )
     }
 
     fn label(game: &Game) -> String {
-        let state = &*game.state.lock().unwrap();
+        let state = &*game.state.read().unwrap();
 
         match state {
             game::State::Uninstalled => "Get".into(),
