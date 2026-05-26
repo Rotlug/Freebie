@@ -36,6 +36,10 @@ impl AsyncFactoryComponent for GameButton {
                 gtk::Button {
                     set_overflow: gtk::Overflow::Hidden,
 
+                    connect_clicked[sender, game, texture] => move |_| {
+                        let _ = sender.output(Outbox::Clicked(game.clone(), texture.clone()));
+                    },
+
                     gtk::Box {
                         set_orientation: gtk::Orientation::Vertical,
                         set_hexpand: false,
@@ -61,7 +65,7 @@ impl AsyncFactoryComponent for GameButton {
                         }
                     },
 
-                    set_css_classes: &["card"]
+                    add_css_class: "card"
                 }
             }
         }
@@ -97,20 +101,11 @@ impl AsyncFactoryComponent for GameButton {
         _returned_widget: &<Self::ParentWidget as relm4::factory::FactoryView>::ReturnedWidget,
         sender: AsyncFactorySender<Self>,
     ) -> Self::Widgets {
-        let widgets = view_output!();
-
-        widgets.cover.set_paintable(Some(&self.texture));
-
-        let outbox = sender.output_sender().clone();
-        let video_game = self.game.clone();
+        let game = self.game.clone();
         let texture = self.texture.clone();
 
-        widgets.cover_button.connect_clicked(move |_| {
-            outbox
-                .send(Outbox::Clicked(video_game.clone(), texture.clone()))
-                .unwrap();
-        });
-
+        let widgets = view_output!();
+        widgets.cover.set_paintable(Some(&self.texture));
         widgets
     }
 }

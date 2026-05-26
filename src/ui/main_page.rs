@@ -57,11 +57,10 @@ pub enum Outbox {
 #[derive(Debug)]
 pub enum Inbox {
     /// fires when the search is started properly, taking `search_delay` into account
-    SearchStarted(String),
+    SearchUpdated(String),
     /// fires every time the search entry text changes, disregarding the `search_delay`.
     SearchEntryUpdated(String),
     /// fires when the search bar is empty, taking `search_delay` into account.
-    SearchBarEmpty,
     GameUninstalled,
     ViewChanged(View),
     RunExe(PathBuf),
@@ -115,6 +114,16 @@ impl AsyncComponent for MainPage {
                     set_name: Some("play"),
                     set_title: Some("Play"),
                     set_icon_name: Some("applications-games-symbolic")
+                },
+
+                connect_visible_child_notify[sender] => move |stack| {
+                    if let Some(visible_child) = stack.visible_child_name() {
+                        match visible_child.as_str() {
+                            "browse" => sender.input(Inbox::ViewChanged(View::Browse)),
+                            "play" => sender.input(Inbox::ViewChanged(View::Play)),
+                            _ => {}
+                        }
+                    }
                 }
             },
 
@@ -131,7 +140,15 @@ impl AsyncComponent for MainPage {
                     gtk::SearchEntry {
                         set_hexpand: true,
                         set_placeholder_text: Some("Search games..."),
-                        set_search_delay: 300
+                        set_search_delay: 300,
+
+                        connect_search_changed[sender] => move |entry| {
+                            sender.input(Inbox::SearchUpdated(entry.text().to_string()));
+                        },
+
+                        connect_search_changed[sender] => move |entry| {
+                            sender.input(Inbox::SearchEntryUpdated(entry.text().to_string()));
+                        }
                     }
                 }
             }
@@ -171,7 +188,7 @@ impl AsyncComponent for MainPage {
             .launch(root_window.clone()) // Passes Init parameters (empty tuple in this case)
             .forward(sender.input_sender(), |output| match output {
                 add_game_dialog::Outbox::GameAdded(game) => Inbox::AddGame(game),
-                add_game_dialog::Outbox::Cancelled => Inbox::SearchBarEmpty,
+                add_game_dialog::Outbox::Cancelled => Inbox::SearchUpdated(String::new()),
             });
 
         // Search
@@ -224,41 +241,6 @@ impl AsyncComponent for MainPage {
         let widgets = view_output!();
         widgets.search_bar.connect_entry(&widgets.search_entry);
 
-        // Search signals
-        let inbox = sender.input_sender().clone();
-        widgets.search_entry.connect_search_changed(move |entry| {
-            let query = entry.text().to_string();
-            inbox
-                .send(match query.len() {
-                    0 => Inbox::SearchBarEmpty,
-                    3.. => Inbox::SearchStarted(query),
-                    _ => return,
-                })
-                .unwrap();
-        });
-
-        let inbox = sender.input_sender().clone();
-        widgets.search_entry.connect_changed(move |entry| {
-            let query = entry.text().to_string();
-            inbox.send(Inbox::SearchEntryUpdated(query)).unwrap();
-        });
-
-        // View switcher signals
-        let inbox = sender.input_sender().clone();
-        widgets
-            .stack
-            .connect_visible_child_name_notify(move |stack| {
-                if let Some(visible_child) = stack.visible_child_name() {
-                    inbox
-                        .send(match visible_child.as_str() {
-                            "browse" => Inbox::ViewChanged(View::Browse),
-                            "play" => Inbox::ViewChanged(View::Play),
-                            _ => return,
-                        })
-                        .unwrap();
-                }
-            });
-
         AsyncComponentParts { model, widgets }
     }
 
@@ -274,18 +256,16 @@ impl AsyncComponent for MainPage {
                 sender.input(Inbox::SearchEntryUpdated(String::new()));
                 match view {
                     View::Play => self.play_view.emit(play_view::Inbox::Update),
-                    View::Browse => self.browse_view.emit(browse_view::Inbox::SearchBarEmpty),
+                    View::Browse => self.browse_view.emit(browse_view::Inbox::ShowPopular),
                 }
                 self.active_view = view;
             }
-            Inbox::SearchStarted(query) => match self.active_view {
-                View::Browse => self
-                    .browse_view
-                    .emit(browse_view::Inbox::SearchStarted(query)),
-                View::Play => {}
-            },
-            Inbox::SearchBarEmpty => match self.active_view {
-                View::Browse => self.browse_view.emit(browse_view::Inbox::SearchBarEmpty),
+            Inbox::SearchUpdated(query) => match self.active_view {
+                View::Browse => self.browse_view.emit(match query.len() {
+                    0 => browse_view::Inbox::ShowPopular,
+                    3.. => browse_view::Inbox::NewQuery(query),
+                    _ => return,
+                }),
                 View::Play => {}
             },
             Inbox::SearchEntryUpdated(text) => match self.active_view {

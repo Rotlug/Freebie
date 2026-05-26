@@ -29,8 +29,8 @@ pub struct BrowseView {
 
 #[derive(Debug)]
 pub enum Inbox {
-    SearchStarted(String),
-    SearchBarEmpty,
+    NewQuery(String),
+    ShowPopular,
 }
 
 #[derive(Debug)]
@@ -130,7 +130,7 @@ impl AsyncComponent for BrowseView {
         _root: &Self::Root,
     ) {
         match message {
-            Inbox::SearchStarted(query) => {
+            Inbox::NewQuery(query) => {
                 self.search_ongoing.set_value(true);
 
                 let command = sender.command_sender().clone();
@@ -143,7 +143,7 @@ impl AsyncComponent for BrowseView {
 
                 self.current_search = Some(handle);
             }
-            Inbox::SearchBarEmpty => {
+            Inbox::ShowPopular => {
                 if let Ok(popular) = game::popular().await {
                     sender
                         .command_sender()

@@ -46,7 +46,11 @@ impl AsyncComponent for ActionButton {
     view! {
         gtk::Button {
             set_label: "Get",
-            set_css_classes: &["suggested-action"]
+            set_css_classes: &["suggested-action"],
+
+            connect_clicked[sender] => move |_| {
+                _ = sender.output(Outbox::Clicked);
+            }
         }
     }
 
@@ -58,11 +62,6 @@ impl AsyncComponent for ActionButton {
         let session = librqbit::Session::new(downloads()).await.unwrap();
         let model = Self { session };
         let widgets = view_output!();
-
-        let outbox = sender.output_sender().clone();
-        root.connect_clicked(move |_| {
-            outbox.clone().send(Outbox::Clicked).unwrap();
-        });
 
         AsyncComponentParts { model, widgets }
     }

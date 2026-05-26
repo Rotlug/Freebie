@@ -6,7 +6,7 @@ use crate::{igdb, settings::Settings};
 #[derive(Debug)]
 pub enum Inbox {
     Start,
-    Done(igdb::Credentials),
+    Done,
 }
 
 #[derive(Debug)]
@@ -60,6 +60,7 @@ impl AsyncComponent for WelcomePage {
                             set_label: "Ok",
                             set_halign: gtk::Align::Center,
                             set_css_classes: &["pill", "suggested-action"],
+                            connect_clicked => Inbox::Start
                         }
                     },
 
@@ -83,7 +84,7 @@ impl AsyncComponent for WelcomePage {
                                set_title: "Client ID",
                             },
 
-                            #[name = "client_secret_row"]
+                            #[name = "client_secret_entry"]
                             adw::PasswordEntryRow {
                                set_title: "Client Secret",
                             },
@@ -94,6 +95,7 @@ impl AsyncComponent for WelcomePage {
                             set_label: "Done",
                             set_halign: gtk::Align::Center,
                             set_css_classes: &["pill", "suggested-action"],
+                            connect_clicked => Inbox::Done,
                         }
                     },
                 },
@@ -115,24 +117,6 @@ impl AsyncComponent for WelcomePage {
         let model = Self {};
         let widgets = view_output!();
 
-        let inbox = sender.input_sender().clone();
-        widgets.start_button.connect_clicked(move |_| {
-            inbox.clone().send(Inbox::Start).unwrap();
-        });
-
-        let inbox = sender.input_sender().clone();
-        let client_id = widgets.client_id_entry.clone();
-        let client_secret = widgets.client_secret_row.clone();
-        widgets.done_button.connect_clicked(move |_| {
-            inbox
-                .clone()
-                .send(Inbox::Done(igdb::Credentials {
-                    client_id: client_id.text().to_string(),
-                    client_secret: client_secret.text().to_string(),
-                }))
-                .unwrap();
-        });
-
         AsyncComponentParts { model, widgets }
     }
 
@@ -147,9 +131,17 @@ impl AsyncComponent for WelcomePage {
             Inbox::Start => {
                 widgets.carousel.scroll_to(&widgets.credentials_page, true);
             }
-            Inbox::Done(credentials) => sender
-                .output(Outbox::Done(Settings { credentials }))
-                .unwrap(),
+            Inbox::Done => {
+                let client_id = widgets.client_id_entry.text().to_string();
+                let client_secret = widgets.client_secret_entry.text().to_string();
+
+                _ = sender.output(Outbox::Done(Settings {
+                    credentials: igdb::Credentials {
+                        client_id,
+                        client_secret,
+                    },
+                }));
+            }
         }
     }
 }
