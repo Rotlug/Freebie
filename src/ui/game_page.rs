@@ -170,7 +170,7 @@ impl AsyncComponent for GamePage {
                 // set cover pic
                 widgets.cover.set_paintable(Some(&texture));
                 // set the background to a blurred version of the cover
-                let blurred = blurred_paintable(&texture, 20.0).unwrap();
+                let blurred = blurred_paintable(&texture, 10.0).unwrap();
                 widgets.blurred_background.set_paintable(Some(&blurred));
 
                 self.action_button.emit(action_button::Inbox::Update(game));
