@@ -33,7 +33,7 @@ impl<T: AsRef<str>> SlugExt for T {
 
         // Remove other special characters and clean up other stuff
         result = result
-            .multi_replace("#$%&()*+,./:;<=>?@[\\]^_`{|}~!", "")
+            .multi_replace("#$%&()*+,./:;-<=>?@[\\]^_`{|}~!", "")
             .to_ascii_lowercase()
             .replace("goty", "game of the year");
 

@@ -16,8 +16,6 @@ pub mod main_page;
 pub mod play_view;
 pub mod welcome_page;
 
-use relm4::gtk::graphene;
-
 /// Use `glycin` to convert a series of bytes into a paintable `gdk::Texture`
 pub async fn bytes_to_texture(bytes: Vec<u8>) -> Result<gdk::Texture, glycin::ErrorCtx> {
     let image = Loader::new_vec(bytes).load().await?;

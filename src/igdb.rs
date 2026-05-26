@@ -22,7 +22,7 @@ struct AccessToken {
 }
 
 /// The credentials used to get an `AccessToken` from the api
-#[derive(Default)]
+#[derive(Default, Debug, Serialize, Deserialize, Clone)]
 pub struct Credentials {
     pub client_id: String,
     pub client_secret: String,

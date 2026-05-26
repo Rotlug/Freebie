@@ -8,19 +8,23 @@ use relm4::prelude::*;
 
 use crate::{
     game::Game,
+    settings::Settings,
     ui::{
         game_page::{self, GamePage},
         main_page::{self, MainPage},
+        welcome_page::{self, WelcomePage},
     },
-    util::{ensure_directories_exist, installed_games, installed_games_file},
+    util::{
+        ensure_directories_exist, installed_games, installed_games_file, settings, settings_file,
+    },
 };
 
 mod error;
-mod util;
-
 mod game;
 mod igdb;
+mod settings;
 mod ui;
+mod util;
 
 /// "Active" games are games that the user has interacted with during the runtime of the program.
 /// Therefore, we need to keep track of them so their state doesn't get lost when
@@ -31,14 +35,17 @@ pub type ActiveGames = Arc<Mutex<HashMap<String, Arc<Game>>>>;
 pub type TextureCache = Arc<Mutex<HashMap<String, gtk::gdk::Texture>>>;
 
 struct App {
-    main_page: AsyncController<MainPage>,
+    main_page: Option<AsyncController<MainPage>>,
     game_page: AsyncController<GamePage>,
+    welcome_page: Option<AsyncController<WelcomePage>>,
     active_games: ActiveGames,
+    settings: Option<Settings>,
 }
 
 #[derive(Debug)]
 pub enum Inbox {
     GameSelected(Arc<Game>, gtk::gdk::Texture),
+    WelcomeDone(Settings),
     Exit,
 }
 
@@ -50,20 +57,26 @@ impl AsyncComponent for App {
     type CommandOutput = ();
 
     view! {
-        adw::Window {
-            set_size_request: (900, 500),
+      adw::Window {
+          #[name = "stack"]
+          adw::ViewStack {
+              set_enable_transitions: true,
 
-            #[name = "nav_view"]
-            adw::NavigationView {
-                #[name = "nav_main_page"]
-                add = &adw::NavigationPage {
-                    set_child = Some(model.main_page.widget()),
-                },
+              #[name = "welcome"]
+              add_titled[Some("welcome"), "Welcome"] = &adw::Bin {
+              },
 
-                #[name = "nav_game_page"]
-                add = &adw::NavigationPage {
-                  set_child = Some(model.game_page.widget()),
-                }
+              #[name = "nav_view"]
+              add_titled[Some("main"), "Main"] = &adw::NavigationView {
+                  #[name = "nav_main_page"]
+                  add = &adw::NavigationPage {
+                  },
+
+                  #[name = "nav_game_page"]
+                  add = &adw::NavigationPage {
+                      set_child: Some(model.game_page.widget()),
+                  }
+              }
             }
         }
     }
@@ -74,33 +87,73 @@ impl AsyncComponent for App {
         sender: AsyncComponentSender<Self>,
     ) -> AsyncComponentParts<Self> {
         ensure_directories_exist().await;
-
-        let active_games = Arc::new(Mutex::new(
-            installed_games()
-                .await
-                .inspect_err(|g| {
-                    _ = dbg!(g);
-                })
-                .unwrap(),
-        ));
-
+        let active_games = Arc::new(Mutex::new(installed_games().await.unwrap()));
         let texture_cache = Arc::new(Mutex::new(HashMap::new()));
 
-        let main_page = MainPage::builder()
-            .launch((root.clone(), active_games.clone(), texture_cache.clone()))
-            .forward(sender.input_sender(), |msg| match msg {
-                main_page::Outbox::GameSelected(game, texture) => {
-                    Inbox::GameSelected(game, texture)
-                }
-            });
+        let settings = settings().await.ok();
+        let has_settings = settings.is_some();
+
+        // Because the main page needs the settings we need to add it only if the settings exist.
+        // If not then we show the welcome page and only then we add the main page to the nav view.
+        let main_page = if let Some(ref current_settings) = settings {
+            let controller = MainPage::builder()
+                .launch((
+                    root.clone(),
+                    active_games.clone(),
+                    texture_cache.clone(),
+                    current_settings.clone(),
+                ))
+                .forward(sender.input_sender(), |msg| match msg {
+                    main_page::Outbox::GameSelected(game, texture) => {
+                        Inbox::GameSelected(game, texture)
+                    }
+                });
+            Some(controller)
+        } else {
+            None
+        };
+
         let game_page = GamePage::builder().launch(active_games.clone()).detach();
+
+        // If the settings dont exist or fail to load, show the welcome page
+        // the welcome page is where the user inserts their credentials
+        let welcome_page = if has_settings {
+            None
+        } else {
+            Some({
+                WelcomePage::builder()
+                    .launch(())
+                    .forward(sender.input_sender(), |msg| match msg {
+                        welcome_page::Outbox::Done(settings) => Inbox::WelcomeDone(settings),
+                    })
+            })
+        };
 
         let model = Self {
             main_page,
             game_page,
+            welcome_page,
             active_games,
+            settings,
         };
+
         let widgets = view_output!();
+
+        if has_settings {
+            if let Some(ref mp) = model.main_page {
+                widgets.nav_main_page.set_child(Some(mp.widget()));
+            }
+            root.set_size_request(900, 500);
+            root.set_resizable(true);
+            widgets.stack.set_visible_child(&widgets.nav_view);
+        } else {
+            if let Some(ref welcome) = model.welcome_page {
+                widgets.welcome.set_child(Some(welcome.widget()));
+            }
+            root.set_size_request(450, 300);
+            root.set_resizable(false);
+            widgets.stack.set_visible_child(&widgets.welcome);
+        }
 
         if let Some(app) = root.application() {
             let inbox = sender.input_sender().clone();
@@ -113,8 +166,8 @@ impl AsyncComponent for App {
         &mut self,
         widgets: &mut Self::Widgets,
         message: Self::Input,
-        _sender: AsyncComponentSender<Self>,
-        _root: &Self::Root,
+        sender: AsyncComponentSender<Self>,
+        root: &Self::Root,
     ) {
         match message {
             Inbox::GameSelected(game, texture) => {
@@ -122,6 +175,32 @@ impl AsyncComponent for App {
                     .emit(game_page::Inbox::ChangeGame(game, texture));
 
                 widgets.nav_view.push(&widgets.nav_game_page);
+            }
+            Inbox::WelcomeDone(settings) => {
+                // Write settings to disk
+                let string = serde_json::to_string(&settings).unwrap();
+                tokio::fs::write(settings_file(), &string).await.unwrap();
+                self.settings = Some(settings.clone());
+
+                // Add main page to ui
+                let main_page = MainPage::builder()
+                    .launch((
+                        root.clone(),
+                        self.active_games.clone(),
+                        Arc::new(Mutex::new(HashMap::new())),
+                        settings,
+                    ))
+                    .forward(sender.input_sender(), |msg| match msg {
+                        main_page::Outbox::GameSelected(game, texture) => {
+                            Inbox::GameSelected(game, texture)
+                        }
+                    });
+                widgets.nav_main_page.set_child(Some(main_page.widget()));
+                self.main_page = Some(main_page);
+
+                root.set_resizable(true);
+                root.set_size_request(900, 500);
+                widgets.stack.set_visible_child(&widgets.nav_view);
             }
             Inbox::Exit => {
                 // Save to disk only the state of games which finished installing

@@ -3,7 +3,8 @@ use std::sync::Arc;
 use crate::{
     ActiveGames, TextureCache,
     game::Game,
-    igdb::{self, MetadataManager},
+    igdb::MetadataManager,
+    settings::Settings,
     ui::{
         browse_view::{self, BrowseView},
         play_view::{self, PlayView},
@@ -50,7 +51,7 @@ pub enum Inbox {
 impl AsyncComponent for MainPage {
     type Input = Inbox;
     type Output = Outbox;
-    type Init = (adw::Window, ActiveGames, TextureCache);
+    type Init = (adw::Window, ActiveGames, TextureCache, Settings);
     type CommandOutput = ();
 
     view! {
@@ -113,11 +114,8 @@ impl AsyncComponent for MainPage {
         root: Self::Root,
         sender: AsyncComponentSender<Self>,
     ) -> AsyncComponentParts<Self> {
-        let (root_window, active_games, texture_cache) = init;
-        let metadata = Arc::new(MetadataManager::new(igdb::Credentials {
-            client_id: "7c9e7z9nn822m4y00n0xkmwch6y2mu".into(),
-            client_secret: "fydcw9o03z77uvckldtlzdz0qyxetf".into(),
-        }));
+        let (root_window, active_games, texture_cache, settings) = init;
+        let metadata = Arc::new(MetadataManager::new(settings.credentials));
 
         let browse_view = BrowseView::builder()
             .launch((
@@ -201,7 +199,7 @@ impl AsyncComponent for MainPage {
                 sender.input(Inbox::SearchEntryUpdated(String::new()));
                 match view {
                     View::Play => self.play_view.emit(play_view::Inbox::Update),
-                    View::Browse => {}
+                    View::Browse => self.browse_view.emit(browse_view::Inbox::SearchBarEmpty),
                 }
                 self.active_view = view;
             }

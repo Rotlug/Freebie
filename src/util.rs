@@ -4,7 +4,7 @@ use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
 use tokio::{fs, io, process};
 
-use crate::game::Game;
+use crate::{game::Game, settings::Settings};
 
 pub mod slug;
 
@@ -57,6 +57,17 @@ pub fn wine_games() -> PathBuf {
 /// Get the path of the `.json` file that saves the installed games data
 pub fn installed_games_file() -> PathBuf {
     base().join("installed_games.json")
+}
+
+/// Get the path of the `.json` file that contains the users settings
+pub fn settings_file() -> PathBuf {
+    base().join("settings.json")
+}
+
+/// Retrieve the users settings from disk
+pub async fn settings() -> anyhow::Result<Settings> {
+    let string = fs::read_to_string(settings_file()).await?;
+    Ok(serde_json::from_str(&string)?)
 }
 
 /// Get all of the installed games from the `installed_games_file()` path. or an empty `HashMap`
