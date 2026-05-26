@@ -230,9 +230,7 @@ impl AsyncComponent for GamePage {
                     if selected == "delete" {
                         _ = game.uninstall().await;
                         sender.input(Inbox::Update(game.clone()));
-                        sender
-                            .output(Outbox::GameUninstalled(game.clone()))
-                            .unwrap();
+                        let _ = sender.output(Outbox::GameUninstalled(game.clone()));
                     }
                 }
             }

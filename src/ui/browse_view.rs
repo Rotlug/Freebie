@@ -137,7 +137,7 @@ impl AsyncComponent for BrowseView {
                 let metadata = self.metadata.clone();
                 let handle = tokio::spawn(async move {
                     if let Ok(games) = search(&metadata, &query).await {
-                        command.send(Command::SearchFinished(games)).unwrap();
+                        _ = command.send(Command::SearchFinished(games));
                     }
                 });
 

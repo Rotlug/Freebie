@@ -211,7 +211,7 @@ impl AsyncComponent for MainPage {
         let run_exe_action = relm4::actions::RelmAction::<RunExeAction>::new_stateless(move |_| {
             let inbox = inbox.clone();
             open_executable_picker(&window, move |path| {
-                inbox.send(Inbox::RunExe(path)).unwrap();
+                _ = inbox.send(Inbox::RunExe(path));
             });
         });
 

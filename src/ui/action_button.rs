@@ -89,9 +89,7 @@ impl AsyncComponent for ActionButton {
                             let updater_inbox = inbox.clone();
                             let updater = tokio::spawn(async move {
                                 loop {
-                                    updater_inbox
-                                        .send(Inbox::Update(game_tracker.clone()))
-                                        .unwrap();
+                                    _ = updater_inbox.send(Inbox::Update(game_tracker.clone()));
                                     tokio::time::sleep(Duration::from_secs(1)).await;
                                 }
                             });
@@ -106,7 +104,7 @@ impl AsyncComponent for ActionButton {
                             }
 
                             updater.abort();
-                            inbox.send(Inbox::Update(game.clone())).unwrap();
+                            _ = inbox.send(Inbox::Update(game.clone()));
                             Command::GameInstalled(game)
                         });
                     }
@@ -120,7 +118,7 @@ impl AsyncComponent for ActionButton {
                         let inbox = sender.input_sender().clone();
                         sender.oneshot_command(async move {
                             _ = game_cmd.play().await;
-                            inbox.send(Inbox::Update(game_cmd)).unwrap();
+                            _ = inbox.send(Inbox::Update(game_cmd));
                             Command::GameClosed
                         });
                     }
@@ -157,7 +155,7 @@ impl AsyncComponent for ActionButton {
             }
             Command::GameClosed => {}
             Command::GameInstalled(game) => {
-                sender.output(Outbox::Update(game.clone()));
+                _ = sender.output(Outbox::Update(game.clone()));
                 let state = &*game.state.lock().unwrap();
                 if let game::State::Installed { exe, .. } = state {
                     println!("Game installed successfuly!");

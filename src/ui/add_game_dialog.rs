@@ -144,7 +144,7 @@ impl AsyncComponent for AddGameDialog {
                 let inbox = sender.input_sender().clone();
 
                 open_executable_picker(&self.root_window, move |path| {
-                    inbox.send(Inbox::ExeSelected(path)).unwrap();
+                    _ = inbox.send(Inbox::ExeSelected(path));
                 });
             }
             Inbox::ExeSelected(path) => {
@@ -152,25 +152,23 @@ impl AsyncComponent for AddGameDialog {
             }
             Inbox::Cancel => {
                 root.close();
-                sender.output(Outbox::Cancelled).unwrap();
+                _ = sender.output(Outbox::Cancelled);
             }
             Inbox::Add => {
                 if let Some(exe_path) = self.exe_path.take() {
                     root.close();
-                    sender
-                        .output(Outbox::GameAdded(Game {
-                            link: String::new(),
-                            size: String::new(),
-                            slug: self.game_name.slug(),
-                            metadata: None,
-                            state: Arc::new(Mutex::new(game::State::Installed {
-                                path: exe_path.parent().unwrap().into(),
-                                exe: exe_path,
-                                time_played: Duration::default(),
-                                is_open: false,
-                            })),
-                        }))
-                        .unwrap();
+                    _ = sender.output(Outbox::GameAdded(Game {
+                        link: String::new(),
+                        size: String::new(),
+                        slug: self.game_name.slug(),
+                        metadata: None,
+                        state: Arc::new(Mutex::new(game::State::Installed {
+                            path: exe_path.parent().unwrap().into(),
+                            exe: exe_path,
+                            time_played: Duration::default(),
+                            is_open: false,
+                        })),
+                    }));
                 }
             }
         }
