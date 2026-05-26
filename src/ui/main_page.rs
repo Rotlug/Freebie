@@ -62,6 +62,7 @@ pub enum Inbox {
     SearchEntryUpdated(String),
     /// fires when the search bar is empty, taking `search_delay` into account.
     SearchBarEmpty,
+    GameUninstalled,
     ViewChanged(View),
     RunExe(PathBuf),
     AddGame(Game),
@@ -296,6 +297,12 @@ impl AsyncComponent for MainPage {
                     _ = umu(&[&path.display().to_string()]).await;
                 });
             }
+            Inbox::GameUninstalled => match self.active_view {
+                View::Browse => {}
+                View::Play => {
+                    self.play_view.emit(play_view::Inbox::Update);
+                }
+            },
             Inbox::AddGame(mut game) => {
                 let slugs = [&game.slug];
                 let Ok(metas) = self.metadata.get_games(&slugs).await else {

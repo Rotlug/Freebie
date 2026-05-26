@@ -16,7 +16,14 @@ use crate::{
 #[derive(Debug)]
 pub enum Inbox {
     ChangeGame(Arc<Game>, gtk::gdk::Texture),
+    Update(Arc<Game>),
     ActionButtonClicked,
+    DeleteButtonClicked,
+}
+
+#[derive(Debug)]
+pub enum Outbox {
+    GameUninstalled(Arc<Game>),
 }
 
 pub struct GamePage {
@@ -24,13 +31,14 @@ pub struct GamePage {
     texture: Option<gtk::gdk::Texture>,
     action_button: AsyncController<ActionButton>,
     active_games: ActiveGames,
+    root_window: adw::Window,
 }
 
 #[relm4::component(pub async)]
 impl AsyncComponent for GamePage {
     type Input = Inbox;
-    type Output = ();
-    type Init = ActiveGames;
+    type Output = Outbox;
+    type Init = (ActiveGames, adw::Window);
     type CommandOutput = ();
 
     view! {
@@ -113,7 +121,7 @@ impl AsyncComponent for GamePage {
                                     #[watch]
                                     set_label: &model.description(),
 
-                                    set_css_classes: &["document"],
+                                    set_css_classes: &["body"],
                                 },
 
                                 gtk::Box {
@@ -122,6 +130,15 @@ impl AsyncComponent for GamePage {
                                     set_spacing: 10,
 
                                     append = model.action_button.widget(),
+
+                                    #[name = "delete_button"]
+                                    gtk::Button {
+                                        set_label: "Delete",
+                                        set_css_classes: &["destructive-action"],
+
+                                        set_visible: false,
+                                        connect_clicked => Inbox::DeleteButtonClicked,
+                                    }
                                 }
                             }
                         }
@@ -136,15 +153,18 @@ impl AsyncComponent for GamePage {
         root: Self::Root,
         sender: AsyncComponentSender<Self>,
     ) -> AsyncComponentParts<Self> {
+        let (active_games, root_window) = init;
         let action_button =
             ActionButton::builder()
                 .launch(())
                 .forward(sender.input_sender(), |msg| match msg {
                     action_button::Outbox::Clicked => Inbox::ActionButtonClicked,
+                    action_button::Outbox::Update(game) => Inbox::Update(game),
                 });
 
         let model = Self {
-            active_games: init,
+            active_games,
+            root_window,
             game: None,
             texture: None,
             action_button,
@@ -163,7 +183,16 @@ impl AsyncComponent for GamePage {
         _root: &Self::Root,
     ) {
         match message {
+            Inbox::Update(game) => {
+                widgets.delete_button.set_visible(game.installed());
+                self.action_button
+                    .emit(action_button::Inbox::Update(game.clone()));
+            }
             Inbox::ChangeGame(game, texture) => {
+                widgets.delete_button.set_visible(game.installed());
+                self.action_button
+                    .emit(action_button::Inbox::Update(game.clone()));
+
                 self.game = Some(game.clone());
                 self.texture = Some(texture.clone());
 
@@ -172,8 +201,6 @@ impl AsyncComponent for GamePage {
                 // set the background to a blurred version of the cover
                 let blurred = blurred_paintable(&texture, 10.0).unwrap();
                 widgets.blurred_background.set_paintable(Some(&blurred));
-
-                self.action_button.emit(action_button::Inbox::Update(game));
             }
             Inbox::ActionButtonClicked => {
                 if let Some(game) = self.game.clone() {
@@ -184,6 +211,29 @@ impl AsyncComponent for GamePage {
 
                     self.action_button
                         .emit(action_button::Inbox::GameAction(game));
+                }
+            }
+            Inbox::DeleteButtonClicked => {
+                if let Some(ref game) = self.game {
+                    let dialog = adw::AlertDialog::builder()
+                        .heading("Are you sure?")
+                        .body(format!("Are you sure you want to delete <b>{}</b>? This removes all game files!", game.metadata.as_ref().unwrap().name))
+                        .body_use_markup(true)
+                        .default_response("cancel").build();
+
+                    dialog.add_response("delete", "Delete");
+                    dialog.set_response_appearance("delete", adw::ResponseAppearance::Destructive);
+                    dialog.add_response("cancel", "Cancel");
+
+                    let selected = dialog.choose_future(Some(&self.root_window)).await;
+
+                    if selected == "delete" {
+                        _ = game.uninstall().await;
+                        sender.input(Inbox::Update(game.clone()));
+                        sender
+                            .output(Outbox::GameUninstalled(game.clone()))
+                            .unwrap();
+                    }
                 }
             }
         }

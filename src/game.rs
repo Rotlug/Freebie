@@ -162,7 +162,7 @@ impl Game {
         set_prefix_mute(false).await?;
 
         // Remove the download directory
-        fs::remove_dir_all(download_dir)?;
+        tokio::fs::remove_dir_all(download_dir).await?;
 
         // Look for a matching .desktop shortcut
         for entry in fs::read_dir(wine_desktop())?.flatten() {
@@ -188,6 +188,25 @@ impl Game {
         // No Desktop shortcut has been found, installation failed.
         *self.state.lock().unwrap() = State::Uninstalled;
         Err(InstallError::DesktopShortcutNotFound)
+    }
+
+    /// Uninstalls the game. WARNING: REMOVES ALL FILES FROM THE GAMES INSTALLATION DIRECTORY.
+    pub async fn uninstall(&self) -> anyhow::Result<()> {
+        let path = {
+            let guard = self.state.lock().unwrap();
+            match *guard {
+                State::Installed { ref path, .. } => Some(path.clone()),
+                _ => None,
+            }
+        };
+
+        if let Some(path) = path {
+            tokio::fs::remove_dir_all(path).await?;
+        }
+
+        *self.state.lock().unwrap() = State::Uninstalled;
+
+        Ok(())
     }
 
     /// Is the game installed.

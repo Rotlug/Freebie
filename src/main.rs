@@ -46,6 +46,7 @@ struct App {
 pub enum Inbox {
     GameSelected(Arc<Game>, gtk::gdk::Texture),
     WelcomeDone(Settings),
+    GameUninstalled(Arc<Game>),
     Exit,
 }
 
@@ -113,7 +114,11 @@ impl AsyncComponent for App {
             None
         };
 
-        let game_page = GamePage::builder().launch(active_games.clone()).detach();
+        let game_page = GamePage::builder()
+            .launch((active_games.clone(), root.clone()))
+            .forward(sender.input_sender(), |msg| match msg {
+                game_page::Outbox::GameUninstalled(game) => Inbox::GameUninstalled(game),
+            });
 
         // If the settings dont exist or fail to load, show the welcome page
         // the welcome page is where the user inserts their credentials
@@ -201,6 +206,12 @@ impl AsyncComponent for App {
                 root.set_resizable(true);
                 root.set_size_request(900, 500);
                 widgets.stack.set_visible_child(&widgets.nav_view);
+            }
+            Inbox::GameUninstalled(game) => {
+                self.active_games.lock().unwrap().remove(&game.slug);
+                if let Some(ref main_page) = self.main_page {
+                    main_page.emit(main_page::Inbox::GameUninstalled);
+                }
             }
             Inbox::Exit => {
                 // Save to disk only the state of games which finished installing

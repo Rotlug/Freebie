@@ -20,6 +20,8 @@ pub enum Inbox {
 #[derive(Debug)]
 pub enum Outbox {
     Clicked,
+    // Tells the game page to update
+    Update(Arc<Game>),
 }
 
 #[derive(Debug)]
@@ -142,7 +144,7 @@ impl AsyncComponent for ActionButton {
     async fn update_cmd(
         &mut self,
         message: Self::CommandOutput,
-        _sender: AsyncComponentSender<Self>,
+        sender: AsyncComponentSender<Self>,
         _root: &Self::Root,
     ) {
         match message {
@@ -156,6 +158,7 @@ impl AsyncComponent for ActionButton {
             }
             Command::GameClosed => {}
             Command::GameInstalled(game) => {
+                sender.output(Outbox::Update(game.clone()));
                 let state = &*game.state.lock().unwrap();
                 if let game::State::Installed { exe, .. } = state {
                     println!("Game installed successfuly!");
