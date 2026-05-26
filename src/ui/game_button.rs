@@ -3,7 +3,7 @@ use std::sync::Arc;
 use adw::prelude::*;
 use relm4::{gtk::gdk, prelude::*};
 
-use crate::{game::Game, ui::bytes_to_texture};
+use crate::{TextureCache, game::Game, ui::bytes_to_texture};
 
 pub struct GameButton {
     game: Arc<Game>,
@@ -19,7 +19,7 @@ pub enum Outbox {
 impl AsyncFactoryComponent for GameButton {
     type Input = ();
     type Output = Outbox;
-    type Init = Arc<Game>;
+    type Init = (Arc<Game>, TextureCache);
     type ParentWidget = gtk::FlowBox;
     type CommandOutput = ();
 
@@ -72,20 +72,22 @@ impl AsyncFactoryComponent for GameButton {
         _index: &DynamicIndex,
         _sender: AsyncFactorySender<Self>,
     ) -> Self {
-        let metadata = init.metadata.as_ref().unwrap();
-        let texture = if let Some(ref texture) = *metadata.cover.texture_cache.lock().await {
+        let (game, texture_cache) = init;
+        let metadata = game.metadata.as_ref().unwrap();
+        let texture = if let Some(texture) = texture_cache.lock().unwrap().get(&metadata.slug) {
             texture.clone()
         } else {
-            let bytes = metadata.cover.download().await.unwrap();
-            let texture = bytes_to_texture(bytes).await.unwrap();
-            *metadata.cover.texture_cache.lock().await = Some(texture.clone());
+            let texture = bytes_to_texture(metadata.cover.download().await.unwrap_or_default())
+                .await
+                .unwrap();
+            texture_cache
+                .lock()
+                .unwrap()
+                .insert(metadata.slug.clone(), texture.clone());
             texture
         };
 
-        Self {
-            game: init,
-            texture,
-        }
+        Self { game, texture }
     }
 
     fn init_widgets(

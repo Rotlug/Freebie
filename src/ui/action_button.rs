@@ -73,9 +73,9 @@ impl AsyncComponent for ActionButton {
     ) {
         match message {
             Inbox::GameAction(game) => {
-                let state = &*game.state.lock().unwrap();
+                let mut state = game.state.lock().unwrap();
 
-                match state {
+                match *state {
                     game::State::Uninstalled => {
                         sender.input(Inbox::Update(game.clone()));
                         let game = game.clone();
@@ -109,13 +109,14 @@ impl AsyncComponent for ActionButton {
                             Command::GameInstalled(game)
                         });
                     }
-                    game::State::Installed { .. } => {
+                    game::State::Installed {
+                        ref mut is_open, ..
+                    } => {
+                        *is_open = true;
+                        sender.input(Inbox::Update(game.clone()));
+
                         let game_cmd = game.clone();
                         let inbox = sender.input_sender().clone();
-
-                        root.set_label("Playing");
-                        root.set_sensitive(false);
-                        root.set_css_classes(&[]);
                         sender.oneshot_command(async move {
                             _ = game_cmd.play().await;
                             inbox.send(Inbox::Update(game_cmd)).unwrap();
@@ -167,11 +168,9 @@ impl AsyncComponent for ActionButton {
 
 impl ActionButton {
     fn sensitive(game: &Game) -> bool {
-        let state = &*game.state.lock().unwrap();
-
         matches!(
-            state,
-            game::State::Uninstalled | game::State::Installed { .. }
+            *game.state.lock().unwrap(),
+            game::State::Uninstalled | game::State::Installed { is_open: false, .. }
         )
     }
 
@@ -183,7 +182,13 @@ impl ActionButton {
             game::State::Preparing => "Preparing for download".into(),
             game::State::Downloading(percentage) => format!("Downloading... ({percentage})"),
             game::State::Installing => "Installing...".into(),
-            game::State::Installed { .. } => "Play".into(),
+            game::State::Installed { is_open, .. } => {
+                if *is_open {
+                    "Playing".into()
+                } else {
+                    "Play".into()
+                }
+            }
         }
     }
 }

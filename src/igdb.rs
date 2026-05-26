@@ -101,8 +101,9 @@ impl MetadataManager {
             futures.push(async {
                 let resp = self.fetch("https://api.igdb.com/v4/games", data).await?;
                 let mut batch: Vec<Metadata> = serde_json::from_str(&resp)?;
-                // Fix the cover.url
+
                 for meta in &mut batch {
+                    // Fix the cover.url
                     meta.cover.url =
                         format!("https:/{}", meta.cover.url.replace("thumb", "cover_big"));
                 }
@@ -194,9 +195,6 @@ pub struct Cover {
     #[serde(rename = "id")]
     _id: i32,
     pub url: String,
-
-    #[serde(skip)]
-    pub texture_cache: Mutex<Option<relm4::gtk::gdk::Texture>>,
 }
 
 impl Cover {

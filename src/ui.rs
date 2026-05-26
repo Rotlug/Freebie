@@ -5,8 +5,11 @@ use adw::prelude::*;
 use relm4::prelude::*;
 
 pub mod action_button;
-pub mod browse_view;
 pub mod game_button;
+
+pub mod browse_view;
+pub mod play_view;
+
 pub mod game_page;
 pub mod main_page;
 

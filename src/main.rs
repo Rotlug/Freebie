@@ -27,6 +27,9 @@ mod ui;
 /// reentering the game page, canceling a search, etc..
 pub type ActiveGames = Arc<Mutex<HashMap<String, Arc<Game>>>>;
 
+/// Keep downloaded textures in this structure to prevent downloading textures twice
+pub type TextureCache = Arc<Mutex<HashMap<String, gtk::gdk::Texture>>>;
+
 struct App {
     main_page: AsyncController<MainPage>,
     game_page: AsyncController<GamePage>,
@@ -81,8 +84,10 @@ impl AsyncComponent for App {
                 .unwrap(),
         ));
 
+        let texture_cache = Arc::new(Mutex::new(HashMap::new()));
+
         let main_page = MainPage::builder()
-            .launch((root.clone(), active_games.clone()))
+            .launch((root.clone(), active_games.clone(), texture_cache.clone()))
             .forward(sender.input_sender(), |msg| match msg {
                 main_page::Outbox::GameSelected(game, texture) => {
                     Inbox::GameSelected(game, texture)
@@ -124,10 +129,7 @@ impl AsyncComponent for App {
                     let guard = self.active_games.lock().unwrap().clone();
                     guard
                         .into_iter()
-                        .filter(|(_, game)| {
-                            let state = &*game.state.lock().unwrap();
-                            matches!(state, game::State::Installed { .. })
-                        })
+                        .filter(|(_, game)| game.installed())
                         .collect()
                 };
 

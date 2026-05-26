@@ -8,7 +8,7 @@ use std::{
     fs,
     path::{Path, PathBuf},
     sync::{Arc, Mutex},
-    time::{Duration, SystemTime},
+    time::{Duration, Instant},
 };
 use tokio::{self};
 
@@ -60,6 +60,8 @@ pub enum State {
         exe: PathBuf,
         /// The games total time played
         time_played: Duration,
+        /// Is the game currently open
+        is_open: bool,
     },
 }
 
@@ -176,6 +178,7 @@ impl Game {
                     path: wine_games().join(&self.slug),
                     exe: entry.path(),
                     time_played: Duration::default(),
+                    is_open: false,
                 };
 
                 return Ok(entry.path());
@@ -187,17 +190,44 @@ impl Game {
         Err(InstallError::DesktopShortcutNotFound)
     }
 
+    /// Is the game installed.
+    pub fn installed(&self) -> bool {
+        matches!(*self.state.lock().unwrap(), State::Installed { .. })
+    }
+
     /// Launch the game, if its installed.
     pub async fn play(&self) -> anyhow::Result<()> {
-        let state = self.state.lock().unwrap().clone();
-        if let State::Installed { exe, .. } = state {
-            let start = SystemTime::now();
-            umu(&[&exe.display().to_string()]).await?;
+        let exe = {
+            let mut state = self.state.lock().unwrap();
             if let State::Installed {
-                mut time_played, ..
-            } = *self.state.lock().unwrap()
+                ref exe,
+                ref mut is_open,
+                ..
+            } = *state
             {
-                time_played += start.elapsed().unwrap();
+                *is_open = true;
+                Some(exe.clone())
+            } else {
+                None
+            }
+        };
+
+        if let Some(exe_path) = exe {
+            let start = Instant::now();
+
+            umu(&[&exe_path.display().to_string()]).await?;
+
+            let elapsed = start.elapsed();
+
+            let mut state = self.state.lock().unwrap();
+            if let State::Installed {
+                ref mut time_played,
+                ref mut is_open,
+                ..
+            } = *state
+            {
+                *time_played += elapsed;
+                *is_open = false;
             }
         }
 
@@ -259,6 +289,6 @@ pub async fn search(query: &str) -> anyhow::Result<HashMap<String, Game>> {
 
 pub async fn popular() -> anyhow::Result<Vec<Arc<Game>>> {
     let games_string = tokio::fs::read_to_string(base().join("popular.json")).await?;
-    let games: Vec<Arc<Game>> = serde_json::from_str(&games_string)?;
+    let games = serde_json::from_str(&games_string)?;
     Ok(games)
 }

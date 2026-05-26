@@ -6,7 +6,7 @@ use relm4::{
 use std::sync::Arc;
 
 use crate::{
-    ActiveGames,
+    ActiveGames, TextureCache,
     game::{self, Game},
     igdb::MetadataManager,
     ui::game_button::{self, GameButton},
@@ -23,6 +23,8 @@ pub struct BrowseView {
     metadata: Arc<MetadataManager>,
     /// The `JoinHandle` for the ongoing search, if there is one.
     current_search: Option<tokio::task::JoinHandle<()>>,
+    /// Forwarded to the game buttons to not donwload covers twice
+    texture_cache: TextureCache,
 }
 
 #[derive(Debug)]
@@ -45,7 +47,7 @@ pub enum Command {
 impl AsyncComponent for BrowseView {
     type Input = Inbox;
     type Output = Outbox;
-    type Init = (ActiveGames, Arc<MetadataManager>);
+    type Init = (ActiveGames, Arc<MetadataManager>, TextureCache);
     type CommandOutput = Command;
 
     view! {
@@ -106,12 +108,14 @@ impl AsyncComponent for BrowseView {
             },
         );
 
+        let (active_games, metadata, texture_cache) = init;
         let model = Self {
-            active_games: init.0,
-            metadata: init.1,
+            active_games,
+            metadata,
             game_buttons,
             search_ongoing: BoolBinding::default(),
             current_search: None,
+            texture_cache,
         };
 
         let widgets = view_output!();
@@ -164,9 +168,9 @@ impl AsyncComponent for BrowseView {
                 guard.clear();
                 for game in games {
                     guard.push_back(if let Some(active) = active_games.get(&game.slug) {
-                        active.clone()
+                        (active.clone(), self.texture_cache.clone())
                     } else {
-                        game
+                        (game, self.texture_cache.clone())
                     });
                 }
             }
