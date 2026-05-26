@@ -4,9 +4,11 @@ use std::{
 };
 
 use adw::prelude::*;
+use clap::Parser;
 use relm4::prelude::*;
 
 use crate::{
+    args::Args,
     game::Game,
     settings::Settings,
     ui::{
@@ -19,6 +21,7 @@ use crate::{
     },
 };
 
+mod args;
 mod error;
 mod game;
 mod igdb;
@@ -234,6 +237,35 @@ impl AsyncComponent for App {
 }
 
 fn main() {
-    let app = RelmApp::new("land.lugasi.freebie");
-    app.run_async::<App>(());
+    let args = Args::parse();
+    if let Some(slug) = args.game {
+        let rt = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+
+        rt.block_on(async move {
+            let installed = installed_games().await?;
+            if let Some(game) = installed.get(&slug) {
+                if let Err(e) = game.play().await {
+                    eprintln!("Error launching game: {e}");
+                }
+
+                let string = serde_json::to_string(&installed)?;
+                tokio::fs::write(installed_games_file(), &string).await?;
+            } else {
+                eprintln!("Game not found: {slug}");
+                eprintln!("Installed games:");
+                for game in installed.values() {
+                    eprintln!("{}", game.slug);
+                }
+            }
+
+            Ok::<(), anyhow::Error>(())
+        })
+        .unwrap();
+    } else {
+        let app = RelmApp::new("land.lugasi.freebie");
+        app.run_async::<App>(());
+    }
 }
