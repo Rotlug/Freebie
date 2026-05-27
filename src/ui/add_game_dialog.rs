@@ -7,8 +7,9 @@ use std::{
 };
 
 use crate::{
+    ActiveGames,
     game::{self, Game},
-    ui::main_page::open_executable_picker,
+    igdb::MetadataManager,
     util::slug::SlugExt,
 };
 
@@ -16,6 +17,8 @@ pub struct AddGameDialog {
     game_name: String,
     exe_path: Option<PathBuf>,
     root_window: adw::Window,
+    active_games: ActiveGames,
+    metadata: Arc<MetadataManager>,
 }
 
 #[derive(Debug)]
@@ -30,7 +33,7 @@ pub enum Inbox {
 
 #[derive(Debug)]
 pub enum Outbox {
-    GameAdded(Game),
+    GameAdded,
     Cancelled,
 }
 
@@ -38,7 +41,7 @@ pub enum Outbox {
 impl AsyncComponent for AddGameDialog {
     type Input = Inbox;
     type Output = Outbox;
-    type Init = adw::Window;
+    type Init = (adw::Window, ActiveGames, Arc<MetadataManager>);
     type CommandOutput = ();
 
     view! {
@@ -111,10 +114,13 @@ impl AsyncComponent for AddGameDialog {
         root: Self::Root,
         sender: AsyncComponentSender<Self>,
     ) -> AsyncComponentParts<Self> {
+        let (root_window, active_games, metadata) = init;
         let model = Self {
             game_name: String::new(),
             exe_path: None,
-            root_window: init,
+            root_window,
+            active_games,
+            metadata,
         };
 
         let widgets = view_output!();
@@ -157,7 +163,7 @@ impl AsyncComponent for AddGameDialog {
             Inbox::Add => {
                 if let Some(exe_path) = self.exe_path.take() {
                     root.close();
-                    _ = sender.output(Outbox::GameAdded(Game {
+                    let mut game = Game {
                         link: String::new(),
                         size: String::new(),
                         slug: self.game_name.slug(),
@@ -168,7 +174,24 @@ impl AsyncComponent for AddGameDialog {
                             time_played: Duration::default(),
                             is_open: false,
                         })),
-                    }));
+                    };
+
+                    let Ok(metas) = self.metadata.get_games(&[&game.slug]).await else {
+                        return;
+                    };
+
+                    for (meta_slug, meta) in metas {
+                        if meta_slug == game.slug {
+                            game.metadata = Some(meta);
+                            let game = Arc::new(game);
+                            self.active_games
+                                .lock()
+                                .unwrap()
+                                .insert(game.slug.clone(), game.clone());
+                            _ = sender.output(Outbox::GameAdded);
+                            return;
+                        }
+                    }
                 }
             }
         }
@@ -193,4 +216,37 @@ impl AddGameDialog {
         self.exe_path = None;
         self.game_name = String::new();
     }
+}
+
+/// Opens a file dialog restricted to executables (.exe, .lnk)
+pub fn open_executable_picker<W, F>(parent_window: &W, on_success: F)
+where
+    W: IsA<gtk::Window>,
+    F: FnOnce(PathBuf) + 'static,
+{
+    let file_picker = gtk::FileDialog::new();
+    file_picker.set_title("Pick Executable");
+
+    // Configure the file filters
+    let filter = gtk::FileFilter::new();
+    filter.set_name(Some("Executables (*.exe, *.lnk)"));
+    filter.add_suffix("exe");
+    filter.add_suffix("lnk");
+
+    let filters = gtk::gio::ListStore::new::<gtk::FileFilter>();
+    filters.append(&filter);
+    file_picker.set_filters(Some(&filters));
+
+    // Open the dialog
+    file_picker.open(
+        Some(parent_window),
+        gtk::gio::Cancellable::NONE,
+        move |file| {
+            if let Ok(file) = file
+                && let Some(path) = file.path()
+            {
+                on_success(path);
+            }
+        },
+    );
 }

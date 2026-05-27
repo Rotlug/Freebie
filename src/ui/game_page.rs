@@ -189,6 +189,7 @@ impl AsyncComponent for GamePage {
         }
 
         let mut group = RelmActionGroup::<GameActionGroup>::new();
+
         let sender_ = sender.clone();
         let make_desktop_shortcut_action =
             RelmAction::<MakeDesktopShortcutAction>::new_stateless(move |_| {

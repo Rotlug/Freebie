@@ -6,7 +6,7 @@ use crate::{
     igdb::MetadataManager,
     settings::Settings,
     ui::{
-        add_game_dialog::{self, AddGameDialog},
+        add_game_dialog::{self, AddGameDialog, open_executable_picker},
         browse_view::{self, BrowseView},
         play_view::{self, PlayView},
     },
@@ -15,7 +15,7 @@ use crate::{
 use adw::prelude::*;
 use relm4::{
     RelmObjectExt,
-    actions::{RelmAction, RelmActionGroup},
+    actions::{AccelsPlus, RelmAction, RelmActionGroup},
     binding::{BoolBinding, ConnectBindingExt},
     prelude::*,
 };
@@ -23,6 +23,12 @@ use relm4::{
 relm4::new_action_group!(AppActionGroup, "app");
 relm4::new_stateless_action!(RunExeAction, AppActionGroup, "run_exe");
 relm4::new_stateless_action!(AddGameAction, AppActionGroup, "add_game");
+relm4::new_stateless_action!(
+    KeyboardShortcutsAction,
+    AppActionGroup,
+    "keyboard_shortcuts"
+);
+relm4::new_stateless_action!(AboutAction, AppActionGroup, "about");
 
 pub struct MainPage {
     root_window: adw::Window,
@@ -31,17 +37,13 @@ pub struct MainPage {
     browse_view: AsyncController<BrowseView>,
     play_view: AsyncController<PlayView>,
 
-    // Dialog to add games not from freebie
-    add_game_dialog: AsyncController<AddGameDialog>,
-
     // Is the search bar currently visible
     search_visible: BoolBinding,
 
+    add_game_dialog: AsyncController<AddGameDialog>,
+
     // The currently visible view
     active_view: View,
-
-    metadata: Arc<MetadataManager>,
-    active_games: ActiveGames,
 }
 
 #[derive(Debug)]
@@ -63,9 +65,12 @@ pub enum Inbox {
     SearchEntryUpdated(String),
     /// fires when the search bar is empty, taking `search_delay` into account.
     GameUninstalled,
+    ShowKeyboardShortcuts,
+    ShowAboutDialog,
     ViewChanged(View),
     RunExe(PathBuf),
-    AddGame(Game),
+    /// Game installed from the "Add game" Dialog. we need to update the play view.
+    GameAdded,
 }
 
 #[relm4::component(pub async)]
@@ -186,9 +191,9 @@ impl AsyncComponent for MainPage {
             });
 
         let add_game_dialog = AddGameDialog::builder()
-            .launch(root_window.clone()) // Passes Init parameters (empty tuple in this case)
+            .launch((root_window.clone(), active_games.clone(), metadata.clone())) // Passes Init parameters (empty tuple in this case)
             .forward(sender.input_sender(), |output| match output {
-                add_game_dialog::Outbox::GameAdded(game) => Inbox::AddGame(game),
+                add_game_dialog::Outbox::GameAdded => Inbox::GameAdded,
                 add_game_dialog::Outbox::Cancelled => Inbox::SearchUpdated(String::new()),
             });
 
@@ -200,43 +205,59 @@ impl AsyncComponent for MainPage {
             primary_menu: {
                 section! {
                     "Run Executable" => RunExeAction,
-                    "Add Game" => AddGameAction
+                    "Add Game" => AddGameAction,
+                    "Keyboard Shortcuts" => KeyboardShortcutsAction,
+                    "About Freebie" => AboutAction
                 }
             }
         }
 
+        let app = relm4::main_adw_application();
+        app.set_accelerators_for_action::<RunExeAction>(&["<primary>E"]);
+        app.set_accelerators_for_action::<AddGameAction>(&["<primary>P"]);
+        app.set_accelerators_for_action::<KeyboardShortcutsAction>(&["<primary>question"]);
+
         let mut group = RelmActionGroup::<AppActionGroup>::new();
 
-        let inbox = sender.input_sender().clone();
+        let sender_ = sender.clone();
         let window = root_window.clone();
         let run_exe_action = RelmAction::<RunExeAction>::new_stateless(move |_| {
-            let inbox = inbox.clone();
+            let sender_ = sender_.clone();
             open_executable_picker(&window, move |path| {
-                _ = inbox.send(Inbox::RunExe(path));
+                sender_.input(Inbox::RunExe(path));
             });
         });
-
         group.add_action(run_exe_action);
 
         let dialog = add_game_dialog.sender().clone();
-        let add_game_action =
-            relm4::actions::RelmAction::<AddGameAction>::new_stateless(move |_| {
-                dialog.emit(add_game_dialog::Inbox::Present);
-            });
+        let add_game_action = RelmAction::<AddGameAction>::new_stateless(move |_| {
+            dialog.emit(add_game_dialog::Inbox::Present);
+        });
         group.add_action(add_game_action);
+
+        let sender_ = sender.clone();
+        let keyboard_shortcuts_action =
+            RelmAction::<KeyboardShortcutsAction>::new_stateless(move |_| {
+                sender_.input(Inbox::ShowKeyboardShortcuts);
+            });
+        group.add_action(keyboard_shortcuts_action);
+
+        let sender_ = sender.clone();
+        let about_action = RelmAction::<AboutAction>::new_stateless(move |_| {
+            sender_.input(Inbox::ShowAboutDialog);
+        });
+        group.add_action(about_action);
 
         group.register_for_widget(&root_window);
 
-        // Model
+        // Final
         let model = Self {
             root_window,
             browse_view,
             play_view,
-            add_game_dialog,
             search_visible,
+            add_game_dialog,
             active_view: View::Browse,
-            metadata,
-            active_games,
         };
 
         let widgets = view_output!();
@@ -284,58 +305,33 @@ impl AsyncComponent for MainPage {
                     self.play_view.emit(play_view::Inbox::Update);
                 }
             },
-            Inbox::AddGame(mut game) => {
-                let slugs = [&game.slug];
-                let Ok(metas) = self.metadata.get_games(&slugs).await else {
-                    return;
-                };
+            Inbox::GameAdded => {
+                self.play_view.emit(play_view::Inbox::Update);
+            }
+            Inbox::ShowKeyboardShortcuts => {
+                let shortcuts_dialog = adw::ShortcutsDialog::new();
 
-                for (meta_slug, meta) in metas {
-                    if meta_slug == game.slug {
-                        game.metadata = Some(meta);
-                        self.active_games
-                            .lock()
-                            .unwrap()
-                            .insert(meta_slug, Arc::new(game));
+                let general_section = adw::ShortcutsSection::new(Some("General"));
 
-                        self.play_view.emit(play_view::Inbox::Update);
-                        break;
-                    }
-                }
+                let add_game_shortcut = adw::ShortcutsItem::new("Add Game", "<primary>p");
+                let run_exe_shortcut = adw::ShortcutsItem::new("Run executable", "<primary>e");
+
+                general_section.add(add_game_shortcut);
+                general_section.add(run_exe_shortcut);
+
+                shortcuts_dialog.add(general_section);
+                shortcuts_dialog.present(Some(&self.root_window));
+            }
+            Inbox::ShowAboutDialog => {
+                let about_dialog = adw::AboutDialog::builder()
+                    .application_name("Freebie")
+                    .developer_name("Rotlug")
+                    .developers(["Rotlug"])
+                    .version("2.0")
+                    .build();
+
+                about_dialog.present(Some(&self.root_window));
             }
         }
     }
-}
-
-/// Opens a file dialog restricted to executables (.exe, .lnk)
-pub fn open_executable_picker<W, F>(parent_window: &W, on_success: F)
-where
-    W: IsA<gtk::Window>,
-    F: FnOnce(PathBuf) + 'static,
-{
-    let file_picker = gtk::FileDialog::new();
-    file_picker.set_title("Pick Executable");
-
-    // Configure the file filters
-    let filter = gtk::FileFilter::new();
-    filter.set_name(Some("Executables (*.exe, *.lnk)"));
-    filter.add_suffix("exe");
-    filter.add_suffix("lnk");
-
-    let filters = gtk::gio::ListStore::new::<gtk::FileFilter>();
-    filters.append(&filter);
-    file_picker.set_filters(Some(&filters));
-
-    // Open the dialog
-    file_picker.open(
-        Some(parent_window),
-        gtk::gio::Cancellable::NONE,
-        move |file| {
-            if let Ok(file) = file
-                && let Some(path) = file.path()
-            {
-                on_success(path);
-            }
-        },
-    );
 }
