@@ -32,6 +32,7 @@
 
           propagatedBuildInputs = with pkgs; [
             umu-launcher
+            icoutils
           ];
 
           shellHook = ''

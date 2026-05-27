@@ -1,7 +1,10 @@
 //! The game page is the page where the user can look at the games metadata and install it.
 
 use adw::prelude::*;
-use relm4::prelude::*;
+use relm4::{
+    actions::{RelmAction, RelmActionGroup},
+    prelude::*,
+};
 use std::sync::Arc;
 
 use crate::{
@@ -13,12 +16,20 @@ use crate::{
     },
 };
 
+relm4::new_action_group!(GameActionGroup, "game");
+relm4::new_stateless_action!(
+    MakeDesktopShortcutAction,
+    GameActionGroup,
+    "make_desktop_shortcut"
+);
+
 #[derive(Debug)]
 pub enum Inbox {
     ChangeGame(Arc<Game>, gtk::gdk::Texture),
     Update(Arc<Game>),
     ActionButtonClicked,
     DeleteButtonClicked,
+    MakeDesktopShortcut,
 }
 
 #[derive(Debug)]
@@ -138,6 +149,12 @@ impl AsyncComponent for GamePage {
 
                                         set_visible: false,
                                         connect_clicked => Inbox::DeleteButtonClicked,
+                                    },
+
+                                    #[name = "menu_button"]
+                                    gtk::MenuButton {
+                                        set_menu_model: Some(&primary_menu),
+                                        set_icon_name: "view-more-symbolic",
                                     }
                                 }
                             }
@@ -162,6 +179,25 @@ impl AsyncComponent for GamePage {
                     action_button::Outbox::Update(game) => Inbox::Update(game),
                 });
 
+        // Menu
+        relm4::menu! {
+            primary_menu: {
+                section! {
+                    "Make desktop shortcut" => MakeDesktopShortcutAction,
+                }
+            }
+        }
+
+        let mut group = RelmActionGroup::<GameActionGroup>::new();
+        let sender_ = sender.clone();
+        let make_desktop_shortcut_action =
+            RelmAction::<MakeDesktopShortcutAction>::new_stateless(move |_| {
+                sender_.input(Inbox::MakeDesktopShortcut);
+            });
+        group.add_action(make_desktop_shortcut_action);
+
+        group.register_for_widget(&root);
+
         let model = Self {
             active_games,
             root_window,
@@ -169,7 +205,6 @@ impl AsyncComponent for GamePage {
             texture: None,
             action_button,
         };
-
         let widgets = view_output!();
 
         AsyncComponentParts { model, widgets }
@@ -185,13 +220,12 @@ impl AsyncComponent for GamePage {
         match message {
             Inbox::Update(game) => {
                 widgets.delete_button.set_visible(game.installed());
+                widgets.menu_button.set_visible(game.installed());
                 self.action_button
                     .emit(action_button::Inbox::Update(game.clone()));
             }
             Inbox::ChangeGame(game, texture) => {
-                widgets.delete_button.set_visible(game.installed());
-                self.action_button
-                    .emit(action_button::Inbox::Update(game.clone()));
+                sender.input(Inbox::Update(game.clone()));
 
                 self.game = Some(game.clone());
                 self.texture = Some(texture.clone());
@@ -232,6 +266,11 @@ impl AsyncComponent for GamePage {
                         sender.input(Inbox::Update(game.clone()));
                         let _ = sender.output(Outbox::GameUninstalled(game.clone()));
                     }
+                }
+            }
+            Inbox::MakeDesktopShortcut => {
+                if let Some(ref game) = self.game {
+                    _ = game.make_shortcut().await;
                 }
             }
         }

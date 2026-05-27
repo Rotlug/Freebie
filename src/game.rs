@@ -15,7 +15,10 @@ use tokio::{self};
 use crate::{
     error::{DownloadError, InstallError},
     igdb,
-    util::{base, downloads, set_prefix_mute, slug::SlugExt, umu, wine_desktop, wine_games},
+    util::{
+        applications, base, desktop, downloads, icons, run, set_prefix_mute, slug::SlugExt, umu,
+        wine_desktop, wine_games,
+    },
 };
 
 /// A Video game that can be downloaded and installed.
@@ -61,6 +64,7 @@ pub enum State {
         /// The games total time played
         time_played: Duration,
         /// Is the game currently open
+        #[serde(skip)]
         is_open: bool,
     },
 }
@@ -251,6 +255,83 @@ impl Game {
         }
 
         Ok(())
+    }
+
+    /// Extract the icon from a games executable, using `wine` if the game has a .lnk executable
+    /// and `ico` utils if the executable is a regular `.exe` file.
+    /// Errors if the game is not installed.
+    pub async fn generate_icon(&self) -> anyhow::Result<PathBuf> {
+        let exe = {
+            let guard = self.state.read().unwrap();
+            if let State::Installed { ref exe, .. } = *guard {
+                Some(exe.clone())
+            } else {
+                None
+            }
+        };
+
+        if let Some(exe) = exe {
+            let path = icons().join(format!("{}.ico", self.slug));
+            if exe.ends_with(".lnk") {
+                umu(&[
+                    "winemenubuilder",
+                    "-t",
+                    &exe.display().to_string(),
+                    &path.display().to_string(),
+                ])
+                .await?;
+            } else {
+                run(
+                    "wrestool",
+                    &[
+                        "-x",
+                        "-t14",
+                        "--output",
+                        &path.display().to_string(),
+                        &exe.display().to_string(),
+                    ],
+                )
+                .await?;
+            }
+            Ok(path)
+        } else {
+            Err(anyhow::anyhow!("Game is not installed!"))
+        }
+    }
+
+    /// Makes a desktop shortcut in `~/.local/share/applications` and the users `Desktop` directory.
+    /// The one in the `Desktop` directory will be a symlink to the one in the `applications` directory.
+    ///
+    /// Fails if the game doesn't have metadata.
+    pub async fn make_shortcut(&self) -> anyhow::Result<()> {
+        if let Some(meta) = &self.metadata {
+            let exe = std::env::current_exe()?.display().to_string(); // Current exe path of freebie
+            let icon = self.generate_icon().await?.display().to_string();
+            let name = &meta.name;
+            let slug = &self.slug;
+
+            let shortcut = format!(
+                "[Desktop Entry]
+Type=Application
+Name={name}
+Comment=
+Icon={icon}
+Exec={exe} --game={slug}
+Categories=Game;
+StartupNotify=true
+Terminal=false",
+            );
+
+            let desktop_path = desktop().join(format!("{slug}.desktop"));
+            let apps_path = applications().join(format!("{slug}.desktop"));
+
+            tokio::fs::write(&apps_path, &shortcut).await?;
+            tokio::fs::symlink(&apps_path, &desktop_path).await?;
+
+            Ok(())
+        } else {
+            Err(anyhow::anyhow!("Game doesn't have metadata!"))
+        }
     }
 }
 

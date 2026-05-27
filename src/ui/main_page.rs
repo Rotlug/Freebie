@@ -15,6 +15,7 @@ use crate::{
 use adw::prelude::*;
 use relm4::{
     RelmObjectExt,
+    actions::{RelmAction, RelmActionGroup},
     binding::{BoolBinding, ConnectBindingExt},
     prelude::*,
 };
@@ -204,27 +205,27 @@ impl AsyncComponent for MainPage {
             }
         }
 
-        let mut app_group = relm4::actions::RelmActionGroup::<AppActionGroup>::new();
+        let mut group = RelmActionGroup::<AppActionGroup>::new();
 
         let inbox = sender.input_sender().clone();
         let window = root_window.clone();
-        let run_exe_action = relm4::actions::RelmAction::<RunExeAction>::new_stateless(move |_| {
+        let run_exe_action = RelmAction::<RunExeAction>::new_stateless(move |_| {
             let inbox = inbox.clone();
             open_executable_picker(&window, move |path| {
                 _ = inbox.send(Inbox::RunExe(path));
             });
         });
 
-        app_group.add_action(run_exe_action);
+        group.add_action(run_exe_action);
 
         let dialog = add_game_dialog.sender().clone();
         let add_game_action =
             relm4::actions::RelmAction::<AddGameAction>::new_stateless(move |_| {
                 dialog.emit(add_game_dialog::Inbox::Present);
             });
-        app_group.add_action(add_game_action);
+        group.add_action(add_game_action);
 
-        app_group.register_for_widget(&root_window);
+        group.register_for_widget(&root_window);
 
         // Model
         let model = Self {

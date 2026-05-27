@@ -9,11 +9,8 @@ use crate::{game::Game, settings::Settings};
 pub mod slug;
 
 /// Run a shell command
-pub async fn run(command: &str) -> tokio::io::Result<()> {
-    process::Command::new("sh")
-        .args(["-c", command])
-        .status()
-        .await?;
+pub async fn run(program: &str, args: &[&str]) -> tokio::io::Result<()> {
+    process::Command::new(program).args(args).status().await?;
 
     Ok(())
 }
@@ -22,6 +19,7 @@ pub async fn run(command: &str) -> tokio::io::Result<()> {
 pub async fn ensure_directories_exist() {
     fs::create_dir_all(downloads()).await.unwrap();
     fs::create_dir_all(prefix()).await.unwrap();
+    fs::create_dir_all(icons()).await.unwrap();
 }
 
 /* Useful paths */
@@ -38,6 +36,11 @@ pub fn downloads() -> PathBuf {
 /// The wine prefix directory (`~/.local/share/freebie/prefix`)
 pub fn prefix() -> PathBuf {
     base().join("prefix")
+}
+
+/// The directory that is used to store the icons from `generate_icon`.
+pub fn icons() -> PathBuf {
+    base().join("icons")
 }
 
 /// The user's desktop directory inside of the wine prefix (`~/.local/share/freebie/prefix/drive_c/users/Public/Desktop`)
@@ -62,6 +65,16 @@ pub fn installed_games_file() -> PathBuf {
 /// Get the path of the `.json` file that contains the users settings
 pub fn settings_file() -> PathBuf {
     base().join("settings.json")
+}
+
+/// Get the path of `~/.local/share/applications`
+pub fn applications() -> PathBuf {
+    dirs::data_dir().unwrap().join("applications")
+}
+
+/// Get the native desktop directory (not inside wine)
+pub fn desktop() -> PathBuf {
+    dirs::desktop_dir().unwrap()
 }
 
 /// Retrieve the users settings from disk
