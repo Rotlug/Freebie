@@ -65,23 +65,29 @@ impl AsyncComponent for App {
       adw::Window {
           #[name = "stack"]
           adw::ViewStack {
-              set_enable_transitions: true,
+                set_enable_transitions: true,
 
-              #[name = "welcome"]
-              add_titled[Some("welcome"), "Welcome"] = &adw::Bin {
-              },
+                #[name = "welcome"]
+                add_titled[Some("welcome"), "Welcome"] = &adw::Bin {
+                },
 
-              #[name = "nav_view"]
-              add_titled[Some("main"), "Main"] = &adw::NavigationView {
-                  #[name = "nav_main_page"]
-                  add = &adw::NavigationPage {
-                  },
+                #[name = "nav_view"]
+                add_titled[Some("main"), "Main"] = &adw::NavigationView {
+                    #[name = "nav_main_page"]
+                    add = &adw::NavigationPage {
+                    },
 
-                  #[name = "nav_game_page"]
-                  add = &adw::NavigationPage {
-                      set_child: Some(model.game_page.widget()),
-                  }
-              }
+                    #[name = "nav_game_page"]
+                    add = &adw::NavigationPage {
+                        set_child: Some(model.game_page.widget()),
+                    }
+                }
+            },
+
+            connect_close_request[sender] => move |_| {
+                sender.input(Inbox::Exit);
+
+                gtk::glib::Propagation::Stop
             }
         }
     }
@@ -164,10 +170,6 @@ impl AsyncComponent for App {
             widgets.stack.set_visible_child(&widgets.welcome);
         }
 
-        if let Some(app) = root.application() {
-            let inbox = sender.input_sender().clone();
-            app.connect_shutdown(move |_| inbox.clone().send(Inbox::Exit).unwrap());
-        }
         AsyncComponentParts { model, widgets }
     }
 
@@ -218,19 +220,51 @@ impl AsyncComponent for App {
                 }
             }
             Inbox::Exit => {
-                // Save to disk only the state of games which finished installing
-                let installed_games: HashMap<String, Arc<Game>> = {
-                    let guard = self.active_games.lock().unwrap().clone();
-                    guard
-                        .into_iter()
-                        .filter(|(_, game)| game.installed())
-                        .collect()
-                };
+                // Check if there are still any ongoing installs
+                let ongoing = self.active_games.lock().unwrap().values().any(|g| {
+                    matches!(
+                        *g.state.read().unwrap(),
+                        game::State::Installing
+                            | game::State::Downloading(..)
+                            | game::State::Preparing
+                    )
+                });
 
-                if let Ok(string) = serde_json::to_string(&installed_games) {
-                    tokio::fs::write(installed_games_file(), &string)
-                        .await
-                        .unwrap();
+                let mut should_exit = true;
+
+                if ongoing {
+                    // Display alert dialog to the user
+                    let alert = adw::AlertDialog::builder()
+                        .heading("Are you sure?")
+                        .body("There are still ongoing installations. closing the app will <b>stop them.</b>")
+                        .body_use_markup(true)
+                        .build();
+
+                    alert.add_responses(&[("cancel", "Cancel"), ("close", "Close")]);
+                    alert.set_response_appearance("close", adw::ResponseAppearance::Destructive);
+
+                    let chosen = alert.choose_future(Some(root)).await;
+                    if chosen == "cancel" {
+                        should_exit = false;
+                    }
+                }
+
+                if should_exit {
+                    let installed_games: HashMap<String, Arc<Game>> = {
+                        let guard = self.active_games.lock().unwrap().clone();
+                        guard
+                            .into_iter()
+                            .filter(|(_, game)| game.installed())
+                            .collect()
+                    };
+
+                    if let Ok(string) = serde_json::to_string(&installed_games) {
+                        tokio::fs::write(installed_games_file(), &string)
+                            .await
+                            .unwrap();
+                    }
+
+                    relm4::main_adw_application().quit();
                 }
             }
         }
