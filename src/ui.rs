@@ -11,10 +11,13 @@ pub mod action_button;
 pub mod game_button;
 
 pub mod add_game_dialog;
+pub mod preferences_dialog;
+
 pub mod browse_view;
+pub mod play_view;
+
 pub mod game_page;
 pub mod main_page;
-pub mod play_view;
 pub mod welcome_page;
 
 /// Use `glycin` to convert a series of bytes into a paintable `gdk::Texture`

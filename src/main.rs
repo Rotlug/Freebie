@@ -1,6 +1,6 @@
 use std::{
     collections::HashMap,
-    sync::{Arc, Mutex},
+    sync::{Arc, Mutex, RwLock},
 };
 
 use adw::prelude::*;
@@ -10,14 +10,15 @@ use relm4::prelude::*;
 use crate::{
     args::Args,
     game::Game,
-    settings::Settings,
+    preferences::Preferences,
     ui::{
         game_page::{self, GamePage},
         main_page::{self, MainPage},
         welcome_page::{self, WelcomePage},
     },
     util::{
-        ensure_directories_exist, installed_games, installed_games_file, settings, settings_file,
+        ensure_directories_exist, installed_games, installed_games_file, preferences,
+        preferences_file,
     },
 };
 
@@ -25,7 +26,7 @@ mod args;
 mod error;
 mod game;
 mod igdb;
-mod settings;
+mod preferences;
 mod ui;
 mod util;
 
@@ -42,13 +43,13 @@ struct App {
     game_page: AsyncController<GamePage>,
     welcome_page: Option<AsyncController<WelcomePage>>,
     active_games: ActiveGames,
-    settings: Option<Settings>,
+    preferences: Option<Preferences>,
 }
 
 #[derive(Debug)]
 pub enum Inbox {
     GameSelected(Arc<Game>, gtk::gdk::Texture),
-    WelcomeDone(Settings),
+    WelcomeDone(Preferences),
     GameUninstalled(Arc<Game>),
     Exit,
 }
@@ -94,18 +95,18 @@ impl AsyncComponent for App {
         let active_games = Arc::new(Mutex::new(installed_games().await.unwrap()));
         let texture_cache = Arc::new(Mutex::new(HashMap::new()));
 
-        let settings = settings().await.ok();
-        let has_settings = settings.is_some();
+        let preferences = preferences().await.ok().map(|p| Arc::new(RwLock::new(p)));
+        let has_settings = preferences.is_some();
 
-        // Because the main page needs the settings we need to add it only if the settings exist.
+        // Because the main page needs the preferences we need to add it only if the preferences exist.
         // If not then we show the welcome page and only then we add the main page to the nav view.
-        let main_page = if let Some(ref current_settings) = settings {
+        let main_page = if let Some(current_preferences) = preferences.clone() {
             let controller = MainPage::builder()
                 .launch((
                     root.clone(),
                     active_games.clone(),
-                    texture_cache.clone(),
-                    current_settings.clone(),
+                    texture_cache,
+                    current_preferences,
                 ))
                 .forward(sender.input_sender(), |msg| match msg {
                     main_page::Outbox::GameSelected(game, texture) => {
@@ -142,7 +143,7 @@ impl AsyncComponent for App {
             game_page,
             welcome_page,
             active_games,
-            settings,
+            preferences,
         };
 
         let widgets = view_output!();
@@ -187,8 +188,8 @@ impl AsyncComponent for App {
             Inbox::WelcomeDone(settings) => {
                 // Write settings to disk
                 let string = serde_json::to_string(&settings).unwrap();
-                tokio::fs::write(settings_file(), &string).await.unwrap();
-                self.settings = Some(settings.clone());
+                tokio::fs::write(preferences_file(), &string).await.unwrap();
+                self.preferences = Some(settings.clone());
 
                 // Add main page to ui
                 let main_page = MainPage::builder()

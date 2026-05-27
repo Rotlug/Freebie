@@ -4,11 +4,12 @@ use crate::{
     ActiveGames, TextureCache,
     game::Game,
     igdb::MetadataManager,
-    settings::Settings,
+    preferences::Preferences,
     ui::{
         add_game_dialog::{self, AddGameDialog, open_executable_picker},
         browse_view::{self, BrowseView},
         play_view::{self, PlayView},
+        preferences_dialog::{self, PreferencesDialog},
     },
     util::umu,
 };
@@ -28,6 +29,7 @@ relm4::new_stateless_action!(
     AppActionGroup,
     "keyboard_shortcuts"
 );
+relm4::new_stateless_action!(PreferencesAction, AppActionGroup, "preferences");
 relm4::new_stateless_action!(AboutAction, AppActionGroup, "about");
 
 pub struct MainPage {
@@ -41,6 +43,7 @@ pub struct MainPage {
     search_visible: BoolBinding,
 
     add_game_dialog: AsyncController<AddGameDialog>,
+    preferences_dialog: AsyncController<PreferencesDialog>,
 
     // The currently visible view
     active_view: View,
@@ -63,11 +66,11 @@ pub enum Inbox {
     SearchUpdated(String),
     /// fires every time the search entry text changes, disregarding the `search_delay`.
     SearchEntryUpdated(String),
-    /// fires when the search bar is empty, taking `search_delay` into account.
     GameUninstalled,
     ShowKeyboardShortcuts,
     ShowAboutDialog,
     ViewChanged(View),
+    /// "Run" Executable action happened
     RunExe(PathBuf),
     /// Game installed from the "Add game" Dialog. we need to update the play view.
     GameAdded,
@@ -77,7 +80,7 @@ pub enum Inbox {
 impl AsyncComponent for MainPage {
     type Input = Inbox;
     type Output = Outbox;
-    type Init = (adw::Window, ActiveGames, TextureCache, Settings);
+    type Init = (adw::Window, ActiveGames, TextureCache, Preferences);
     type CommandOutput = ();
 
     view! {
@@ -166,8 +169,8 @@ impl AsyncComponent for MainPage {
         root: Self::Root,
         sender: AsyncComponentSender<Self>,
     ) -> AsyncComponentParts<Self> {
-        let (root_window, active_games, texture_cache, settings) = init;
-        let metadata = Arc::new(MetadataManager::new(settings.credentials));
+        let (root_window, active_games, texture_cache, preferences) = init;
+        let metadata = Arc::new(MetadataManager::new(preferences.clone()));
 
         let browse_view = BrowseView::builder()
             .launch((
@@ -197,6 +200,10 @@ impl AsyncComponent for MainPage {
                 add_game_dialog::Outbox::Cancelled => Inbox::SearchUpdated(String::new()),
             });
 
+        let preferences_dialog = PreferencesDialog::builder()
+            .launch((root_window.clone(), preferences.clone()))
+            .detach();
+
         // Search
         let search_visible = BoolBinding::new(false);
 
@@ -206,6 +213,7 @@ impl AsyncComponent for MainPage {
                 section! {
                     "Run Executable" => RunExeAction,
                     "Add Game" => AddGameAction,
+                    "Preferences" => PreferencesAction,
                     "Keyboard Shortcuts" => KeyboardShortcutsAction,
                     "About Freebie" => AboutAction
                 }
@@ -242,6 +250,12 @@ impl AsyncComponent for MainPage {
             });
         group.add_action(keyboard_shortcuts_action);
 
+        let dialog = preferences_dialog.sender().clone();
+        let add_game_action = RelmAction::<PreferencesAction>::new_stateless(move |_| {
+            dialog.emit(preferences_dialog::Inbox::Present);
+        });
+        group.add_action(add_game_action);
+
         let sender_ = sender.clone();
         let about_action = RelmAction::<AboutAction>::new_stateless(move |_| {
             sender_.input(Inbox::ShowAboutDialog);
@@ -257,6 +271,7 @@ impl AsyncComponent for MainPage {
             play_view,
             search_visible,
             add_game_dialog,
+            preferences_dialog,
             active_view: View::Browse,
         };
 

@@ -4,7 +4,10 @@ use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
 use tokio::{fs, io, process};
 
-use crate::{game::Game, settings::Settings};
+use crate::{
+    game::Game,
+    preferences::{Preferences, PreferencesInner},
+};
 
 pub mod slug;
 
@@ -62,9 +65,9 @@ pub fn installed_games_file() -> PathBuf {
     base().join("installed_games.json")
 }
 
-/// Get the path of the `.json` file that contains the users settings
-pub fn settings_file() -> PathBuf {
-    base().join("settings.json")
+/// Get the path of the `.json` file that contains the users preferences
+pub fn preferences_file() -> PathBuf {
+    base().join("preferences.json")
 }
 
 /// Get the path of `~/.local/share/applications`
@@ -77,9 +80,9 @@ pub fn desktop() -> PathBuf {
     dirs::desktop_dir().unwrap()
 }
 
-/// Retrieve the users settings from disk
-pub async fn settings() -> anyhow::Result<Settings> {
-    let string = fs::read_to_string(settings_file()).await?;
+/// Retrieve the users preferences from disk
+pub async fn preferences() -> anyhow::Result<PreferencesInner> {
+    let string = fs::read_to_string(preferences_file()).await?;
     Ok(serde_json::from_str(&string)?)
 }
 

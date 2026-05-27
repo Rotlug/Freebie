@@ -12,9 +12,11 @@ use serde_with::DurationSeconds;
 use serde_with::serde_as;
 use tokio::sync::Mutex;
 
+use crate::preferences::Preferences;
+
 /// The token returned from igdb after requesting access
 #[serde_as]
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 struct AccessToken {
     #[serde_as(as = "DurationSeconds<u64>")]
     expires_in: Duration,
@@ -41,16 +43,16 @@ pub struct MetadataManager {
     /// The `access_token` hasn't been renewed yet.
     access_last_renewed: Arc<Mutex<Option<Instant>>>,
 
-    credentials: Credentials,
+    preferences: Preferences,
 }
 
 impl MetadataManager {
-    pub fn new(credentials: Credentials) -> Self {
+    pub fn new(preferences: Preferences) -> Self {
         let reqwest_client = reqwest::Client::new();
 
         Self {
             reqwest_client,
-            credentials,
+            preferences,
             ..Default::default()
         }
     }
@@ -70,7 +72,8 @@ impl MetadataManager {
     pub async fn authenticate(&self) -> anyhow::Result<()> {
         let url = format!(
             "https://id.twitch.tv/oauth2/token?client_id={}&client_secret={}&grant_type=client_credentials",
-            self.credentials.client_id, self.credentials.client_secret
+            self.preferences.read().unwrap().credentials.client_id,
+            self.preferences.read().unwrap().credentials.client_secret
         );
 
         let resp = self.reqwest_client.post(url).send().await?.text().await?;
@@ -128,21 +131,22 @@ impl MetadataManager {
             self.authenticate().await?;
         }
 
+        let access_token = self.access_token.lock().await.clone().unwrap();
+        let client_id = self
+            .preferences
+            .read()
+            .unwrap()
+            .credentials
+            .client_id
+            .clone();
+
         Ok(self
             .reqwest_client
             .post(url)
-            .header("Client-ID", &self.credentials.client_id)
+            .header("Client-ID", client_id)
             .header(
                 "Authorization",
-                format!(
-                    "Bearer {}",
-                    self.access_token
-                        .lock()
-                        .await
-                        .as_ref()
-                        .unwrap()
-                        .access_token
-                ),
+                format!("Bearer {}", access_token.access_token),
             )
             .body(data)
             .send()

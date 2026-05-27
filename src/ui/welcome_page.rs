@@ -1,7 +1,12 @@
+use std::sync::{Arc, RwLock};
+
 use adw::prelude::*;
 use relm4::prelude::*;
 
-use crate::{igdb, settings::Settings};
+use crate::{
+    igdb,
+    preferences::{Preferences, PreferencesInner},
+};
 
 #[derive(Debug)]
 pub enum Inbox {
@@ -11,7 +16,7 @@ pub enum Inbox {
 
 #[derive(Debug)]
 pub enum Outbox {
-    Done(Settings),
+    Done(Preferences),
 }
 
 pub struct WelcomePage {}
@@ -135,12 +140,12 @@ impl AsyncComponent for WelcomePage {
                 let client_id = widgets.client_id_entry.text().to_string();
                 let client_secret = widgets.client_secret_entry.text().to_string();
 
-                _ = sender.output(Outbox::Done(Settings {
+                _ = sender.output(Outbox::Done(Arc::new(RwLock::new(PreferencesInner {
                     credentials: igdb::Credentials {
                         client_id,
                         client_secret,
                     },
-                }));
+                }))));
             }
         }
     }
