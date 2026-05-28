@@ -209,6 +209,10 @@ impl Game {
             _ = tokio::fs::remove_dir_all(path).await;
         }
 
+        // remove leftover desktop shortcuts (ignoring the error if they dont exist)
+        _ = tokio::fs::remove_file(applications().join(format!("{}.desktop", self.slug))).await;
+        _ = tokio::fs::remove_file(desktop().join(format!("{}.desktop", self.slug))).await;
+
         *self.state.write().unwrap() = State::Uninstalled;
 
         Ok(())
