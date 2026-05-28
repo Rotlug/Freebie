@@ -27,13 +27,14 @@ pub trait SlugExt {
 impl<T: AsRef<str>> SlugExt for T {
     fn slug(&self) -> String {
         let mut result = self.cut_first("–,").to_string();
+        result = result.replace(" -", "");
 
         // Remove non-ascii characters
         result = result.nfd().filter(char::is_ascii).collect();
 
         // Remove other special characters and clean up other stuff
         result = result
-            .multi_replace("#$%&()*+,./:;-<=>?@[\\]^_`{|}~!", "")
+            .multi_replace("#$%&()*+,./:;<=>?@[\\]^_`{|}~!", "")
             .to_ascii_lowercase()
             .replace("goty", "game of the year");
 
@@ -97,5 +98,41 @@ impl<T: AsRef<str>> SlugExt for T {
         }
 
         result
+    }
+}
+
+mod tests {
+    use super::*;
+
+    #[test]
+    fn slug_doesnt_change_slug() {
+        let slugs = [
+            "elden-ring",
+            "red-dead-redemption-2",
+            "ghost-of-tsushima-directors-cut",
+            "stray",
+            "hollow-knight-silksong",
+            "resident-evil-requiem",
+            "god-of-war-ragnarok",
+            "forza-horizon-6",
+            "cyberpunk-2077",
+            "baldurs-gate-3",
+            "the-legend-of-zelda-tears-of-the-kingdom",
+            "alan-wake-2",
+            "starfield",
+            "final-fantasy-7-rebirth",
+            "grand-theft-auto-v",
+            "hades-2",
+            "it-takes-two",
+            "the-last-of-us-part-1",
+            "cuphead",
+            "disco-elysium",
+            "outer-wilds",
+            "persona-5-royal",
+        ];
+
+        for slug in slugs {
+            assert_eq!(slug.slug(), slug);
+        }
     }
 }

@@ -10,6 +10,7 @@ use crate::{
     preferences::PreferencesInner,
     util::{
         downloads, ensure_directories_exist, installed_games, installed_games_file, preferences,
+        slug::SlugExt,
     },
 };
 
@@ -34,7 +35,7 @@ fn main() {
 
     spawn(async move {
         let args = Args::parse();
-        if let Some(slug) = args.obtain {
+        if let Some(game) = args.obtain {
             // Try to make metadata manager from command line args OR preferences file
             let metadata = if let Some(creds) = args.credentials {
                 let mut split = creds.split(',');
@@ -49,7 +50,11 @@ fn main() {
                 MetadataManager::new(Arc::new(RwLock::new(preferences)))
             };
 
-            obtain(&slug, &metadata).await;
+            obtain(&game.slug(), &metadata).await;
+        }
+
+        if let Some(game) = args.launch {
+            launch(&game.slug()).await;
         }
     });
 }
