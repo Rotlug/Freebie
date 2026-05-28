@@ -155,6 +155,8 @@ impl AsyncComponent for GamePage {
                                     gtk::MenuButton {
                                         set_menu_model: Some(&primary_menu),
                                         set_icon_name: "view-more-symbolic",
+
+                                        set_css_classes: &["flat"]
                                     }
                                 }
                             }
