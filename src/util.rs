@@ -16,10 +16,10 @@ pub async fn run(program: &str, args: &[&str]) -> tokio::io::Result<()> {
 }
 
 /// Creates all required directories for the app if they don't exist
-pub async fn ensure_directories_exist() {
-    fs::create_dir_all(downloads()).await.unwrap();
-    fs::create_dir_all(prefix()).await.unwrap();
-    fs::create_dir_all(icons()).await.unwrap();
+pub fn ensure_directories_exist() {
+    std::fs::create_dir_all(downloads()).unwrap();
+    std::fs::create_dir_all(prefix()).unwrap();
+    std::fs::create_dir_all(icons()).unwrap();
 }
 
 /* Useful paths */

@@ -3,7 +3,7 @@ use std::sync::Arc;
 use adw::prelude::*;
 use relm4::{gtk::gdk, prelude::*};
 
-use crate::{TextureCache, game::Game, ui::bytes_to_texture};
+use crate::{app::TextureCache, game::Game, ui::bytes_to_texture};
 
 pub struct GameButton {
     game: Arc<Game>,

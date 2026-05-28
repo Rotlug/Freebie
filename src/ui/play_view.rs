@@ -4,7 +4,7 @@ use adw::prelude::*;
 use relm4::prelude::*;
 
 use crate::{
-    ActiveGames, TextureCache,
+    app::{ActiveGames, TextureCache},
     game::Game,
     ui::game_button::{self, GameButton},
 };

@@ -7,7 +7,7 @@ use std::{
 };
 
 use crate::{
-    ActiveGames,
+    app::ActiveGames,
     game::{self, Game},
     igdb::MetadataManager,
     util::slug::SlugExt,

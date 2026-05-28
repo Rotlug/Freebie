@@ -8,7 +8,7 @@ use relm4::{
 use std::sync::Arc;
 
 use crate::{
-    ActiveGames,
+    app::ActiveGames,
     game::Game,
     ui::{
         action_button::{self, ActionButton},

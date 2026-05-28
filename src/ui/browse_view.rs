@@ -6,7 +6,7 @@ use relm4::{
 use std::sync::Arc;
 
 use crate::{
-    ActiveGames, TextureCache,
+    app::{ActiveGames, TextureCache},
     game::{self, Game},
     igdb::MetadataManager,
     ui::game_button::{self, GameButton},

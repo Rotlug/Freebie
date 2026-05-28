@@ -1,7 +1,7 @@
 use std::{path::PathBuf, sync::Arc};
 
 use crate::{
-    ActiveGames, TextureCache,
+    app::{ActiveGames, TextureCache},
     game::Game,
     igdb::MetadataManager,
     preferences::Preferences,
@@ -42,7 +42,10 @@ pub struct MainPage {
     // Is the search bar currently visible
     search_visible: BoolBinding,
 
+    // these need to be in the struct to keep them alive
+    #[allow(unused)]
     add_game_dialog: AsyncController<AddGameDialog>,
+    #[allow(unused)]
     preferences_dialog: AsyncController<PreferencesDialog>,
 
     // The currently visible view
