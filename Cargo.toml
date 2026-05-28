@@ -11,7 +11,7 @@ futures-util = "0.3.32"
 glycin = { version = "3.1.0", features = ["gdk4"] }
 image = "0.25.10"
 librqbit = "8.1.1"
-relm4 = { version = "0.11.0", features = ["gnome_49", "libadwaita"] }
+relm4 = { version = "0.11.0", features = ["gnome_50", "libadwaita"] }
 reqwest = { version = "0.13.3", features = ["json"] }
 scraper = "0.27.0"
 serde = { version = "1.0.228", features = ["derive", "rc"] }

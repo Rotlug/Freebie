@@ -11,14 +11,24 @@
         "aarch64-linux"
       ];
 
-      perSystem = {pkgs, ...}: {
-        devShells.default = pkgs.mkShell {
+      perSystem = {
+        pkgs,
+        config,
+        ...
+      }: let
+        cargoToml = fromTOML (builtins.readFile ./Cargo.toml);
+      in {
+        packages.default = pkgs.rustPlatform.buildRustPackage {
+          pname = cargoToml.package.name;
+          version = cargoToml.package.version;
+
+          src = ./.;
+          cargoHash = "sha256-joTKZpGRSzSbkqUhsgH8rF4ImCT4LrifM2UuQi9yv1s=";
+
           nativeBuildInputs = with pkgs; [
-            cargo
-            rustc
-            rustPlatform.bindgenHook
             pkg-config
             wrapGAppsHook4
+            makeWrapper
           ];
 
           buildInputs = with pkgs; [
@@ -28,11 +38,23 @@
             libseccomp
             glycin-loaders
             bubblewrap
-          ];
-
-          propagatedBuildInputs = with pkgs; [
             umu-launcher
             icoutils
+          ];
+
+          postInstall = ''
+            wrapProgram $out/bin/${cargoToml.package.name} \
+              --prefix PATH : ${pkgs.lib.makeBinPath [pkgs.umu-launcher pkgs.icoutils]}
+          '';
+        };
+
+        devShells.default = pkgs.mkShell {
+          inputsFrom = [config.packages.default];
+
+          nativeBuildInputs = with pkgs; [
+            cargo
+            rustc
+            rustPlatform.bindgenHook
           ];
 
           shellHook = ''
