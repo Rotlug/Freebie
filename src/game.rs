@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
     fs,
+    io::Write,
     path::{Path, PathBuf},
     sync::{Arc, RwLock},
     time::{Duration, Instant},
@@ -74,6 +75,7 @@ impl Game {
     pub async fn download(
         &self,
         session: &Arc<librqbit::Session>,
+        terminal_output: bool,
     ) -> Result<PathBuf, DownloadError> {
         *self.state.write().unwrap() = State::Preparing;
 
@@ -125,7 +127,13 @@ impl Game {
                     .progress_percent_human_readable()
                     .to_string();
 
-                *self.state.write().unwrap() = State::Downloading(progress);
+                *self.state.write().unwrap() = State::Downloading(progress.clone());
+
+                if terminal_output {
+                    print!("\rDownloading progress: {progress}");
+                    let _ = std::io::stdout().flush();
+                }
+
                 tokio::time::sleep(Duration::from_secs(1)).await;
             }
         };
@@ -321,7 +329,7 @@ Type=Application
 Name={name}
 Comment=
 Icon={icon}
-Exec={exe} --game={slug}
+Exec={exe} --launch={slug}
 Categories=Game;
 StartupNotify=true
 Terminal=false",

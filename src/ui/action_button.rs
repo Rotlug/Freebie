@@ -94,7 +94,7 @@ impl AsyncComponent for ActionButton {
                                 }
                             });
 
-                            let download = match game.download(&session).await {
+                            let download = match game.download(&session, false).await {
                                 Ok(download) => download,
                                 Err(err) => return Command::DownloadFail(err, updater),
                             };

@@ -213,3 +213,18 @@ impl Cover {
         Ok(bytes)
     }
 }
+
+impl std::fmt::Display for Metadata {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "--- {} ---", self.name)?;
+        if let Some(rating) = self.rating {
+            #[allow(clippy::cast_possible_truncation)]
+            writeln!(f, "Rating: {}/100", rating as i32)?;
+        }
+        if let Some(description) = &self.description {
+            writeln!(f, "{description}")?;
+        }
+
+        Ok(())
+    }
+}
