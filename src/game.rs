@@ -205,7 +205,8 @@ impl Game {
         };
 
         if let Some(path) = path {
-            tokio::fs::remove_dir_all(path).await?;
+            // the game will still uninstall even if the files fail to be removed
+            _ = tokio::fs::remove_dir_all(path).await;
         }
 
         *self.state.write().unwrap() = State::Uninstalled;
