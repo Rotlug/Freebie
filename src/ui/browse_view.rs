@@ -144,7 +144,7 @@ impl AsyncComponent for BrowseView {
                 self.current_search = Some(handle);
             }
             Inbox::ShowPopular => {
-                if let Ok(popular) = game::popular().await {
+                if let Ok(popular) = game::popular() {
                     sender
                         .command_sender()
                         .send(Command::SearchFinished(popular))

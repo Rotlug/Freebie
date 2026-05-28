@@ -16,7 +16,7 @@ use crate::{
     error::{DownloadError, InstallError},
     igdb,
     util::{
-        applications, base, desktop, downloads, icons, run, set_prefix_mute, slug::SlugExt, umu,
+        applications, desktop, downloads, icons, run, set_prefix_mute, slug::SlugExt, umu,
         wine_desktop, wine_games,
     },
 };
@@ -387,8 +387,6 @@ pub async fn search(query: &str) -> anyhow::Result<HashMap<String, Game>> {
     Ok(games)
 }
 
-pub async fn popular() -> anyhow::Result<Vec<Arc<Game>>> {
-    let games_string = tokio::fs::read_to_string(base().join("popular.json")).await?;
-    let games = serde_json::from_str(&games_string)?;
-    Ok(games)
+pub fn popular() -> anyhow::Result<Vec<Arc<Game>>> {
+    Ok(serde_json::from_str(include_str!("../popular.json"))?)
 }

@@ -4,10 +4,7 @@ use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
 use tokio::{fs, io, process};
 
-use crate::{
-    game::Game,
-    preferences::{Preferences, PreferencesInner},
-};
+use crate::{game::Game, preferences::PreferencesInner};
 
 pub mod slug;
 
@@ -28,7 +25,7 @@ pub async fn ensure_directories_exist() {
 /* Useful paths */
 /// The base data directory of the app (`~/.local/share/freebie`)
 pub fn base() -> PathBuf {
-    dirs::data_dir().unwrap().join("freebie2") // TODO: Change from `freebie2` to `freebie`
+    dirs::data_dir().unwrap().join("freebie")
 }
 
 /// The directory that temporarily contains downloaded torrents (`~/.local/share/freebie/downloads`)

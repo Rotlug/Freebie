@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use adw::prelude::*;
 use relm4::prelude::*;
 
