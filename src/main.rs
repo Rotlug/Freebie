@@ -214,6 +214,7 @@ impl AsyncComponent for App {
                 widgets.stack.set_visible_child(&widgets.nav_view);
             }
             Inbox::GameUninstalled(game) => {
+                widgets.nav_view.pop_to_page(&widgets.nav_main_page);
                 self.active_games.lock().unwrap().remove(&game.slug);
                 if let Some(ref main_page) = self.main_page {
                     main_page.emit(main_page::Inbox::GameUninstalled);
