@@ -29,7 +29,7 @@ pub enum Command {
     DownloadFail(DownloadError, tokio::task::JoinHandle<()>),
     InstallError(InstallError, tokio::task::JoinHandle<()>),
     GameInstalled(Arc<Game>),
-    GameClosed,
+    GameClosed(Arc<Game>),
 }
 
 pub struct ActionButton {
@@ -118,8 +118,8 @@ impl AsyncComponent for ActionButton {
                         let inbox = sender.input_sender().clone();
                         sender.oneshot_command(async move {
                             _ = game_cmd.play().await;
-                            _ = inbox.send(Inbox::Update(game_cmd));
-                            Command::GameClosed
+                            _ = inbox.send(Inbox::Update(game_cmd.clone()));
+                            Command::GameClosed(game_cmd)
                         });
                     }
                     _ => panic!("ActionButton should not be pressable"),
@@ -153,7 +153,9 @@ impl AsyncComponent for ActionButton {
                 dbg!(err);
                 updater.abort();
             }
-            Command::GameClosed => {}
+            Command::GameClosed(game) => {
+                _ = sender.output(Outbox::Update(game));
+            }
             Command::GameInstalled(game) => {
                 _ = sender.output(Outbox::Update(game.clone()));
                 let state = &*game.state.read().unwrap();

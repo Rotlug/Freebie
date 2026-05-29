@@ -5,11 +5,11 @@ use relm4::{
     actions::{RelmAction, RelmActionGroup},
     prelude::*,
 };
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use crate::{
     app::ActiveGames,
-    game::Game,
+    game::{self, Game},
     ui::{
         action_button::{self, ActionButton},
         blurred_paintable,
@@ -123,6 +123,15 @@ impl AsyncComponent for GamePage {
                                     set_css_classes: &["heading"],
                                 },
 
+                                #[name = "time_played"]
+                                gtk::Label {
+                                    set_wrap: true,
+                                    set_wrap_mode: gtk::pango::WrapMode::Word,
+                                    set_halign: gtk::Align::Start,
+
+                                    set_css_classes: &["dimmed"]
+                                },
+
                                 gtk::Label {
                                     set_wrap: true,
                                     set_wrap_mode: gtk::pango::WrapMode::Word,
@@ -222,8 +231,14 @@ impl AsyncComponent for GamePage {
     ) {
         match message {
             Inbox::Update(game) => {
+                self.game = Some(game.clone());
                 widgets.delete_button.set_visible(game.installed());
                 widgets.menu_button.set_visible(game.installed());
+                widgets.time_played.set_visible(game.installed());
+                widgets
+                    .time_played
+                    .set_label(&format!("Time played: {}", self.time_played()));
+
                 self.action_button
                     .emit(action_button::Inbox::Update(game.clone()));
             }
@@ -307,6 +322,67 @@ impl GamePage {
         match rating {
             Some(rating) => format!("{rating} • {size}"),
             None => size.into(),
+        }
+    }
+
+    fn time_played(&self) -> String {
+        if let Some(ref game) = self.game
+            && let game::State::Installed { time_played, .. } = *game.state.read().unwrap()
+        {
+            display_to_string(&time_played)
+        } else {
+            String::new()
+        }
+    }
+}
+
+fn display_to_string(duration: &Duration) -> String {
+    let mut total_secs = duration.as_secs();
+
+    if total_secs == 0 {
+        return "0 seconds".into();
+    }
+
+    let days = total_secs / 86400;
+    total_secs %= 86400;
+    let hours = total_secs / 3600;
+    total_secs %= 3600;
+    let minutes = total_secs / 60;
+    let seconds = total_secs % 60;
+    let mut parts = Vec::new();
+
+    if days > 0 {
+        parts.push(format!("{} day{}", days, if days > 1 { "s" } else { "" }));
+    }
+    if hours > 0 {
+        parts.push(format!(
+            "{} hour{}",
+            hours,
+            if hours > 1 { "s" } else { "" }
+        ));
+    }
+    if minutes > 0 {
+        parts.push(format!(
+            "{} minute{}",
+            minutes,
+            if minutes > 1 { "s" } else { "" }
+        ));
+    }
+    if seconds > 0 {
+        parts.push(format!(
+            "{} second{}",
+            seconds,
+            if seconds > 1 { "s" } else { "" }
+        ));
+    }
+
+    match parts.len() {
+        0 => String::new(),
+        1 => parts.remove(0),
+        2 => format!("{} and {}", parts[0], parts[1]),
+        _ => {
+            let last = parts.pop().unwrap();
+            format!("{}, and {}", parts.join(", "), last)
         }
     }
 }
