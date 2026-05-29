@@ -321,7 +321,7 @@ impl Game {
     /// Fails if the game doesn't have metadata.
     pub async fn make_shortcut(&self) -> anyhow::Result<()> {
         if let Some(meta) = &self.metadata {
-            let exe = std::env::current_exe()?.display().to_string(); // Current exe path of freebie
+            let exe = "freebie"; // Current exe path of freebie
             let icon = self.generate_icon().await?.display().to_string();
             let name = &meta.name;
             let slug = &self.slug;
