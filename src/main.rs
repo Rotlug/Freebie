@@ -111,12 +111,14 @@ async fn obtain(slug: &str, metadata: &MetadataManager) {
     let Some(meta) = metas.remove(slug) else {
         panic!("Couldn't find metadata for game {slug}");
     };
-    println!("{}", &meta);
+    println!("{meta}");
     game.metadata = Some(meta);
 
     let session = librqbit::Session::new(downloads())
         .await
         .expect("Failed to create torrent session!");
+
+    println!("File size: {}", game.size);
 
     let download = game
         .download(&session, true)
