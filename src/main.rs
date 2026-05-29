@@ -1,4 +1,7 @@
-use std::sync::{Arc, RwLock};
+use std::{
+    sync::{Arc, RwLock},
+    time::Instant,
+};
 
 use clap::Parser;
 use relm4::prelude::*;
@@ -85,7 +88,20 @@ async fn launch(slug: &str) {
         return;
     };
 
+    let start = Instant::now();
     _ = game.play().await;
+    if let game::State::Installed {
+        mut time_played, ..
+    } = *game.state.write().unwrap()
+    {
+        time_played += start.elapsed();
+    }
+
+    _ = tokio::fs::write(
+        installed_games_file(),
+        serde_json::to_string(&installed_games).unwrap(),
+    )
+    .await;
 }
 
 /// Download and install a game
