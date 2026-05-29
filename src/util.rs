@@ -38,7 +38,7 @@ pub fn prefix() -> PathBuf {
     base().join("prefix")
 }
 
-/// The directory that is used to store the icons from `generate_icon`.
+/// The directory that is used to store the icons from `game::generate_icon`.
 pub fn icons() -> PathBuf {
     base().join("icons")
 }

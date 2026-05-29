@@ -285,7 +285,10 @@ impl Game {
 
         if let Some(exe) = exe {
             let path = icons().join(format!("{}.ico", self.slug));
-            if exe.ends_with(".lnk") {
+            if exe
+                .extension()
+                .is_some_and(|ext| ext.eq_ignore_ascii_case("lnk"))
+            {
                 umu(&[
                     "winemenubuilder",
                     "-t",
