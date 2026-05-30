@@ -49,6 +49,8 @@ impl AsyncComponent for App {
 
     view! {
       adw::Window {
+          set_title: Some("Freebie"),
+
           #[name = "stack"]
           adw::ViewStack {
                 set_enable_transitions: true,
