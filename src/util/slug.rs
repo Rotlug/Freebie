@@ -102,6 +102,7 @@ impl<T: AsRef<str>> SlugExt for T {
 }
 
 mod tests {
+    #[allow(unused)] // this actually is used, idk why i get this warning
     use super::*;
 
     #[test]

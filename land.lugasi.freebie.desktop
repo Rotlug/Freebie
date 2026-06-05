@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Freebie
+Comment=Browse and play video games
+Exec=freebie
+Icon=applications-games
+Type=Application
+Terminal=false
+Categories=Game;

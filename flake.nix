@@ -42,6 +42,11 @@
             icoutils
           ];
 
+          installPhase = ''
+            mkdir -p $out/share/applications
+            cp $src/land.lugasi.freebie.desktop $out/share/applications
+          '';
+
           postInstall = ''
             wrapProgram $out/bin/${cargoToml.package.name} \
               --prefix PATH : ${pkgs.lib.makeBinPath [pkgs.umu-launcher pkgs.icoutils pkgs.bubblewrap]} \
