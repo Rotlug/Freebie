@@ -6,6 +6,7 @@ use relm4::prelude::*;
 use crate::{
     app::App,
     args::Args,
+    game::Game,
     igdb::MetadataManager,
     preferences::PreferencesInner,
     util::{
@@ -96,13 +97,13 @@ async fn launch(slug: &str) {
 /// Download and install a game
 async fn obtain(slug: &str, metadata: &MetadataManager) {
     println!("Searching for {slug}");
-    let mut games = game::search(slug)
+    let mut results = game::search(slug)
         .await
         .unwrap_or_else(|err| panic!("Failed to perform online search: {err:?}"));
 
-    let Some(mut game) = games.remove(slug) else {
+    let Some(result) = results.remove(slug) else {
         eprintln!("Couldn't find game {slug} in search. Found games:");
-        for (slug, _) in games {
+        for (slug, _) in results {
             eprintln!("{slug}");
         }
         return;
@@ -116,8 +117,8 @@ async fn obtain(slug: &str, metadata: &MetadataManager) {
     let Some(meta) = metas.remove(slug) else {
         panic!("Couldn't find metadata for game {slug}");
     };
-    println!("{meta}");
-    game.metadata = Some(meta);
+
+    let game = Game::new(result, meta);
 
     let session = librqbit::Session::new(downloads())
         .await

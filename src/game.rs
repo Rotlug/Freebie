@@ -22,6 +22,12 @@ use crate::{
     },
 };
 
+pub struct SearchResult {
+    pub link: String,
+    pub size: String,
+    pub slug: String,
+}
+
 /// A Video game that can be downloaded and installed.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Game {
@@ -34,8 +40,8 @@ pub struct Game {
     /// (for example: "`tetris-effect-connected`")
     pub slug: String,
 
-    /// The games metadata from IGDB, or `None` if it hasn't been fetched yet.
-    pub metadata: Option<igdb::Metadata>,
+    /// The games metadata from IGDB
+    pub metadata: igdb::Metadata,
 
     /// The games current installation state.
     pub state: Arc<RwLock<State>>,
@@ -71,6 +77,18 @@ pub enum State {
 }
 
 impl Game {
+    /// Construct a new `Game` struct, given a `SearchResult` from `game::search` and metadata
+    /// from `igdb::Search`
+    pub fn new(result: SearchResult, metadata: igdb::Metadata) -> Self {
+        Self {
+            link: result.link,
+            size: result.size,
+            slug: result.slug,
+            metadata,
+            state: Arc::new(RwLock::new(State::default())),
+        }
+    }
+
     /// Download a game using `link`. Returns the output directory of the download.
     pub async fn download(
         &self,
@@ -320,14 +338,13 @@ impl Game {
     ///
     /// Fails if the game doesn't have metadata.
     pub async fn make_shortcut(&self) -> anyhow::Result<()> {
-        if let Some(meta) = &self.metadata {
-            let exe = "freebie"; // Current exe path of freebie
-            let icon = self.generate_icon().await?.display().to_string();
-            let name = &meta.name;
-            let slug = &self.slug;
+        let exe = "freebie"; // Current exe path of freebie
+        let icon = self.generate_icon().await?.display().to_string();
+        let name = &self.metadata.name;
+        let slug = &self.slug;
 
-            let shortcut = format!(
-                "[Desktop Entry]
+        let shortcut = format!(
+            "[Desktop Entry]
 Type=Application
 Name={name}
 Comment=
@@ -336,24 +353,21 @@ Exec={exe} --launch={slug}
 Categories=Game;
 StartupNotify=true
 Terminal=false",
-            );
+        );
 
-            let desktop_path = desktop().join(format!("{slug}.desktop"));
-            let apps_path = applications().join(format!("{slug}.desktop"));
+        let desktop_path = desktop().join(format!("{slug}.desktop"));
+        let apps_path = applications().join(format!("{slug}.desktop"));
 
-            tokio::fs::write(&apps_path, &shortcut).await?;
-            tokio::fs::symlink(&apps_path, &desktop_path).await?;
+        tokio::fs::write(&apps_path, &shortcut).await?;
+        tokio::fs::symlink(&apps_path, &desktop_path).await?;
 
-            Ok(())
-        } else {
-            Err(anyhow::anyhow!("Game doesn't have metadata!"))
-        }
+        Ok(())
     }
 }
 
 /// Search for video games on `fitgirl-repacks.site` and collect the results.
-pub async fn search(query: &str) -> anyhow::Result<HashMap<String, Game>> {
-    let mut games = HashMap::new();
+pub async fn search(query: &str) -> anyhow::Result<HashMap<String, SearchResult>> {
+    let mut results = HashMap::new();
 
     let url = format!("https://fitgirl-repacks.site/?s={query}");
 
@@ -361,7 +375,7 @@ pub async fn search(query: &str) -> anyhow::Result<HashMap<String, Game>> {
     let document = Html::parse_document(&html);
 
     for article in document.select(&Selector::parse(".post").unwrap()) {
-        let parse = || -> Option<Game> {
+        let parse = || -> Option<SearchResult> {
             let link = article
                 .select(&Selector::parse(".entry-title > a").unwrap())
                 .next()?;
@@ -386,21 +400,15 @@ pub async fn search(query: &str) -> anyhow::Result<HashMap<String, Game>> {
             let link = link.attr("href")?.to_string();
             let slug = link.split('/').nth(3).unwrap().to_string();
 
-            Some(Game {
-                metadata: None,
-                link,
-                size,
-                slug,
-                state: Arc::new(RwLock::new(State::default())),
-            })
+            Some(SearchResult { link, size, slug })
         };
 
-        if let Some(game) = parse() {
-            games.insert(game.slug.clone(), game);
+        if let Some(result) = parse() {
+            results.insert(result.slug.clone(), result);
         }
     }
 
-    Ok(games)
+    Ok(results)
 }
 
 pub fn popular() -> anyhow::Result<Vec<Arc<Game>>> {

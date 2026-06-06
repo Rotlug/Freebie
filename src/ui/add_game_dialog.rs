@@ -162,36 +162,34 @@ impl AsyncComponent for AddGameDialog {
             }
             Inbox::Add => {
                 if let Some(exe_path) = self.exe_path.take() {
+                    let slug = self.game_name.slug();
                     root.close();
-                    let mut game = Game {
+
+                    let Ok(mut metas) = self.metadata.get_games(&[&slug]).await else {
+                        return;
+                    };
+                    let Some(meta) = metas.remove(&slug) else {
+                        return;
+                    };
+
+                    let game = Arc::new(Game {
                         link: String::new(),
                         size: String::new(),
                         slug: self.game_name.slug(),
-                        metadata: None,
+                        metadata: meta,
                         state: Arc::new(RwLock::new(game::State::Installed {
                             path: exe_path.parent().unwrap().into(),
                             exe: exe_path,
                             time_played: Duration::default(),
                             is_open: false,
                         })),
-                    };
+                    });
 
-                    let Ok(metas) = self.metadata.get_games(&[&game.slug]).await else {
-                        return;
-                    };
-
-                    for (meta_slug, meta) in metas {
-                        if meta_slug == game.slug {
-                            game.metadata = Some(meta);
-                            let game = Arc::new(game);
-                            self.active_games
-                                .lock()
-                                .unwrap()
-                                .insert(game.slug.clone(), game.clone());
-                            _ = sender.output(Outbox::GameAdded);
-                            return;
-                        }
-                    }
+                    self.active_games
+                        .lock()
+                        .unwrap()
+                        .insert(game.slug.clone(), game.clone());
+                    _ = sender.output(Outbox::GameAdded);
                 }
             }
         }

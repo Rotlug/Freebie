@@ -54,7 +54,7 @@ impl AsyncFactoryComponent for GameButton {
 
                         #[name = "title"]
                         gtk::Label {
-                            set_label: &self.game.metadata.as_ref().unwrap().name,
+                            set_label: &self.game.metadata.name,
                             set_ellipsize: gtk::pango::EllipsizeMode::End,
                             set_hexpand: true,
                             set_halign: gtk::Align::Start,
@@ -77,17 +77,18 @@ impl AsyncFactoryComponent for GameButton {
         _sender: AsyncFactorySender<Self>,
     ) -> Self {
         let (game, texture_cache) = init;
-        let metadata = game.metadata.as_ref().unwrap();
-        let texture = if let Some(texture) = texture_cache.lock().unwrap().get(&metadata.slug) {
+        let texture = if let Some(texture) = texture_cache.lock().unwrap().get(&game.metadata.slug)
+        {
             texture.clone()
         } else {
-            let texture = bytes_to_texture(metadata.cover.download().await.unwrap_or_default())
-                .await
-                .unwrap();
+            let texture =
+                bytes_to_texture(game.metadata.cover.download().await.unwrap_or_default())
+                    .await
+                    .unwrap();
             texture_cache
                 .lock()
                 .unwrap()
-                .insert(metadata.slug.clone(), texture.clone());
+                .insert(game.metadata.slug.clone(), texture.clone());
             texture
         };
 

@@ -8,7 +8,7 @@ use std::sync::Arc;
 use crate::{
     app::{ActiveGames, TextureCache},
     game::{self, Game},
-    igdb::MetadataManager,
+    igdb::{self, MetadataManager},
     ui::game_button::{self, GameButton},
 };
 
@@ -180,21 +180,10 @@ impl AsyncComponent for BrowseView {
 
 /// Fetch games with their metadata
 async fn search(metadata: &MetadataManager, query: &str) -> anyhow::Result<Vec<Arc<Game>>> {
-    let mut games = game::search(query).await?;
-    let slugs: Vec<&String> = games.keys().collect();
-    let mut metas = metadata.get_games(&slugs).await?;
+    let results = game::search(query).await?;
+    let slugs: Vec<&String> = results.keys().collect();
+    let metas = metadata.get_games(&slugs).await?;
+    let games = igdb::match_metadatas(metas, results);
 
-    // Map metadata to game
-    for (game_slug, game) in &mut games {
-        if let Some(matching) = metas.remove(game_slug) {
-            game.metadata = Some(matching);
-        }
-    }
-
-    // Filter out games which don't have metadata
-    Ok(games
-        .into_values()
-        .map(Arc::new)
-        .filter(|game| game.metadata.is_some())
-        .collect())
+    Ok(games.into_values().map(Arc::new).collect())
 }

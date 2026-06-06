@@ -12,6 +12,7 @@ use serde_with::DurationSeconds;
 use serde_with::serde_as;
 use tokio::sync::Mutex;
 
+use crate::game::{Game, SearchResult};
 use crate::preferences::Preferences;
 
 /// The token returned from igdb after requesting access
@@ -227,4 +228,19 @@ impl std::fmt::Display for Metadata {
 
         Ok(())
     }
+}
+
+pub fn match_metadatas(
+    mut metadatas: HashMap<String, Metadata>,
+    results: HashMap<String, SearchResult>,
+) -> HashMap<String, Game> {
+    let mut games = HashMap::new();
+
+    for (slug, result) in results {
+        if let Some(metadata) = metadatas.remove(&slug) {
+            games.insert(slug, Game::new(result, metadata));
+        }
+    }
+
+    games
 }

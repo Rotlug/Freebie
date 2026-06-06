@@ -68,7 +68,7 @@ impl AsyncComponent for GamePage {
                         set_title_widget = &adw::WindowTitle {
                             #[watch]
                             set_title: model.game.as_ref().map_or("Title", |game| {
-                                &game.metadata.as_ref().unwrap().name
+                                &game.metadata.name
                             })
                         }
                     },
@@ -106,7 +106,7 @@ impl AsyncComponent for GamePage {
 
                                     #[watch]
                                     set_label: model.game.as_ref().map_or("Title", |game| {
-                                        &game.metadata.as_ref().unwrap().name
+                                        &game.metadata.name
                                     }),
 
                                     set_css_classes: &["title-1"]
@@ -269,7 +269,7 @@ impl AsyncComponent for GamePage {
                 if let Some(ref game) = self.game {
                     let dialog = adw::AlertDialog::builder()
                         .heading("Are you sure?")
-                        .body(format!("Are you sure you want to delete <b>{}</b>? This removes all game files!", game.metadata.as_ref().unwrap().name))
+                        .body(format!("Are you sure you want to delete <b>{}</b>? This removes all game files!", game.metadata.name))
                         .body_use_markup(true)
                         .default_response("cancel").build();
 
@@ -302,9 +302,8 @@ impl GamePage {
     fn description(&self) -> &str {
         self.game
             .as_ref()
-            .and_then(|game| game.metadata.as_ref())
-            .and_then(|metadata| metadata.description.as_ref())
-            .map_or_else(|| "No description available", |metadata| metadata.as_str())
+            .and_then(|game| game.metadata.description.as_deref())
+            .unwrap_or("No description available")
     }
 
     fn subtitle(&self) -> String {
@@ -312,7 +311,7 @@ impl GamePage {
             return String::new();
         };
 
-        let rating = game.metadata.as_ref().unwrap().rating.map(|rating| {
+        let rating = game.metadata.rating.map(|rating| {
             let rating = (rating as i32).to_string();
             format!("{rating}/100")
         });
